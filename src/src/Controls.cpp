@@ -5,6 +5,7 @@
 #include <Bounce2.h>
 #include "neotimer.h"
 #include <ArduinoMap.h>
+#include <yasm.h>
 
 
 Neotimer button_read_timer = Neotimer(10);
@@ -24,6 +25,8 @@ volatile bool feeding = false;
 volatile bool feeding_dir = true;
 
 
+YASM btn_yasm;
+
 // Debouncer
 Bounce debLBP = Bounce(); 
 Bounce debRBP = Bounce();
@@ -37,7 +40,37 @@ const int NUM_BUTTONS = 6;
 CreateMap(button_states, const char*, int, NUM_BUTTONS);
 
 
+struct BtnEvents{
+  bool fell_left;
+  bool fell_right;
+  bool fell_up;
+  bool fell_down;
+  bool fell_mod;
+  bool fell_menu;
+  bool rose_left;
+  bool rose_right;
+  bool rose_up;
+  bool rose_down;
+  bool rose_mod;
+  bool rose_menu;
+};
 
+BtnEvents btn_events = {
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,  
+  false,
+  false,
+  false,
+  false,
+  false,
+  false  
+};
+
+// button data definition
 
 struct Bd{
   uint8_t pin;
@@ -49,14 +82,14 @@ struct Bd{
   uint8_t idx;
 };
 
+// Button data structs
 
-
-Bd lbd  {LBP,"LB",false,true,true,&debLBP,0};
-Bd rbd  {RBP,"RB",false,true,true,&debRBP,1};
-Bd ubd  {UBP,"UB",false,true,true,&debUBP,2};
-Bd dbd  {DBP,"DB",false,true,true,&debDBP,3};
-Bd sbd  {SBP,"SB",false,true,true,&debSBP,4};
-Bd mbd  {MBP,"MB",false,true,true,&debMBP,5};
+Bd lbd  {LBP,"left",false,true,true,&debLBP,0};
+Bd rbd  {RBP,"right",false,true,true,&debRBP,1};
+Bd ubd  {UBP,"up",false,true,true,&debUBP,2};
+Bd dbd  {DBP,"down",false,true,true,&debDBP,3};
+Bd sbd  {SBP,"menu",false,true,true,&debSBP,4};
+Bd mbd  {MBP,"mod",false,true,true,&debMBP,5};
 
 Bd bdata[NUM_BUTTONS] = {
     lbd,
@@ -67,25 +100,8 @@ Bd bdata[NUM_BUTTONS] = {
     mbd
   };
 
-/*
-struct Bd{
-  uint8_t pin;
-  const char* name;
-  Bounce *deb;
-  uint8_t idx;
-};
-
-Bd lbd  {LBP,"LB",&debLBP,0};
-Bd rbd  {RBP,"RB",&debRBP,1};
-Bd ubd  {UBP,"UB",&debUBP,2};
-Bd dbd  {DBP,"DB",&debDBP,3};
-Bd sbd  {SBP,"SB",&debSBP,4};
-Bd mbd  {MBP,"MB",&debMBP,5};
-*/
-
-
-
 int mode_select = FEED;
+
 
 void init_controls(){
 
@@ -96,154 +112,12 @@ void init_controls(){
     bd.deb->interval(interval);
     button_states[bd.name] = i;
   }
-    
+  btn_yasm.next(startupState);  
+
+  Serial.println(display_mode);
 }
 
 
-void readConfigureButtons(){
-  
-  handleSBP();
-  if(debLBP.rose()){
-    menu++;
-  }
-  if(debRBP.rose()){
-    menu--;
-  }
-
-}
-
-void readStartupButtons(){
-  //handleLBP();
-  handleRBP();
-  handleSBP();
-  handleUBP();
-  handleDBP();
-
-  if(button_down){
-    mode_select = THREAD;
-  }
-  if(button_up){
-    mode_select = FEED;
-  }
-  if(debLBP.rose()){
-    display_mode = READY;
-    //delay(200);
-  }
-
-}
-
-void readReadyButtons(){
-  //handleLBP();
-  handleRBP();
-  //handleSBP();
-  handleUBP();
-  handleDBP();
-  if(debSBP.rose()){
-    display_mode = STARTUP;
-    return;
-  }
-  if(debLBP.rose()){
-    display_mode = DSTATUS;
-    return;
-  }
-}
-void readDstatusButtons(){
-  //handleLBP();
-  //handleRBP();
-  handleSBP();
-  handleUBP();
-  handleDBP();
-
-  //  if left button pressed and not feeding
-  if(debLBP.read() == LOW && !feeding){
-    // start feeding
-    toolPos = factor * encoder.getCount();
-    
-    feeding_dir = true;
-    feeding = true;
-  }
-  // if right button pressed and not feeding
-  if(debRBP.read() == LOW && !feeding){
-    // start feeding
-    toolPos = factor * encoder.getCount();
-
-    Serial.print("fuckyou: ");
-    Serial.print(spindlePos);
-    Serial.print(",");
-    Serial.print(toolPos);
-    Serial.print(",");
-    Serial.print(delta);
-    Serial.print(",");
-    
-    feeding_dir = false;
-    feeding = true;
-  }
-  if(debRBP.read() == LOW && feeding){
-    // keep feeding
-    // update?
-  }
-
-  // if left button up and feeding
-  if(debLBP.rose() && feeding){
-   feeding = false;
-  }
-  // if right button up  and feeding
-  if(debRBP.rose() && feeding){
-   feeding = false;
-  }
-  if(button_menu){
-    display_mode = STARTUP;
-  }
-  if(button_up){
-    feed_menu++;
-    feed_parameters();
-  }
-  if(button_down){
-    feed_menu--;
-    feed_parameters();
-  }
-  
-}
-
-void handleLBP(){
-  if(debLBP.read() == LOW){
-    button_left = true;
-    Serial.print(" LBP ");
-  }else{
-    button_left = false;
-  }
-}
-void handleRBP(){
-  if(debRBP.read() == LOW){
-    button_right = true;
-    Serial.print(" RBP ");
-  }else{
-    button_right = false;
-  }
-}
-
-void handleSBP(){
-  if(debSBP.rose()){
-    button_menu = true;
-    switch (display_mode) {
-      case STARTUP:
-        //btn_mode = 1;
-        break;
-      case CONFIGURE:
-        //btn_mode = 2;
-        break;
-      case DSTATUS:
-        //btn_mode = 0;
-        break;
-      default: 
-        break;
-    }
-  }else{
-    button_menu = false;
-  }
-
-
-}
 
 void debugButtons(){
   for(int i = 0; i < NUM_BUTTONS;i++){
@@ -263,39 +137,58 @@ void debugButtons(){
     Serial.println();
   }
 }
+
+void set_event(Bd bd, bool eventtype){
+  if(eventtype){
+    
+    Serial.print(bd.name);
+    Serial.println(" rose.");
+    bd.changed = true;
+    if(strcmp(bd.name, "left") == 0){
+      btn_events.rose_left = true;
+    }
+    if(strcmp(bd.name, "menu") == 0){
+      btn_events.rose_menu = true;
+    }
+  }else{
+    Serial.print(bd.name);
+    Serial.println(" fell.");
+    if(strcmp(bd.name, "left") == 0){
+      btn_events.fell_left = true;
+    }
+
+  }
+}
+
+bool check_event(bool * event_state){
+  if(*event_state){
+    *event_state = false;
+    return true;
+  }else{
+    return false;
+  }
+}
+
 void read_buttons(){
   if(button_read_timer.repeat()){
     for(int i = 0; i < NUM_BUTTONS;i++){
       Bd bd = bdata[i];
       bd.deb->update();
-      if(bd.deb->rose()){
-        Serial.print(bd.name);
-        Serial.println(".");
-        bd.changed = true;
+      if(bd.deb->fell()){
+
+        set_event(bd,false);
       }
-      /*
-      if(bd.deb->changed()){
-        Serial.print(i);
-        Serial.print(",");
-        Serial.print(bd.pin);
-        Serial.print(",");
-        Serial.print(bd.name);
-        Serial.println(" C ");
-        bd.changed = true;
-        bd.change_read = false;
-        if(bd.deb->fell()){
-          bd.state = 0;
-        }
-        if(bd.deb->rose()){
-          bd.state = 1;
-        }
-      }  
-      */  
+      if(bd.deb->rose()){
+        set_event(bd,true);
+      }
+      
     }
+    btn_yasm.run();
   }
   if(button_print_timer.repeat()){
-    debugButtons();
+    //debugButtons();
   }
+
 
   /*  TODO: fix this when you fix bounce
     
@@ -320,33 +213,50 @@ void read_buttons(){
     
 }
 
-void handleUBP(){
-  if(debUBP.read() == LOW){
-    button_up = true;
-    Serial.print(" UBP ");
-  }else{
-    button_up = false;
+void startupState(){
+  if(btn_yasm.isFirstRun()){
+    display_mode = STARTUP;
   }
-}
-// this seems to set the left limit
-
-void handleStatusUBP(){
-  if(debUBP.rose()){
-    if(left_limit != left_limit_max){
-      left_limit = left_limit_max;
-    }
-    else{
-      left_limit = toolPos; 
-    }
+  if(check_event(&btn_events.rose_left)){
+    Serial.println("startup -> ready");
+    btn_yasm.next(readyState);
   }
 }
 
-void handleDBP(){
-  if(debDBP.read() == LOW){
-    button_down = true;
-    Serial.print(" DBP ");
-  }else{
-    button_down = false;
+void readyState(){
+  if(btn_yasm.isFirstRun()){
+    display_mode = READY;
+  }
+  if(btn_events.rose_left){
+    btn_events.rose_left = false;
+    Serial.println("ready -> status");
+    btn_yasm.next(feedingState);
+  }
+}
+
+void statusState(){
+  if(btn_yasm.isFirstRun()){
+    display_mode = DSTATUS;
+  }
+
+  if(btn_events.fell_left){
+    Serial.println("status -> feeding");
+    btn_yasm.next(feedingState);
+  }
+  if(btn_events.rose_menu){
+    btn_events.rose_menu = false;
+    Serial.println("feeding -> startup");
+    btn_yasm.next(startupState);
+  }
+}
+
+void feedingState(){
+  if(btn_yasm.isFirstRun()){
+    // set the feeding flag for the stepper.
+  }
+  if(check_event( & btn_events.rose_left )){
+    Serial.println("feeding -> status");
+    btn_yasm.next(feedingState);
   }
 }
 

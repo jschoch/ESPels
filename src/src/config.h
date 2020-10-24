@@ -5,19 +5,17 @@
 
 
 #include <Arduino.h>
+#include <ESP32Encoder.h>
+
 #include "neotimer.h"
 #include "util.h"
-#include "util.h"
 #include "display.h"
-
-
 #include "Machine.h"
 #include "Controls.h"
 #include "Stepper.h"
 #include "Encoder.h"
 #include "motion.h"
 #include "freertos/task.h"
-#include <ESP32Encoder.h>
 #include "web.h"
 
 
