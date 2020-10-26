@@ -16,16 +16,22 @@ volatile int32_t left_limit = 2147483646;
 uint8_t btn_mode = FEED;
 uint8_t menu = 33; 
 volatile bool button_left = false;
-bool button_right = false;
-bool button_up = false;
-bool button_down = false;
-bool button_menu = false;
+
 int feed_menu = 1;
 volatile bool feeding = false;
 volatile bool feeding_dir = true;
 
 
 YASM btn_yasm;
+
+enum class BtnState{
+  Startup,
+  Ready,
+  Status,
+  Feeding
+}; 
+
+BtnState btnState = BtnState::Startup;
 
 // Debouncer
 Bounce debLBP = Bounce(); 
@@ -117,7 +123,22 @@ void init_controls(){
   Serial.println(display_mode);
 }
 
-
+void resetBtnStates(){
+  btn_events = {
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,  
+    false,
+    false,
+    false,
+    false,
+    false,
+    false  
+  };
+}
 
 void debugButtons(){
   for(int i = 0; i < NUM_BUTTONS;i++){
@@ -139,6 +160,8 @@ void debugButtons(){
 }
 
 void set_event(Bd bd, bool eventtype){
+
+  // button rose
   if(eventtype){
     
     Serial.print(bd.name);
@@ -150,7 +173,8 @@ void set_event(Bd bd, bool eventtype){
     if(strcmp(bd.name, "menu") == 0){
       btn_events.rose_menu = true;
     }
-  }else{
+  } // button fell
+  else{
     Serial.print(bd.name);
     Serial.println(" fell.");
     if(strcmp(bd.name, "left") == 0){
@@ -175,7 +199,6 @@ void read_buttons(){
       Bd bd = bdata[i];
       bd.deb->update();
       if(bd.deb->fell()){
-
         set_event(bd,false);
       }
       if(bd.deb->rose()){
@@ -188,29 +211,7 @@ void read_buttons(){
   if(button_print_timer.repeat()){
     //debugButtons();
   }
-
-
-  /*  TODO: fix this when you fix bounce
-    
-    switch (display_mode){
-      case STARTUP:
-        // same as 2 for now
-        readStartupButtons();
-        break;
-      case CONFIGURE:
-        readConfigureButtons();
-        break;
-      case DSTATUS: 
-        readDstatusButtons();
-        break;
-      case READY: 
-        readReadyButtons();
-        break;
-    
-    }
-  }
-  */
-    
+     
 }
 
 void startupState(){
@@ -219,6 +220,7 @@ void startupState(){
   }
   if(check_event(&btn_events.rose_left)){
     Serial.println("startup -> ready");
+    resetBtnStates();
     btn_yasm.next(readyState);
   }
 }
@@ -227,10 +229,11 @@ void readyState(){
   if(btn_yasm.isFirstRun()){
     display_mode = READY;
   }
-  if(btn_events.rose_left){
-    btn_events.rose_left = false;
+  if(check_event( & btn_events.rose_left)){
+    
     Serial.println("ready -> status");
-    btn_yasm.next(feedingState);
+    resetBtnStates();
+    btn_yasm.next(statusState);
   }
 }
 
@@ -239,24 +242,39 @@ void statusState(){
     display_mode = DSTATUS;
   }
 
-  if(btn_events.fell_left){
-    Serial.println("status -> feeding");
+  if(check_event( & btn_events.fell_left)){
+    Serial.println("status -> feeding left");
+    // clear the previous press
+    resetBtnStates();
+    feeding_dir = true;
     btn_yasm.next(feedingState);
+    return; 
   }
-  if(btn_events.rose_menu){
-    btn_events.rose_menu = false;
+  if(check_event( & btn_events.fell_right)){
+    Serial.println("status -> feeding right");
+    // clear the previous press
+    resetBtnStates();
+    feeding_dir = false;
+    btn_yasm.next(feedingState);
+    return;
+  }
+  if(check_event( & btn_events.rose_menu) ){
     Serial.println("feeding -> startup");
+    resetBtnStates();
     btn_yasm.next(startupState);
   }
 }
 
 void feedingState(){
   if(btn_yasm.isFirstRun()){
+    display_mode = FEEDING;
+    Serial.println("enter feedingState");
     // set the feeding flag for the stepper.
   }
   if(check_event( & btn_events.rose_left )){
     Serial.println("feeding -> status");
-    btn_yasm.next(feedingState);
+    resetBtnStates();
+    btn_yasm.next(statusState);
   }
 }
 

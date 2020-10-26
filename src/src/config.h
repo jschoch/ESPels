@@ -98,5 +98,6 @@ extern volatile int delay_ticks;
 extern ESP32Encoder encoder;
 extern volatile bool feeding;
 extern volatile bool feeding_dir;
+//extern class BtnState btnState;
 
 #endif
