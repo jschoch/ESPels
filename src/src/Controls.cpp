@@ -45,37 +45,6 @@ const int NUM_BUTTONS = 6;
 // Make a structure for button states
 CreateMap(button_states, const char*, int, NUM_BUTTONS);
 
-
-struct BtnEvents{
-  bool fell_left;
-  bool fell_right;
-  bool fell_up;
-  bool fell_down;
-  bool fell_mod;
-  bool fell_menu;
-  bool rose_left;
-  bool rose_right;
-  bool rose_up;
-  bool rose_down;
-  bool rose_mod;
-  bool rose_menu;
-};
-
-BtnEvents btn_events = {
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,  
-  false,
-  false,
-  false,
-  false,
-  false,
-  false  
-};
-
 // button data definition
 
 struct Bd{
@@ -123,23 +92,6 @@ void init_controls(){
   Serial.println(display_mode);
 }
 
-void resetBtnStates(){
-  btn_events = {
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,  
-    false,
-    false,
-    false,
-    false,
-    false,
-    false  
-  };
-}
-
 void debugButtons(){
   for(int i = 0; i < NUM_BUTTONS;i++){
     Bd bd = bdata[i];
@@ -159,52 +111,11 @@ void debugButtons(){
   }
 }
 
-void set_event(Bd bd, bool eventtype){
-
-  // button rose
-  if(eventtype){
-    
-    Serial.print(bd.name);
-    Serial.println(" rose.");
-    bd.changed = true;
-    if(strcmp(bd.name, "left") == 0){
-      btn_events.rose_left = true;
-    }
-    if(strcmp(bd.name, "menu") == 0){
-      btn_events.rose_menu = true;
-    }
-  } // button fell
-  else{
-    Serial.print(bd.name);
-    Serial.println(" fell.");
-    if(strcmp(bd.name, "left") == 0){
-      btn_events.fell_left = true;
-    }
-
-  }
-}
-
-bool check_event(bool * event_state){
-  if(*event_state){
-    *event_state = false;
-    return true;
-  }else{
-    return false;
-  }
-}
-
 void read_buttons(){
   if(button_read_timer.repeat()){
     for(int i = 0; i < NUM_BUTTONS;i++){
       Bd bd = bdata[i];
       bd.deb->update();
-      if(bd.deb->fell()){
-        set_event(bd,false);
-      }
-      if(bd.deb->rose()){
-        set_event(bd,true);
-      }
-      
     }
     btn_yasm.run();
   }
@@ -218,9 +129,9 @@ void startupState(){
   if(btn_yasm.isFirstRun()){
     display_mode = STARTUP;
   }
-  if(check_event(&btn_events.rose_left)){
+  if(lbd.deb->rose()){
     Serial.println("startup -> ready");
-    resetBtnStates();
+    
     btn_yasm.next(readyState);
   }
 }
@@ -229,10 +140,10 @@ void readyState(){
   if(btn_yasm.isFirstRun()){
     display_mode = READY;
   }
-  if(check_event( & btn_events.rose_left)){
+  if(lbd.deb->rose()){
     
     Serial.println("ready -> status");
-    resetBtnStates();
+    
     btn_yasm.next(statusState);
   }
 }
@@ -242,25 +153,23 @@ void statusState(){
     display_mode = DSTATUS;
   }
 
-  if(check_event( & btn_events.fell_left)){
+  if(lbd.deb->fell()){
     Serial.println("status -> feeding left");
-    // clear the previous press
-    resetBtnStates();
+    
     feeding_dir = true;
     btn_yasm.next(feedingState);
     return; 
   }
-  if(check_event( & btn_events.fell_right)){
+  if(rbd.deb->fell()){
     Serial.println("status -> feeding right");
-    // clear the previous press
-    resetBtnStates();
+    
     feeding_dir = false;
     btn_yasm.next(feedingState);
     return;
   }
-  if(check_event( & btn_events.rose_menu) ){
+  if(sbd.deb->rose() ){
     Serial.println("feeding -> startup");
-    resetBtnStates();
+    
     btn_yasm.next(startupState);
   }
 }
@@ -271,41 +180,38 @@ void feedingState(){
     Serial.println("enter feedingState");
     // set the feeding flag for the stepper.
   }
-  if(check_event( & btn_events.rose_left )){
+  if(lbd.deb->rose() || rbd.deb->rose()){
     Serial.println("feeding -> status");
-    resetBtnStates();
     btn_yasm.next(statusState);
   }
 }
 
 void setFactor(){
+  if(menu<4){
+    factor= (motor_steps*pitch)/(lead_screw_pitch*spindle_encoder_resolution);            
+  }
+  else
+    {
+    if(menu<20)
+      {
+        // the depth of cut in mm on the compound slide I need for each thread pitch.  
+        // I use this during operation rather than looking it up each time
 
+        depth=pitch_factor*25.4/tpi;
 
-         if(menu<4){
-           factor= (motor_steps*pitch)/(lead_screw_pitch*spindle_encoder_resolution);            
-          }
-          else
-            {
-            if(menu<20)
-              {
-                // the depth of cut in mm on the compound slide I need for each thread pitch.  
-                // I use this during operation rather than looking it up each time
-
-               depth=pitch_factor*25.4/tpi;
-
-                // the imperial factor needed to account for details of lead screw pitch, 
-                // stepper motor #pulses/rev and encoder #pulses/rev
-               factor= motor_steps*25.4/(tpi*lead_screw_pitch*spindle_encoder_resolution);  
-               }
-             else
-               {
-                // the depth of cut in mm on the compound slide
-               depth=pitch_factor*pitch; 
-                // the metric factor needed to account for details of lead screw pitch, 
-                // stepper motor #pulses/rev and encoder #pulses/rev
-               factor=pitch*motor_steps/(lead_screw_pitch*spindle_encoder_resolution);
-               }
-             }
+        // the imperial factor needed to account for details of lead screw pitch, 
+        // stepper motor #pulses/rev and encoder #pulses/rev
+        factor= motor_steps*25.4/(tpi*lead_screw_pitch*spindle_encoder_resolution);  
+        }
+      else
+        {
+        // the depth of cut in mm on the compound slide
+        depth=pitch_factor*pitch; 
+        // the metric factor needed to account for details of lead screw pitch, 
+        // stepper motor #pulses/rev and encoder #pulses/rev
+        factor=pitch*motor_steps/(lead_screw_pitch*spindle_encoder_resolution);
+        }
+      }
                                                      
 } 
 
