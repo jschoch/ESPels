@@ -11,7 +11,7 @@ volatile int32_t delivered_stepper_pulses=0;          //number of steps delivere
 //number of steps we should have delivered for a given lead screw pitch
 
 // tracks the current tool position based on delivered steps
-volatile int32_t toolPos = 0;
+volatile int64_t toolPos = 0;
 
 
 void setup() {

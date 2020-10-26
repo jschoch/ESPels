@@ -7,6 +7,6 @@
 
 void init_stepper(void);
 bool getDir(void);
-void setDir(bool);
+bool setDir(bool);
 
 #endif

@@ -92,6 +92,10 @@ void init_controls(){
   Serial.println(display_mode);
 }
 
+void resetToolPos(){
+  toolPos = factor * encoder.getCount();
+}
+
 void debugButtons(){
   for(int i = 0; i < NUM_BUTTONS;i++){
     Bd bd = bdata[i];
@@ -155,15 +159,20 @@ void statusState(){
 
   if(lbd.deb->fell()){
     Serial.println("status -> feeding left");
-    feeding = true;
+    resetToolPos();
     feeding_dir = true;
+    feeding = true;
+    
     btn_yasm.next(feedingState);
     return; 
   }
   if(rbd.deb->fell()){
     Serial.println("status -> feeding right");
-    feeding = true;
+    resetToolPos();
     feeding_dir = false;
+
+    feeding = true;
+
     btn_yasm.next(feedingState);
     return;
   }
@@ -268,7 +277,7 @@ void thread_parameters()
     case(35):    pitch=7.0;   break;
     }
   // TODO: this is a bit of a hack, changing feed changes the factor which changes the delta.  not sure of a good way to update this and maintain positions.
-  toolPos = encoder.getCount();
+  toolPos = factor * encoder.getCount();
   setFactor();
 }
 
@@ -283,6 +292,6 @@ void feed_parameters(){
     case(3):     pitch=0.16;                  break;  // Coarse Turning
     case(4):     pitch=0.2;                  break;  // Coarse Turning
   }
-  toolPos = encoder.getCount();
+  toolPos = factor * encoder.getCount();
   factor= (motor_steps*pitch)/(lead_screw_pitch*spindle_encoder_resolution); 
 }

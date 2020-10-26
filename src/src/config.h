@@ -67,22 +67,22 @@ extern float pitch_factor;                           // a parameter to define ho
 //extern enum display_mode_t display_mode;
 extern int display_mode;
 extern volatile int16_t encoder0Pos;
-extern volatile int32_t spindlePos;
+extern volatile int64_t spindlePos;
 
 
-extern volatile int32_t delta;
+extern volatile int64_t delta;
 extern int32_t left_limit_max ;
 extern volatile int32_t left_limit;
 extern uint8_t btn_mode ;
 extern uint8_t menu ; 
 extern volatile boolean button_left ;
-extern volatile int32_t toolPos;
+extern volatile int64_t toolPos;
 extern volatile uint8_t err;
 
  
 extern int spindle_encoder_resolution;   // the number of pulses per revolution of the spindle encoder
-extern volatile float calculated_stepper_pulses;
-extern volatile float factor;  
+extern volatile int32_t calculated_stepper_pulses;
+extern volatile double factor;  
 
 
 extern int32_t left_limit_max;
