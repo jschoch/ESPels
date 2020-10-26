@@ -61,4 +61,6 @@ void loop() {
   // read controls
   read_buttons();
 
+  do_rpm();
+
 }

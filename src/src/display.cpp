@@ -69,9 +69,9 @@ void do_status_display(){
   
   display.drawString(0,0, "enc: " + String((uint32_t)encoder.getCount()) + " T: " + String(toolPos));
   //display.drawString(0,0,  " T: " + String(toolPos));
-  display.drawString(0,11,"f: " +String(factor) + " D: " + String(delta));
+  display.drawString(0,11,"f: " +String(factor,4) + " D: " + String(delta));
 
-  display.drawString(0,21,"P:" + String(pitch));
+  display.drawString(0,21,"P:" + String(pitch,3) + "RPM: " + String(rpm));
 
   if(feeding){
     display.drawString(110,51,"F:"+ String(feeding_dir));
@@ -104,6 +104,9 @@ void do_display(){
         break;
       case READY:
         do_ready_display();
+        break;
+      case FEEDING:
+        do_status_display();
         break;
     }
     

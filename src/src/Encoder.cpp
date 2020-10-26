@@ -6,9 +6,12 @@
 volatile int32_t spindlePos = 0;
 
 int spindle_encoder_resolution=2400 ;
+int64_t last_count = 0;
+int rpm = 0;
 
 ESP32Encoder encoder;
 
+Neotimer rpm_timer = Neotimer(100);
 
 void init_encoder(){
   /*   -------------------------------------   OLD   --------------------------------------
@@ -23,7 +26,22 @@ void init_encoder(){
   attachInterrupt(digitalPinToInterrupt(26),doEncoderB,CHANGE);
   */
   ESP32Encoder::useInternalWeakPullResistors=UP;
-  encoder.attachHalfQuad(25, 26);
+  encoder.attachFullQuad(25, 26);
   encoder.clearCount();
   
+}
+
+void do_rpm(){
+  if(rpm_timer.repeat()){
+    int64_t count = encoder.getCount();
+    long count_diff = abs(last_count - count);
+    float revolutions = (float) count_diff / spindle_encoder_resolution;
+    rpm = revolutions * 10 * 60;
+    last_count = count;
+    Serial.print(revolutions);
+    Serial.print(",");
+    Serial.print(count_diff);
+    Serial.print(",");
+    Serial.println();
+  }
 }

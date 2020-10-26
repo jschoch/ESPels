@@ -155,14 +155,14 @@ void statusState(){
 
   if(lbd.deb->fell()){
     Serial.println("status -> feeding left");
-    
+    feeding = true;
     feeding_dir = true;
     btn_yasm.next(feedingState);
     return; 
   }
   if(rbd.deb->fell()){
     Serial.println("status -> feeding right");
-    
+    feeding = true;
     feeding_dir = false;
     btn_yasm.next(feedingState);
     return;
@@ -171,6 +171,15 @@ void statusState(){
     Serial.println("feeding -> startup");
     
     btn_yasm.next(startupState);
+  }
+
+  if(ubd.deb->rose()){
+    feed_menu++;
+    feed_parameters();
+  }
+  if(dbd.deb->rose()){
+    feed_menu--;
+    feed_parameters();
   }
 }
 
@@ -182,6 +191,7 @@ void feedingState(){
   }
   if(lbd.deb->rose() || rbd.deb->rose()){
     Serial.println("feeding -> status");
+    feeding = false;
     btn_yasm.next(statusState);
   }
 }
@@ -264,14 +274,14 @@ void thread_parameters()
 
 void feed_parameters(){
   
-  if(feed_menu > 3) feed_menu = 1;
+  if(feed_menu > 4) feed_menu = 1;
   if(feed_menu < 1) feed_menu = 4;
 
   switch(feed_menu) {
-    case(1):     pitch=0.085;                  break;  // Normal Turning
-    case(2):     pitch=0.050;                  break;  // Fine Turning
-    case(3):     pitch=0.160;                  break;  // Coarse Turning
-    case(4):     pitch=0.05;                  break;  // Coarse Turning
+    case(1):     pitch=0.05;                  break;  // Normal Turning
+    case(2):     pitch=0.085;                  break;  // Fine Turning
+    case(3):     pitch=0.16;                  break;  // Coarse Turning
+    case(4):     pitch=0.2;                  break;  // Coarse Turning
   }
   toolPos = encoder.getCount();
   factor= (motor_steps*pitch)/(lead_screw_pitch*spindle_encoder_resolution); 
