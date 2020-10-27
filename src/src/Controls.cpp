@@ -21,6 +21,13 @@ int feed_menu = 1;
 volatile bool feeding = false;
 volatile bool feeding_dir = true;
 
+#ifdef DEBUG_CPU_STATS
+char stats[ 2048];
+#undef configGENERATE_RUN_TIME_STATS
+#define configGENERATE_RUN_TIME_STATS 1
+#undef configUSE_STATS_FORMATTING_FUNCTIONS
+#define configUSE_STATS_FORMATTING_FUNCTIONS 1
+#endif
 
 YASM btn_yasm;
 
@@ -132,6 +139,7 @@ void read_buttons(){
 void startupState(){
   if(btn_yasm.isFirstRun()){
     display_mode = STARTUP;
+    web = true;
   }
   if(lbd.deb->rose()){
     Serial.println("startup -> ready");
@@ -143,6 +151,7 @@ void startupState(){
 void readyState(){
   if(btn_yasm.isFirstRun()){
     display_mode = READY;
+    web = true;
   }
   if(lbd.deb->rose()){
     
@@ -155,6 +164,7 @@ void readyState(){
 void statusState(){
   if(btn_yasm.isFirstRun()){
     display_mode = DSTATUS;
+    web = false;
   }
 
   if(lbd.deb->fell()){

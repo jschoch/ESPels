@@ -34,6 +34,9 @@
 #define MICROSTEPS 32
 #define MOTOR_TYPE 1 // 1 is 1.8 degree, 2 is .9 degree
 
+// read the cpu usage via the web server, only use for testing as it comes with bloat
+#define DEBUG_CPU_STATS
+
 // User parameters to be altered depending on lathe parameters...................................................... 
 // To use this code one must replace these parameters with correct values for your lathe. These are 'spindle_encoder_resolution','lead_screw_pitch' and 'motor_steps'.  
 // For example, if you had a spindle encoder of 200 step/rev... then edit the current 'spindle_encoder_resolution=1024' to read 'spindle_encoder_resolution=200'.
@@ -100,5 +103,8 @@ extern volatile bool feeding;
 extern volatile bool feeding_dir;
 //extern class BtnState btnState;
 extern int rpm;
-
+extern float rapids;
+extern uint8_t motor_type;
+extern float backlash;
+extern bool web;
 #endif

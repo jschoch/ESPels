@@ -3,6 +3,7 @@
 // TODO: Configure your WiFi here
 #include <WiFi.h>
 #include <WebServer.h>
+#include <ESPmDNS.h>
 #include "config.h"
 
 /* Put IP Address details */
@@ -11,11 +12,14 @@ IPAddress gateway(192,168,1,1);
 IPAddress subnet(255,255,255,0);
 
 WebServer server(80);
+bool web = true;
 
 void handle_OnConnect() {
   
   Serial.println("GPIO4 Status: OFF | GPIO5 Status: OFF");
-  server.send(200, "text/html", "Lead: " + String(lead_screw_pitch)); 
+  String response = String("Settings:<HR>Pitch: " + String(lead_screw_pitch) + "<BR> resolution: " + spindle_encoder_resolution \
+    + "<BR> Micro Steps: " +  microsteps + "<BR> Motor: " + motor_type + "<BR> Rapids: " + rapids + "<BR> Backlash: "+ backlash);
+  server.send(200, "text/html", "Lead: " + String(response)); 
 }
 
 
@@ -25,25 +29,64 @@ void init_web(){
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print(".");
-    delay(500);
+    delay(100);
   }
   Serial.print("Connected. IP=");
   Serial.println(WiFi.localIP());
+
+  if (!MDNS.begin("els")) {
+        Serial.println("Error setting up MDNS responder!");
+        while(1) {
+          Serial.print("*");
+            delay(100);
+        }
+    }
+  MDNS.addService("http", "tcp", 80);
+  
 
 
 
   server.on("/", handle_OnConnect);
   
-  
-  server.on("/users/{}", []() {
-    String user = server.pathArg(0);
-    server.send(200, "text/plain", "User: '" + user + "'");
-  });
-
   server.on("/leadscrew/{}", []() {
     float leadscrew = server.pathArg(0).toFloat();
     server.send(200, "text/plain", "L: '" + String(leadscrew) + "'");
     lead_screw_pitch = leadscrew;
+    init_machine();
+  });
+
+  server.on("/encoder/{}", []() {
+    int enc = server.pathArg(0).toInt();
+    server.send(200, "text/plain", "Got: '" + String(enc) + "'");
+    spindle_encoder_resolution = enc;
+  });
+
+  server.on("/microsteps/{}", []() {
+    microsteps = server.pathArg(0).toInt();
+    server.send(200, "text/plain", "Got: '" + String(microsteps) + "'");
+    init_machine();
+  });
+
+  server.on("/motor_type/{}", []() {
+    int mt = server.pathArg(0).toInt();
+    if(mt == 1 || mt == 2){
+      motor_type = mt;
+      server.send(200, "text/plain", "Got: '" + String(microsteps) + "'");
+      init_machine();
+    }else{
+      server.send(200, "text/plain", "Error: motor type should be 1(200 1.8) or 2 (400 0.0");
+    }
+    
+  });
+
+  server.on("/rapids/{}", []() {
+    float rapids = server.pathArg(0).toFloat();
+    server.send(200, "text/plain", "Got: '" + String(rapids) + "'");
+  });
+
+  server.on("/backlash/{}", []() {
+    float backlash = server.pathArg(0).toFloat();
+    server.send(200, "text/plain", "Got: '" + String(backlash) + "'");
   });
   
   // TODO:  add motor_steps, microsteps, native_steps, encoder_resolution 
@@ -54,7 +97,10 @@ void init_web(){
 }
 
 void do_web(){
-  server.handleClient();
+  if(web){
+    server.handleClient();
+  }
+  
 }
 
 
