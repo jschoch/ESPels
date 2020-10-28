@@ -15,7 +15,7 @@ Plan:
 
 The control state machine waits for button state changes and changes modes based on input.  There will be several modes.  The general operating mode model is that we track the spindle position via the quadrature encoder.  This position is mapped to a int64_t of stepper steps.  The tool position is also tracked in steps.  When the motor is slaved to the spindle the motor control interrupt timer will calculate how many steps away from it's ideal position it is based on the current pitch setting.  This is calculated as 
 
-`
+```
 motor_steps = (microsteps * native_steps) /lead_screw_pitch;
 
 # current steps per revolution
@@ -26,7 +26,7 @@ calculated_stepper_pulses = (int32_t)(factor * encoder.getCount());
 
 # the distance in steps from the ideal position
 delta = toolPos - calculated_stepper_pulses; 
-`
+```
 
 Once the delta is calculated and > 1, direction is determined and stepper pulses are generated until the delta is zero.  This works with the motor on or off, hand turning it or spinning at 2krpm.  There is not currently any acceleration done.  If the spindle stops cold (unlikely) the motor will get no step pulses.  If the spindle motor is already running at 2krpm and you try to set the pitch to 7mm it isn't likely to work out (just like on a real lathe).  This allows the things to bet setup in a simple slave mode where it operates like a regular lathe and the stepper acceleration is derived from the spindle motor's acceleration... Simple!
 
