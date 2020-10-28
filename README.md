@@ -18,13 +18,13 @@ The control state machine waits for button state changes and changes modes based
 `
 motor_steps = (microsteps * native_steps) /lead_screw_pitch;
 
-// current steps per revolution
+# current steps per revolution
 factor= (motor_steps*pitch)/(lead_screw_pitch*spindle_encoder_resolution); 
 
-// current position
+# current position
 calculated_stepper_pulses = (int32_t)(factor * encoder.getCount());
 
-// the distance in steps from the ideal position
+# the distance in steps from the ideal position
 delta = toolPos - calculated_stepper_pulses; 
 `
 
