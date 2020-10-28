@@ -16,7 +16,7 @@ bool web = true;
 
 void handle_OnConnect() {
   
-  Serial.println("GPIO4 Status: OFF | GPIO5 Status: OFF");
+  Serial.println("Web connection to /");
   String response = String("Settings:<HR>Pitch: " + String(lead_screw_pitch) + "<BR> resolution: " + spindle_encoder_resolution \
     + "<BR> Micro Steps: " +  microsteps + "<BR> Motor: " + motor_type + "<BR> Rapids: " + rapids + "<BR> Backlash: "+ backlash);
   server.send(200, "text/html", "Lead: " + String(response)); 

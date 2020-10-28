@@ -14,7 +14,7 @@ Neotimer button_print_timer = Neotimer(500);
 int32_t left_limit_max = 2147483646;
 volatile int32_t left_limit = 2147483646;
 uint8_t btn_mode = FEED;
-uint8_t menu = 33; 
+uint8_t menu = 3; 
 volatile bool button_left = false;
 
 int feed_menu = 1;
@@ -293,14 +293,31 @@ void thread_parameters()
 
 void feed_parameters(){
   
-  if(feed_menu > 4) feed_menu = 1;
-  if(feed_menu < 1) feed_menu = 4;
+  if(feed_menu > 21) feed_menu = 1;
+  if(feed_menu < 1) feed_menu = 21;
 
   switch(feed_menu) {
     case(1):     pitch=0.05;                  break;  // Normal Turning
     case(2):     pitch=0.085;                  break;  // Fine Turning
     case(3):     pitch=0.16;                  break;  // Coarse Turning
     case(4):     pitch=0.2;                  break;  // Coarse Turning
+    case(5):    pitch=0.4;   break;      
+    case(6):    pitch=0.4;   break;      
+    case(7):    pitch=0.5;   break;      
+    case(8):    pitch=0.7;   break;      
+    case(9):    pitch=0.75;  break;      
+    case(10):    pitch=0.8;   break;      
+    case(11):    pitch=1.0;   break;      
+    case(12):    pitch=1.25;  break;      
+    case(13):    pitch=1.5;   break;      
+    case(14):    pitch=1.75;  break;      
+    case(15):    pitch=2.0;   break;      
+    case(16):    pitch=2.5;   break;      
+    case(17):    pitch=3.0;   break;      
+    case(18):    pitch=3.5;   break;      
+    case(19):    pitch=4.0;   break;      
+    case(20):    pitch=5.0;   break;
+    case(21):    pitch=7.0;   break;
   }
   toolPos = factor * encoder.getCount();
   factor= (motor_steps*pitch)/(lead_screw_pitch*spindle_encoder_resolution); 

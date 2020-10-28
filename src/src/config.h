@@ -35,7 +35,7 @@
 #define MOTOR_TYPE 1 // 1 is 1.8 degree, 2 is .9 degree
 
 // read the cpu usage via the web server, only use for testing as it comes with bloat
-#define DEBUG_CPU_STATS
+//#define DEBUG_CPU_STATS
 
 // User parameters to be altered depending on lathe parameters...................................................... 
 // To use this code one must replace these parameters with correct values for your lathe. These are 'spindle_encoder_resolution','lead_screw_pitch' and 'motor_steps'.  

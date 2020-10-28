@@ -67,7 +67,7 @@ void do_configure_display(){
 
 void do_status_display(){
   
-  //display.drawString(0,0, "enc: " + String((int32_t)encoder.getCount()) + " T: " + String((int32_t)toolPos));
+  display.drawString(0,0, "enc: " + String((int32_t)encoder.getCount()) + " T: " + String((int32_t)toolPos));
   display.drawString(0,11,"f: " +String(factor,4) + " D: " + String((int32_t)delta));
 
   display.drawString(0,21,"P:" + String(pitch,3) + "RPM: " + String(rpm));
