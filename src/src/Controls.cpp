@@ -15,7 +15,7 @@ Neotimer button_print_timer = Neotimer(500);
 
 
 uint8_t menu = 3; 
-int feed_menu = 1;
+int pitch_menu= 1;
 volatile bool feeding = false;
 volatile bool feeding_dir = true;
 
@@ -57,17 +57,7 @@ const int NUM_BUTTONS = 6;
 // Make a structure for button states
 CreateMap(button_states, const char*, int, NUM_BUTTONS);
 
-// button data definition
 
-struct Bd{
-  uint8_t pin;
-  const char* name;
-  bool changed;
-  bool change_read;
-  bool state;
-  Bounce *deb;
-  uint8_t idx;
-};
 
 // Button data structs
 
@@ -180,7 +170,24 @@ void startupState(){
   if(lbd.deb->rose()){
     Serial.println("startup -> ready");
     
-    btn_yasm.next(readyState);
+    if(strcmp(feed_menu_items[feed_mode_select],"Slave")== 0){
+      btn_yasm.next(SlaveModeReadyState);
+    }
+    if(strcmp(feed_menu_items[feed_mode_select],"Slave Jog")== 0){
+      // TODO: break these out
+      btn_yasm.next(readyState);
+    }
+    if(strcmp(feed_menu_items[feed_mode_select],"Feed To Stop")== 0){
+
+    }
+    if(strcmp(feed_menu_items[feed_mode_select],"Thread")== 0){
+
+    }
+    if(strcmp(feed_menu_items[feed_mode_select],"Debug")== 0){
+
+    }
+
+    
   }
   if(ubd.deb->rose()){
     menu_next(&feed_mode_select,&feed_menu_items);
@@ -237,11 +244,11 @@ void statusState(){
   }
 
   if(ubd.deb->rose()){
-    feed_menu++;
+    pitch_menu++;
     feed_parameters();
   }
   if(dbd.deb->rose()){
-    feed_menu--;
+    pitch_menu--;
     feed_parameters();
   }
 }
@@ -337,12 +344,12 @@ void thread_parameters()
 
 void feed_parameters(){
   
-  if(feed_menu > 21) feed_menu = 1;
+  if(pitch_menu> 21) pitch_menu= 1;
 
   // do not wrap!!
-  if(feed_menu < 1) feed_menu = 1;
+  if(pitch_menu< 1) pitch_menu= 1;
 
-  switch(feed_menu) {
+  switch(pitch_menu) {
     case(1):     pitch=0.05;                  break;  // Normal Turning
     case(2):     pitch=0.085;                  break;  // Fine Turning
     case(3):     pitch=0.16;                  break;  // Coarse Turning

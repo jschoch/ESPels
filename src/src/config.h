@@ -18,6 +18,7 @@
 #include "freertos/task.h"
 #include "web.h"
 #include "Vector.h"
+#include "SlaveMode.h"
 
 
 
@@ -110,5 +111,13 @@ extern bool web;
 extern long mm_per_tick;
 typedef Vector<const char*> Menu;
 extern Menu feed_menu_items;
+extern class YASM btn_yasm;
+extern struct Bd lbd;
+extern int pitch_menu;
+extern Bd rbd;
+extern Bd ubd;
+extern Bd dbd;
+extern Bd sbd;
+extern Bd mbd;
 
 #endif

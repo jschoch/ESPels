@@ -13,7 +13,8 @@ const char* DISPLAY_MODE [] =
   "Configure",
   "Status",
   "Ready",
-  "Feeding"
+  "Feeding",
+  "Slave Ready"
 };
 
 
