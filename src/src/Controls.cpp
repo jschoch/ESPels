@@ -1,4 +1,5 @@
 #include "Controls.h"
+
 #include "config.h"
 
 #define BOUNCE_LOCK_OUT
@@ -6,20 +7,24 @@
 #include "neotimer.h"
 #include <ArduinoMap.h>
 #include <yasm.h>
-
+#include <Vector.h>
 
 Neotimer button_read_timer = Neotimer(10);
 Neotimer button_print_timer = Neotimer(500);
 
-int32_t left_limit_max = 2147483646;
-volatile int32_t left_limit = 2147483646;
-uint8_t btn_mode = FEED;
-uint8_t menu = 3; 
-volatile bool button_left = false;
 
+
+uint8_t menu = 3; 
 int feed_menu = 1;
 volatile bool feeding = false;
 volatile bool feeding_dir = true;
+
+
+
+const int MENU_MAX = 5;
+Menu feed_menu_items;
+const char* feed_menu_storage[MENU_MAX];
+int feed_mode_select = 0;
 
 #ifdef DEBUG_CPU_STATS
 char stats[ 2048];
@@ -82,12 +87,43 @@ Bd bdata[NUM_BUTTONS] = {
     mbd
   };
 
-int mode_select = FEED;
 
+
+void make_menu(){
+  
+  feed_menu_items.setStorage(feed_menu_storage);
+  feed_menu_items.push_back("Slave");
+  feed_menu_items.push_back("Slave Jog");
+  feed_menu_items.push_back("Feed To Stop");
+  feed_menu_items.push_back("Thread");
+  feed_menu_items.push_back("Debug");
+
+}
+void menu_next(int *index, Menu *menu){
+  *index = *index + 1;
+  if(*index >= (int)menu->size()){
+    *index = 0;
+  }
+}
+
+void menu_prev(int *index, Menu *menu){
+  *index = *index -1;
+  if(*index < 0){
+    *index = (int)menu->size();
+  }
+}
+
+// We don't want to go from 0.05 mm feed to 7.0mm feed!!!!!
+void menu_prev_nowrap(int *index, Menu *menu){
+  *index = *index - 1;
+  if(*index < 0){
+    *index = 0;
+  }
+}
 
 void init_controls(){
-
-    uint16_t interval = 20;
+  make_menu();
+  uint16_t interval = 20;
   for(int i = 0; i < NUM_BUTTONS;i++){
     Bd bd = bdata[i];
     bd.deb->attach(bd.pin,INPUT_PULLUP);
@@ -146,6 +182,12 @@ void startupState(){
     
     btn_yasm.next(readyState);
   }
+  if(ubd.deb->rose()){
+    menu_next(&feed_mode_select,&feed_menu_items);
+  }
+  if(dbd.deb->rose()){
+    
+  }
 }
 
 void readyState(){
@@ -159,6 +201,8 @@ void readyState(){
     
     btn_yasm.next(statusState);
   }
+
+  // TODO:  Add free jogging here perhaps?
 }
 
 void statusState(){
@@ -294,7 +338,9 @@ void thread_parameters()
 void feed_parameters(){
   
   if(feed_menu > 21) feed_menu = 1;
-  if(feed_menu < 1) feed_menu = 21;
+
+  // do not wrap!!
+  if(feed_menu < 1) feed_menu = 1;
 
   switch(feed_menu) {
     case(1):     pitch=0.05;                  break;  // Normal Turning
@@ -320,5 +366,5 @@ void feed_parameters(){
     case(21):    pitch=7.0;   break;
   }
   toolPos = factor * encoder.getCount();
-  factor= (motor_steps*pitch)/(lead_screw_pitch*spindle_encoder_resolution); 
+  factor = (motor_steps*pitch)/(lead_screw_pitch*spindle_encoder_resolution); 
 }

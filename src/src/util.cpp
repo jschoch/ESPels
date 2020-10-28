@@ -1,14 +1,11 @@
 #include <Arduino.h>
 #include "util.h"
+#include "config.h"
 
 
 
-const char* FEED_MODE [] =
-{
-  "Rapid Feed",
-  "Feed",
-  "Thread"
-};
+
+
 
 const char* DISPLAY_MODE [] =
 {
@@ -19,3 +16,21 @@ const char* DISPLAY_MODE [] =
   "Feeding"
 };
 
+
+/* i hate C
+
+void menu_next(int *index, (char**) ary){
+  *index++;
+  int size = sizeof(ary) / sizeof ary[0];
+  if(*index > size){
+    *index = 0;
+  }
+}
+void menu_prev(int *index, const char* ary){
+  *index--;
+  int size = sizeof(ary) / sizeof ary[0];
+  if(*index < size){
+    *index = size;
+  }
+}
+*/

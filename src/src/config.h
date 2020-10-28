@@ -17,6 +17,7 @@
 #include "motion.h"
 #include "freertos/task.h"
 #include "web.h"
+#include "Vector.h"
 
 
 
@@ -62,7 +63,7 @@ extern float pitch; // TODO: for testing set back to a decent feed rate
  
 // the parameter for the menu select
 
-extern int mode_select;                                 // a parameter to define the programming versus operation settings
+extern int feed_mode_select;                                 // a parameter to define the programming versus operation settings
 
 
 extern float depth;                                       // a parameter to define the thread depth in mm on the compound slide. This is set at 75% of the pitch which seems to work
@@ -76,9 +77,9 @@ extern volatile int64_t spindlePos;
 extern volatile int64_t delta;
 extern int32_t left_limit_max ;
 extern volatile int32_t left_limit;
-extern uint8_t btn_mode ;
+
 extern uint8_t menu ; 
-extern volatile boolean button_left ;
+
 extern volatile int64_t toolPos;
 extern volatile uint8_t err;
 
@@ -88,11 +89,10 @@ extern volatile int32_t calculated_stepper_pulses;
 extern volatile double factor;  
 
 
-extern int32_t left_limit_max;
-extern volatile int32_t left_limit;
-extern uint8_t btn_mode;
+
+
 extern uint8_t menu;
-extern volatile bool button_left;
+
 extern const char* FEED_MODE [];
 extern const char* DISPLAY_MODE [];
 extern volatile bool z_moving;
@@ -107,4 +107,8 @@ extern float rapids;
 extern uint8_t motor_type;
 extern float backlash;
 extern bool web;
+extern long mm_per_tick;
+typedef Vector<const char*> Menu;
+extern Menu feed_menu_items;
+
 #endif

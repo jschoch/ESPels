@@ -64,4 +64,10 @@ The display is integrated on the lolin32 (ssd1306), the display will be abstract
 
 Misc:
 
+display mm
+add diag screen for old display mode of steps vs mm
+fix display wrapping
+add slave mode
+add jog mode
+add encoder control
 figure out why fault pin use makes screen stop working

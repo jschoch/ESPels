@@ -13,6 +13,7 @@ Neotimer print_timer = Neotimer(1000);
 
 int display_mode = STARTUP;
 
+
 void clear(){
   display.clear();
   //display.flipScreenVertically();
@@ -29,8 +30,7 @@ void init_display(){
   delay(200);
   clear();
 
-  display.drawString(0, 0, "Hello world");
-  display.display();
+  
 //#endif
 
 }
@@ -43,18 +43,18 @@ static String sp = String(" ");
 // this is the feed mode
 void do_startup_display(){
  
+  display.drawString(0,0,"Mode: up/down ") ;
+  display.drawString(0,11,"Left to start");  
+  display.drawString(0,21, "Feed Mode: " + String(feed_menu_items[feed_mode_select]));
   
-  display.drawString(0,0,"M: "+ String(mode_select));
-  display.drawString(30,0,String(FEED_MODE[mode_select]));
-  display.drawString(0,11,"P:" + String(pitch));
   display.display();
 }
 
 void do_ready_display(){
-  display.drawString(0,0,"System Ready!") ;
-  display.drawString(0,11,"Press Left Button to start");
-  display.drawString(0,22, "feed pitch: " + String(pitch));
-  display.drawString(0,33, String(FEED_MODE[mode_select]));
+  display.drawString(0,0," Menu to go back") ;
+  display.drawString(0,11,"Mod to start");
+  display.drawString(0,22, "pitch: " + String(pitch) + " Mode: "  + String(feed_menu_items[feed_mode_select]));
+  
   display.display();
 }
 // this is the config mode
@@ -65,7 +65,7 @@ void do_configure_display(){
 }
 
 
-void do_status_display(){
+void do_status_display2(){
   
   display.drawString(0,0, "enc: " + String((int32_t)encoder.getCount()) + " T: " + String((int32_t)toolPos));
   display.drawString(0,11,"f: " +String(factor,4) + " D: " + String((int32_t)delta));
@@ -82,6 +82,16 @@ void do_status_display(){
     display.drawString(100,51,"R");
   }
 
+  display.display();
+}
+
+void do_status_display(){
+  // Slave logging/feeding
+  // this mode only moves slaved to spindle and with a direction button pressed
+  display.drawString(0,0,"RPM:" + String(rpm) +  " Rapid: " + String(rapids) );
+  display.drawString(0,11,  "Feed Pitch: " + String(pitch,3));
+  display.drawString(0,21,"Right or Left jogs")  ;
+  display.drawString(0,31," Delta: " + String( (int32_t)delta ));
   display.display();
 }
 
@@ -114,8 +124,8 @@ void do_display(){
   if (print_timer.repeat()){
     Serial.print("display mode ");
     Serial.print(DISPLAY_MODE[display_mode]);
-    Serial.print(" ");
-    Serial.print(String(FEED_MODE[mode_select]));
+    Serial.print(" Feed Mode: ");
+    Serial.print(feed_menu_items[feed_mode_select]);
     Serial.println();
   }
 }
