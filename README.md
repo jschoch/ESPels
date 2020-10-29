@@ -16,7 +16,7 @@ Plan:
 The control state machine waits for button state changes and changes modes based on input.  There will be several modes.  The general operating mode model is that we track the spindle position via the quadrature encoder.  This position is mapped to a int64_t of stepper steps.  The tool position is also tracked in steps.  When the motor is slaved to the spindle the motor control interrupt timer will calculate how many steps away from it's ideal position it is based on the current pitch setting.  This is calculated as 
 
 ```
-motor_steps = (microsteps * native_steps) /lead_screw_pitch;
+motor_steps = microsteps * native_steps;
 
 # current steps per revolution
 factor= (motor_steps*pitch)/(lead_screw_pitch*spindle_encoder_resolution); 
