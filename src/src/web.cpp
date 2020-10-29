@@ -17,8 +17,11 @@ bool web = true;
 void handle_OnConnect() {
   
   Serial.println("Web connection to /");
-  String response = String("Settings:<HR>Pitch: " + String(lead_screw_pitch) + "<BR> resolution: " + spindle_encoder_resolution \
-    + "<BR> Micro Steps: " +  microsteps + "<BR> Motor: " + motor_type + "<BR> Rapids: " + rapids + "<BR> Backlash: "+ backlash);
+    String response = String("Settings:<HR>Pitch: " + String(lead_screw_pitch) + "<BR> resolution: " + \
+    spindle_encoder_resolution + "<BR> Micro Steps: " +  microsteps + "<BR> Motor: " + motor_type + \
+    "<BR> Rapids: " + rapids + "<BR> Backlash: "+ backlash + "<BR> motor steps: "+ motor_steps +\
+    "<BR> Factor: " + String(factor,10) \
+    );
   server.send(200, "text/html", "Lead: " + String(response)); 
 }
 

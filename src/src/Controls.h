@@ -39,5 +39,6 @@ void startupState(void);
 void readyState(void);
 void feedingState(void);
 void statusState(void);
+void resetToolPos(void);
 
 #endif

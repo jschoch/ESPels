@@ -19,6 +19,7 @@
 #include "web.h"
 #include "Vector.h"
 #include "SlaveMode.h"
+#include "DebugMode.h"
 
 
 
@@ -86,7 +87,7 @@ extern volatile uint8_t err;
 
  
 extern int spindle_encoder_resolution;   // the number of pulses per revolution of the spindle encoder
-extern volatile int32_t calculated_stepper_pulses;
+extern volatile int64_t calculated_stepper_pulses;
 extern volatile double factor;  
 
 
@@ -119,5 +120,10 @@ extern Bd ubd;
 extern Bd dbd;
 extern Bd sbd;
 extern Bd mbd;
+extern volatile int32_t jog_steps;
+extern volatile bool jogging;
+extern volatile bool jog_done;
+extern volatile int step_delta;
+extern volatile uint16_t vel;
 
 #endif

@@ -7,7 +7,8 @@ enum display_mode_t {
   DSTATUS,
   READY,
   FEEDING,
-  SLAVE_READY
+  SLAVE_READY,
+  DEBUG_READY
 } ;
 
 enum feed_mode_t {

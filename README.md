@@ -60,10 +60,12 @@ The display is integrated on the lolin32 (ssd1306), the display will be abstract
 - [ ] Add backlash compensation
 - [ ] turn on task monitoring and display via web ui
 - [ ] smooth RPM for display
+- [ ] store position after disengaging slave so you can re-index if you re-engage
 
 
 Misc:
 
+add debug move 10mm via web ui when in debug mode
 display mm
 add diag screen for old display mode of steps vs mm
 fix display wrapping

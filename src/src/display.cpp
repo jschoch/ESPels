@@ -68,7 +68,7 @@ void do_configure_display(){
 void do_status_display2(){
   
   display.drawString(0,0, "enc: " + String((int32_t)encoder.getCount()) + " T: " + String((int32_t)toolPos));
-  display.drawString(0,11,"f: " +String(factor,4) + " D: " + String((int32_t)delta));
+  display.drawString(0,11,"f: " +String(factor,2) + " D: " + String((int32_t)delta));
 
   display.drawString(0,21,"P:" + String(pitch,3) + "RPM: " + String(rpm));
 
@@ -85,13 +85,24 @@ void do_status_display2(){
   display.display();
 }
 
+void do_debug_ready_display(){
+  display.drawString(0,0,"Debug Jog" + String(vel));
+  display.drawString(0,11," Left to jog 10mm");
+  display.drawString(0,21," back: middle " + String(step_delta) );
+  display.drawString(0,31,"J:"+ String(jogging) + " JS: " + String(jog_done));
+  display.drawString(0,41,"s: " +String(jog_steps));
+  display.display();
+}
+
 void do_status_display(){
   // Slave logging/feeding
   // this mode only moves slaved to spindle and with a direction button pressed
   display.drawString(0,0,"RPM:" + String(rpm) +  " Rapid: " + String(rapids) );
-  display.drawString(0,11,  "Feed Pitch: " + String(pitch,3));
-  display.drawString(0,21,"Right or Left jogs")  ;
+  display.drawString(0,11,  "Feed Pitch: " + String(pitch,2));
+  //display.drawString(0,21,"Right or Left jogs")  ;
   display.drawString(0,31," Delta: " + String( (int32_t)delta ));
+  display.drawString(0,41, "factor: " + String(factor,6) );
+  
   display.display();
 }
 
@@ -117,6 +128,10 @@ void do_display(){
       case FEEDING:
         do_status_display();
         break;
+      case DEBUG_READY:
+        do_debug_ready_display();
+        break;
+
     }
     
   }

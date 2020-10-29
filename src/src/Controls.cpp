@@ -168,13 +168,15 @@ void startupState(){
     web = true;
   }
   if(lbd.deb->rose()){
-    Serial.println("startup -> ready");
+    
     
     if(strcmp(feed_menu_items[feed_mode_select],"Slave")== 0){
+      Serial.println("startup -> slave ready");
       btn_yasm.next(SlaveModeReadyState);
     }
     if(strcmp(feed_menu_items[feed_mode_select],"Slave Jog")== 0){
       // TODO: break these out
+      Serial.println("startup -> ready");
       btn_yasm.next(readyState);
     }
     if(strcmp(feed_menu_items[feed_mode_select],"Feed To Stop")== 0){
@@ -184,7 +186,8 @@ void startupState(){
 
     }
     if(strcmp(feed_menu_items[feed_mode_select],"Debug")== 0){
-
+      Serial.println("startup -> debug ready");
+      btn_yasm.next(debugState);
     }
 
     
@@ -270,6 +273,8 @@ void setFactor(){
   if(menu<4){
     factor= (motor_steps*pitch)/(lead_screw_pitch*spindle_encoder_resolution);            
   }
+
+  /*   TODO: add back imperial threads
   else
     {
     if(menu<20)
@@ -281,7 +286,7 @@ void setFactor(){
 
         // the imperial factor needed to account for details of lead screw pitch, 
         // stepper motor #pulses/rev and encoder #pulses/rev
-        factor= motor_steps*25.4/(tpi*lead_screw_pitch*spindle_encoder_resolution);  
+        factor= motor_steps*25.4/(tpi*lead_screw_pitch*spindle_encoder_resolution);  // imperial
         }
       else
         {
@@ -289,10 +294,10 @@ void setFactor(){
         depth=pitch_factor*pitch; 
         // the metric factor needed to account for details of lead screw pitch, 
         // stepper motor #pulses/rev and encoder #pulses/rev
-        factor=pitch*motor_steps/(lead_screw_pitch*spindle_encoder_resolution);
+        factor=pitch*motor_steps/(lead_screw_pitch*spindle_encoder_resolution); // keep redundant
         }
       }
-                                                     
+  */              
 } 
 
 //this defines the parameters for the thread and turning for both metric and imperial threads
@@ -372,6 +377,7 @@ void feed_parameters(){
     case(20):    pitch=5.0;   break;
     case(21):    pitch=7.0;   break;
   }
+
+  setFactor();
   toolPos = factor * encoder.getCount();
-  factor = (motor_steps*pitch)/(lead_screw_pitch*spindle_encoder_resolution); 
 }

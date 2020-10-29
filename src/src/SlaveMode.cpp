@@ -27,11 +27,13 @@ void slaveStatusState(){
 
     }
     if(lbd.deb->rose()){
+        resetToolPos();
         feeding_dir = true;
         Serial.println("slave_status -> slave feed left");
         btn_yasm.next(slaveFeedingState);
     }
     if(rbd.deb->rose()){
+        resetToolPos();
         feeding_dir = false;
         Serial.println("slave_status -> slave feed right");
         btn_yasm.next(slaveFeedingState);
@@ -54,6 +56,8 @@ void slaveFeedingState(){
     }
 
     if(sbd.deb->fell()){
+
+        // TODO, store position so you can resync to thread?
         feeding = false;
         Serial.println("slave_feeding -> slave status");
        btn_yasm.next(slaveStatusState); 
