@@ -20,6 +20,7 @@
 #include "Vector.h"
 #include "SlaveMode.h"
 #include "DebugMode.h"
+#include "c:\Users\jesse\Documents\Arduino\config.h"
 
 
 

@@ -61,6 +61,7 @@ The display is integrated on the lolin32 (ssd1306), the display will be abstract
 - [ ] turn on task monitoring and display via web ui
 - [ ] smooth RPM for display
 - [ ] store position after disengaging slave so you can re-index if you re-engage
+- [ ] Add angle measure mode like a manual turned indexing plate.
 
 
 Misc:
