@@ -6,10 +6,10 @@ this is currently in test mode and pre-alpha
 
 Plan:
 
-1. get feeding working 
-2. get feed to position working
+1. hack in config updates from webfrontend
+2. get stops working
 3. figure out how to sync thread start
-4. implement threading cycle
+4. implement full threading cycle
 
 ## Frontend
 
