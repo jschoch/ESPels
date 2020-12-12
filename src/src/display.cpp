@@ -99,7 +99,7 @@ void do_status_display(){
   // this mode only moves slaved to spindle and with a direction button pressed
   display.drawString(0,0,"RPM:" + String(rpm) +  " Rapid: " + String(rapids) );
   display.drawString(0,11,  "Feed Pitch: " + String(pitch,2));
-  //display.drawString(0,21,"Right or Left jogs")  ;
+  display.drawString(0,21,"Pos: " + String(relativePosition))  ;
   display.drawString(0,31," Delta: " + String( (int32_t)delta ));
   display.drawString(0,41, "factor: " + String(factor,6) );
   

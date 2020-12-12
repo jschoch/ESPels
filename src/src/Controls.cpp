@@ -10,7 +10,7 @@
 #include <Vector.h>
 
 Neotimer button_read_timer = Neotimer(10);
-Neotimer button_print_timer = Neotimer(500);
+Neotimer button_print_timer = Neotimer(2000);
 
 
 
@@ -77,7 +77,9 @@ Bd bdata[NUM_BUTTONS] = {
     mbd
   };
 
-
+int32_t stepsPerMM = 0;
+int32_t relativePosition = 0;
+int32_t absolutePosition = 0;
 
 void make_menu(){
   
@@ -130,6 +132,7 @@ void resetToolPos(){
 }
 
 void debugButtons(){
+  updatePosition();
   for(int i = 0; i < NUM_BUTTONS;i++){
     Bd bd = bdata[i];
     
@@ -157,7 +160,7 @@ void read_buttons(){
     btn_yasm.run();
   }
   if(button_print_timer.repeat()){
-    //debugButtons();
+    debugButtons();
   }
      
 }
@@ -251,6 +254,7 @@ void statusState(){
     feed_parameters();
   }
   if(dbd.deb->rose()){
+    Serial.println("DOWN");
     pitch_menu--;
     feed_parameters();
   }
@@ -270,10 +274,11 @@ void feedingState(){
 }
 
 void setFactor(){
-  if(menu<4){
+  //if(menu<4){
     factor= (motor_steps*pitch)/(lead_screw_pitch*spindle_encoder_resolution);            
-  }
-
+  //}
+  stepsPerMM = motor_steps / lead_screw_pitch;
+  updatePosition();
   /*   TODO: add back imperial threads
   else
     {
@@ -380,4 +385,5 @@ void feed_parameters(){
 
   setFactor();
   toolPos = factor * encoder.getCount();
+  updateConfigDoc();
 }

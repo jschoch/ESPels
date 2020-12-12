@@ -106,6 +106,11 @@ void init_jog(){
   
 }
 
+void updatePosition(){
+  relativePosition = toolPos * stepsPerMM;
+  absolutePosition = encoder.getCount() * stepsPerMM;
+}
+
 void IRAM_ATTR calcAccel(){
   step_delta = abs( jog_steps - jogs);
 

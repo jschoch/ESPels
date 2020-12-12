@@ -17,6 +17,21 @@ AsyncWebSocket ws("/test");
 AsyncWebSocketClient * globalClient = NULL;
 bool web = true;
 
+void updateConfigDoc(){
+  doc["absP"] = absolutePosition;
+  doc["P"] = relativePosition;
+  doc["pitch"] = pitch;
+  doc["rapid"] = rapids;
+  doc["stopA"] = 1.0;
+  doc["stopB"] = 2.0;
+  doc["zero"] = 3.0;
+  doc["jogD"] = 0.1;
+  doc["lead"] = lead_screw_pitch;
+  doc["enc"] = spindle_encoder_resolution;
+  doc["micro"] = microsteps;
+  doc["e"] = 0;
+  doc["u"] = 0;
+}
 
 void parseObj(String msg){
   //const size_t capacity = JSON_OBJECT_SIZE(2) + 10;
@@ -113,17 +128,7 @@ void init_web(){
   server.begin();
   Serial.println("HTTP websocket server started");
 
-  doc["pitch"] = 0.1;
-  doc["rapid"] = 1.0;
-  doc["stopA"] = 1.0;
-  doc["stopB"] = 2.0;
-  doc["zero"] = 3.0;
-  doc["jogD"] = 0.1;
-  doc["lead"] = 2.0;
-  doc["enc"] = 2400;
-  doc["micro"] = 32;
-  doc["e"] = 0;
-  doc["u"] = 0;
+  updateConfigDoc();
 
   init_ota();
 }

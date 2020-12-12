@@ -126,5 +126,8 @@ extern volatile bool jogging;
 extern volatile bool jog_done;
 extern volatile int step_delta;
 extern volatile uint16_t vel;
+extern int stepsPerMM;
+extern int32_t relativePosition;
+extern int32_t absolutePosition;
 
 #endif
