@@ -2,13 +2,10 @@
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 #include "config.h"
-//#include "web.h"
-
-
-
 
 // json buffer
-StaticJsonDocument<200> doc;
+StaticJsonDocument<300> doc;
+StaticJsonDocument<300> inDoc;
 
 /* Put IP Address details */
 IPAddress local_ip(192,168,1,1);
@@ -22,25 +19,37 @@ bool web = true;
 
 
 void parseObj(String msg){
-  const size_t capacity = JSON_OBJECT_SIZE(2) + 10;
-  DynamicJsonDocument buf(capacity);
-  deserializeJson(buf, msg);
-  Serial.print("F: ");
+  //const size_t capacity = JSON_OBJECT_SIZE(2) + 10;
+  //DynamicJsonDocument buf(capacity);
+  DeserializationError error = deserializeJson(inDoc, msg);
+  if (error) {
+    Serial.print(F("deserializeJson() failed: "));
+    Serial.println(error.f_str());
+    return;
+  }
+  
+  const char * cmd = inDoc["cmd"];
 
-  float f = buf["f"];
-  Serial.println(f);
-  const char * cmd = buf["cmd"];
   if(strcmp(cmd,"fetch") == 0){
+    // regenerate config and send it along
+
     Serial.println("sending config");
-    
-    size_t len = JSON_OBJECT_SIZE(9);;
-    char   buffer[200]; 
-    
-    size_t len2 = serializeJson(doc, buffer);  
-       
-    ws.textAll(buffer,len2);
-       
-    
+    char outBuffer[200]; 
+    size_t len2 = serializeJson(doc, outBuffer);  
+    // send it! 
+    ws.textAll(outBuffer,len2);
+
+  }else if(strcmp(cmd,"send") == 0){
+    JsonObject config = inDoc["config"];
+    Serial.println("getting config");
+    Serial.print("got pitch: ");
+    float p = config["pitch"];
+    Serial.println(p);
+    if(p != pitch){
+      Serial.println("new pitch");
+      doc["pitch"] = p;
+      pitch = p;
+    }
 
   }
 }
@@ -113,6 +122,8 @@ void init_web(){
   doc["lead"] = 2.0;
   doc["enc"] = 2400;
   doc["micro"] = 32;
+  doc["e"] = 0;
+  doc["u"] = 0;
 
   init_ota();
 }
