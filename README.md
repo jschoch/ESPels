@@ -11,6 +11,10 @@ Plan:
 3. figure out how to sync thread start
 4. implement threading cycle
 
+## Frontend
+
+the webfrontend can be found here [https://github.com/jschoch/espELSfrontend]
+
 ## how
 
 The control state machine waits for button state changes and changes modes based on input.  There will be several modes.  The general operating mode model is that we track the spindle position via the quadrature encoder.  This position is mapped to a int64_t of stepper steps.  The tool position is also tracked in steps.  When the motor is slaved to the spindle the motor control interrupt timer will calculate how many steps away from it's ideal position it is based on the current pitch setting.  This is calculated as 
