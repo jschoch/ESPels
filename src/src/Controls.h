@@ -40,5 +40,6 @@ void readyState(void);
 void feedingState(void);
 void statusState(void);
 void resetToolPos(void);
+void updateMode(int newMode);
 
 #endif

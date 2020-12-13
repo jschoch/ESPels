@@ -32,6 +32,18 @@ void updateConfigDoc(){
   doc["micro"] = microsteps;
   doc["e"] = 0;
   doc["u"] = 0;
+  doc["m"] = display_mode; 
+
+  sendConfig();
+  // this needs a timer to send on interval
+  
+}
+
+void sendConfig(){
+  size_t len2 = serializeJson(doc, outBuffer);  
+    // send it! 
+    ws.textAll(outBuffer,len2);
+
 }
 
 void parseObj(String msg){
@@ -50,11 +62,8 @@ void parseObj(String msg){
     // regenerate config and send it along
 
     Serial.println("sending config");
+    sendConfig();    
     
-    size_t len2 = serializeJson(doc, outBuffer);  
-    // send it! 
-    ws.textAll(outBuffer,len2);
-
   }else if(strcmp(cmd,"send") == 0){
     JsonObject config = inDoc["config"];
     Serial.println("getting config");

@@ -160,14 +160,19 @@ void read_buttons(){
     btn_yasm.run();
   }
   if(button_print_timer.repeat()){
-    debugButtons();
+    //debugButtons();
   }
      
 }
 
+void updateMode(int newMode){
+  display_mode = newMode;
+  updateConfigDoc();
+}
+
 void startupState(){
   if(btn_yasm.isFirstRun()){
-    display_mode = STARTUP;
+    updateMode(STARTUP);
     web = true;
   }
   if(lbd.deb->rose()){
@@ -199,13 +204,13 @@ void startupState(){
     menu_next(&feed_mode_select,&feed_menu_items);
   }
   if(dbd.deb->rose()){
-    
+    menu_prev(&feed_mode_select,&feed_menu_items); 
   }
 }
 
 void readyState(){
   if(btn_yasm.isFirstRun()){
-    display_mode = READY;
+    updateMode(READY);
     web = true;
   }
   if(lbd.deb->rose()){
@@ -218,9 +223,10 @@ void readyState(){
   // TODO:  Add free jogging here perhaps?
 }
 
+// This is "slave jog" status mode, "slave" status is in SlaveMode.cpp
 void statusState(){
   if(btn_yasm.isFirstRun()){
-    display_mode = DSTATUS;
+    updateMode(DSTATUS);
     web = false;
   }
 
@@ -262,7 +268,7 @@ void statusState(){
 
 void feedingState(){
   if(btn_yasm.isFirstRun()){
-    display_mode = FEEDING;
+    updateMode(FEEDING);
     Serial.println("enter feedingState");
     // set the feeding flag for the stepper.
   }

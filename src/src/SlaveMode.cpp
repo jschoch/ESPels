@@ -5,7 +5,7 @@
 
 void SlaveModeReadyState(){
    if(btn_yasm.isFirstRun()){
-    display_mode = SLAVE_READY;
+    updateMode(SLAVE_READY);
     web = true;
   }
   if(lbd.deb->rose()){
@@ -18,7 +18,7 @@ void SlaveModeReadyState(){
 
 void slaveStatusState(){
     if(btn_yasm.isFirstRun()){
-        display_mode = DSTATUS;
+        updateMode(DSTATUS);
         web = false;
     }
     if(sbd.deb->fell()){
@@ -43,14 +43,17 @@ void slaveStatusState(){
         pitch_menu++;
         feed_parameters();
     }
-
+    if(dbd.deb->rose()){
+        pitch_menu--;
+        feed_parameters();
+    }
 }
 
 void slaveFeedingState(){
     if(btn_yasm.isFirstRun()){
 
         // TODO: should check for RPM 0 for this state?
-        display_mode = DSTATUS;
+        updateMode(DSTATUS);
         feeding = true;
         web = false;
     }

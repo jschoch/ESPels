@@ -6,7 +6,7 @@
 
 void debugState(){
     if(btn_yasm.isFirstRun()){
-        display_mode = DEBUG_READY;
+        updateMode(DEBUG_READY);
         web = true;
     }
     if(lbd.deb->rose()){
