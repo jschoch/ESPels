@@ -4,8 +4,8 @@
 #include "config.h"
 
 // json buffer
-StaticJsonDocument<300> doc;
-StaticJsonDocument<300> inDoc;
+StaticJsonDocument<400> doc;
+StaticJsonDocument<400> inDoc;
 
 /* Put IP Address details */
 IPAddress local_ip(192,168,1,1);
@@ -16,6 +16,7 @@ AsyncWebServer server(80);
 AsyncWebSocket ws("/test");
 AsyncWebSocketClient * globalClient = NULL;
 bool web = true;
+char outBuffer[250]; 
 
 void updateConfigDoc(){
   doc["absP"] = absolutePosition;
@@ -49,7 +50,7 @@ void parseObj(String msg){
     // regenerate config and send it along
 
     Serial.println("sending config");
-    char outBuffer[200]; 
+    
     size_t len2 = serializeJson(doc, outBuffer);  
     // send it! 
     ws.textAll(outBuffer,len2);
@@ -65,6 +66,12 @@ void parseObj(String msg){
       doc["pitch"] = p;
       pitch = p;
     }
+    if(config["rapid"] != rapids){
+      Serial.println("updating rapids");
+      rapids = config["rapid"];
+      doc["rapid"] = rapids;
+    }
+
 
   }
 }
