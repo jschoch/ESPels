@@ -42,7 +42,7 @@ volatile int64_t calculated_stepper_pulses=0;
 
 volatile bool jog_done = true;
 volatile int32_t jog_steps = 0;
-
+int jog_mm = 0;
 volatile uint16_t vel = 1;
 
 

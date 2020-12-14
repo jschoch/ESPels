@@ -35,6 +35,8 @@ void updateConfigDoc(){
   doc["u"] = 0;
   doc["m"] = (int)run_mode; 
   doc["d"] = (int)display_mode;
+  doc["js"] = jog_steps;
+  doc["jm"] = jog_mm;
 
   sendConfig();
   // this needs a timer to send on interval
@@ -86,6 +88,13 @@ void parseObj(String msg){
     Serial.println("sending config");
     sendConfig();    
     
+  }else if(strcmp(cmd,"jog") == 0){
+    Serial.println("got jog command");
+    if(run_mode == RunMode::DEBUG_READY){
+      Serial.println("mode ok");
+    }else{
+      Serial.println("can't jog, failed mode check");
+    }
   }else if(strcmp(cmd,"send") == 0){
     JsonObject config = inDoc["config"];
     Serial.println("getting config");
@@ -113,6 +122,9 @@ void parseObj(String msg){
     }
     updateConfigDoc();
 
+  }else{
+    Serial.println("unknown command");
+    Serial.println(cmd);
   }
 }
 
