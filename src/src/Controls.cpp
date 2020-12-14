@@ -11,6 +11,7 @@
 
 Neotimer button_read_timer = Neotimer(10);
 Neotimer button_print_timer = Neotimer(2000);
+Neotimer dro_timer = Neotimer(200);
 
 
 
@@ -162,17 +163,25 @@ void read_buttons(){
   if(button_print_timer.repeat()){
     //debugButtons();
   }
+  if(dro_timer.repeat()){
+    updatePosition();
+  }
      
 }
 
-void updateMode(int newMode){
-  display_mode = newMode;
+void updateMode(display_mode_t newDisplayMode,RunMode run){
+  Serial.print("updating modes: ");
+  Serial.print(display_mode);
+  Serial.print(":");
+  Serial.println((int)run);
+  display_mode = newDisplayMode;
+  run_mode = run;
   updateConfigDoc();
 }
 
 void startupState(){
   if(btn_yasm.isFirstRun()){
-    updateMode(STARTUP);
+    updateMode(STARTUP,RunMode::STARTUP);
     web = true;
   }
   if(lbd.deb->rose()){
@@ -185,7 +194,7 @@ void startupState(){
     if(strcmp(feed_menu_items[feed_mode_select],"Slave Jog")== 0){
       // TODO: break these out
       Serial.println("startup -> ready");
-      btn_yasm.next(readyState);
+      btn_yasm.next(slaveJogReadyState);
     }
     if(strcmp(feed_menu_items[feed_mode_select],"Feed To Stop")== 0){
 
@@ -208,9 +217,9 @@ void startupState(){
   }
 }
 
-void readyState(){
+void slaveJogReadyState(){
   if(btn_yasm.isFirstRun()){
-    updateMode(READY);
+    updateMode(READY,RunMode::SLAVE_JOG_READY);
     web = true;
   }
   if(lbd.deb->rose()){
@@ -226,7 +235,7 @@ void readyState(){
 // This is "slave jog" status mode, "slave" status is in SlaveMode.cpp
 void statusState(){
   if(btn_yasm.isFirstRun()){
-    updateMode(DSTATUS);
+    updateMode(DSTATUS,RunMode::RUNNING);
     web = false;
   }
 
@@ -266,9 +275,11 @@ void statusState(){
   }
 }
 
+
+//  WTF IS THIS?  TODO:
 void feedingState(){
   if(btn_yasm.isFirstRun()){
-    updateMode(FEEDING);
+    updateMode(FEEDING,RunMode::RUNNING);
     Serial.println("enter feedingState");
     // set the feeding flag for the stepper.
   }
@@ -282,6 +293,10 @@ void feedingState(){
 void setFactor(){
   //if(menu<4){
     factor= (motor_steps*pitch)/(lead_screw_pitch*spindle_encoder_resolution);            
+    // TODO:  this needs some careful thought
+    // it currently resets toolPos for slave jog mode, not sure if it works for slave mode.
+    // it is unclear what happens as the spindle encoder ticks on
+    toolPos = factor * encoder.getCount();
   //}
   stepsPerMM = motor_steps / lead_screw_pitch;
   updatePosition();
@@ -315,6 +330,7 @@ void setFactor(){
 
 void thread_parameters()                                           
   { 
+    /* TODO: add back when you work on thread cycle
   switch(menu) {
     case(1):     pitch=0.085;                  break;  // Normal Turning
     case(2):     pitch=0.050;                  break;  // Fine Turning
@@ -354,8 +370,10 @@ void thread_parameters()
     case(35):    pitch=7.0;   break;
     }
   // TODO: this is a bit of a hack, changing feed changes the factor which changes the delta.  not sure of a good way to update this and maintain positions.
-  toolPos = factor * encoder.getCount();
+  //toolPos = factor * encoder.getCount();
   setFactor();
+
+  */
 }
 
 void feed_parameters(){
@@ -390,6 +408,7 @@ void feed_parameters(){
   }
 
   setFactor();
-  toolPos = factor * encoder.getCount();
+  // TODO:  this needs some thought
+  //toolPos = factor * encoder.getCount();
   updateConfigDoc();
 }

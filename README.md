@@ -6,7 +6,8 @@ this is currently in test mode and pre-alpha
 
 Plan:
 
-1. hack in config updates from webfrontend
+1. rethink "modes", right now there are display_modes and state transitions.  The GUI's mode selection should select the state machine mode needed.
+1a. rethink DRO, need a new param to track when the tool actually moves in slave_jog mode.
 2. get stops working
 3. figure out how to sync thread start
 4. implement full threading cycle

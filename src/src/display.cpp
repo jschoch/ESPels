@@ -137,10 +137,12 @@ void do_display(){
   }
   
   if (print_timer.repeat()){
+    /*
     Serial.print("display mode ");
     Serial.print(DISPLAY_MODE[display_mode]);
     Serial.print(" Feed Mode: ");
     Serial.print(feed_menu_items[feed_mode_select]);
     Serial.println();
+    */
   }
 }

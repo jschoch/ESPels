@@ -36,10 +36,10 @@ void setFactor(void);
 void thread_parameters(void);
 void feed_parameters(void);
 void startupState(void);
-void readyState(void);
+void slaveJogReadyState(void);
 void feedingState(void);
 void statusState(void);
 void resetToolPos(void);
-void updateMode(int newMode);
+void updateMode(display_mode_t newDisplayMode,RunMode run);
 
 #endif

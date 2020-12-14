@@ -17,6 +17,7 @@ AsyncWebSocket ws("/test");
 AsyncWebSocketClient * globalClient = NULL;
 bool web = true;
 char outBuffer[250]; 
+RunMode run_mode = RunMode::STARTUP;
 
 void updateConfigDoc(){
   doc["absP"] = absolutePosition;
@@ -32,17 +33,38 @@ void updateConfigDoc(){
   doc["micro"] = microsteps;
   doc["e"] = 0;
   doc["u"] = 0;
-  doc["m"] = display_mode; 
+  doc["m"] = (int)run_mode; 
+  doc["d"] = (int)display_mode;
 
   sendConfig();
   // this needs a timer to send on interval
   
 }
 
+void setRunMode(int mode){
+    switch(mode){
+      case (int)RunMode::DEBUG_READY :
+        // NEed to be able to stop what is currently running 
+        btn_yasm.next(debugState);
+        break;
+      case (int)RunMode::SLAVE_JOG_READY :
+        btn_yasm.next(slaveJogReadyState);
+        break;
+      case (int)RunMode::SLAVE_READY :
+        btn_yasm.next(SlaveModeReadyState);
+        break;
+      default: 
+        btn_yasm.next(startupState);
+        break;
+    }
+}
+
 void sendConfig(){
   size_t len2 = serializeJson(doc, outBuffer);  
     // send it! 
-    ws.textAll(outBuffer,len2);
+  Serial.print("sending config: ");
+  Serial.println(outBuffer);
+  ws.textAll(outBuffer,len2);
 
 }
 
@@ -72,15 +94,24 @@ void parseObj(String msg){
     Serial.println(p);
     if(p != pitch){
       Serial.println("new pitch");
-      doc["pitch"] = p;
+
+      //doc["pitch"] = p;
       pitch = p;
+      setFactor();
     }
     if(config["rapid"] != rapids){
       Serial.println("updating rapids");
       rapids = config["rapid"];
-      doc["rapid"] = rapids;
+      //doc["rapid"] = rapids;
     }
-
+    if(config["m"] != (int)run_mode){
+      Serial.print("setting new mode from webUI: ");
+      int got_run_mode = config["m"];
+      run_mode = RunMode(got_run_mode);
+      Serial.println((int)run_mode);
+      setRunMode(got_run_mode);
+    }
+    updateConfigDoc();
 
   }
 }
@@ -126,7 +157,7 @@ void init_web(){
   Serial.print("Connected. IP=");
   Serial.println(WiFi.localIP());
 
-  if (!MDNS.begin("elsWS")) {
+  if (!MDNS.begin("elsWSdesk")) {
         Serial.println("Error setting up MDNS responder!");
         while(1) {
           Serial.print("*");

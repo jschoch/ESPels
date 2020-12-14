@@ -21,7 +21,7 @@
 #include "SlaveMode.h"
 #include "DebugMode.h"
 #include "c:\Users\jesse\Documents\Arduino\config.h"
-
+#include <yasm.h>
 
 
 
@@ -129,5 +129,6 @@ extern volatile uint16_t vel;
 extern int stepsPerMM;
 extern int32_t relativePosition;
 extern int32_t absolutePosition;
+extern RunMode run_mode;
 
 #endif

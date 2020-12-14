@@ -11,6 +11,14 @@ enum display_mode_t {
   DEBUG_READY
 } ;
 
+enum class RunMode{
+  STARTUP,
+  SLAVE_READY,
+  SLAVE_JOG_READY,
+  DEBUG_READY,
+  RUNNING //  Any mode where we are actually moving.  
+};
+
 enum feed_mode_t {
   RAPID_FEED,
   FEED,
