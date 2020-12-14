@@ -42,7 +42,7 @@ volatile int64_t calculated_stepper_pulses=0;
 
 volatile bool jog_done = true;
 volatile int32_t jog_steps = 0;
-int jog_mm = 0;
+float jog_mm = 0;
 volatile uint16_t vel = 1;
 
 
@@ -280,6 +280,7 @@ void init_stepper(){
   pinMode(z_step_pin, OUTPUT);
 
   toolPos = 0;
+  stepsPerMM = motor_steps / lead_screw_pitch;
   // setup a timer to handle stepper pulses
   timerSemaphore = xSemaphoreCreateBinary();
   timer = timerBegin(0, 80, true);

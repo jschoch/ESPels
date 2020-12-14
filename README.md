@@ -16,6 +16,7 @@ Cleanup:
 
 1. rethink "modes", right now there are display_modes and state transitions.  The GUI's mode selection should select the state machine mode needed.  
   a. get rid of the menu thing.
+2. Add speed factor for accel table
 
 ## Frontend
 

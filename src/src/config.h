@@ -130,6 +130,6 @@ extern int stepsPerMM;
 extern int32_t relativePosition;
 extern int32_t absolutePosition;
 extern RunMode run_mode;
-extern int jog_mm;
+extern float jog_mm;
 
 #endif

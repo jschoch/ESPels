@@ -91,7 +91,15 @@ void parseObj(String msg){
   }else if(strcmp(cmd,"jog") == 0){
     Serial.println("got jog command");
     if(run_mode == RunMode::DEBUG_READY){
+      JsonObject config = inDoc["config"];
+      jog_mm = config["jm"].as<float>();
       Serial.println("mode ok");
+      Serial.print("Jog steps: ");
+      Serial.println(stepsPerMM * jog_mm);
+      if(!jogging){
+        jog_steps = (float)stepsPerMM * jog_mm;
+        jogging = true;
+      }
     }else{
       Serial.println("can't jog, failed mode check");
     }
@@ -161,6 +169,7 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
 void init_web(){
   // Connect to WiFi
   Serial.println("Setting up WiFi");
+  WiFi.setHostname("elsd");
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print(".");
@@ -169,13 +178,16 @@ void init_web(){
   Serial.print("Connected. IP=");
   Serial.println(WiFi.localIP());
 
-  if (!MDNS.begin("elsWSdesk")) {
+  
+  //  MDNS hostname must be lowercase
+  if (!MDNS.begin("elsd")) {
         Serial.println("Error setting up MDNS responder!");
         while(1) {
           Serial.print("*");
             delay(100);
         }
     }
+  MDNS.setInstanceName("mydeskels");
   MDNS.addService("http", "tcp", 80);
   ws.onEvent(onWsEvent);
   server.addHandler(&ws);
