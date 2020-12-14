@@ -33,6 +33,9 @@ volatile bool z_moving = false;
 volatile bool jogging = false;
 volatile int32_t jogs = 0;
 volatile int step_delta = 0;
+volatile double toolRelPos = 0;
+double toolRelPosMM = 0;
+double oldToolRelPosMM = 0;
 
 int z_step_pin = 13;
 int z_dir_pin = 12;
@@ -43,12 +46,13 @@ volatile int64_t calculated_stepper_pulses=0;
 volatile bool jog_done = true;
 volatile int32_t jog_steps = 0;
 float jog_mm = 0;
+volatile float jog_scaler = 0.2;
 volatile uint16_t vel = 1;
 
 
 /////////////  naive acceleration
 
-// This table defines the acceleration curve as a list of (step, delay) pairs.
+// This table defines the acceleration curve as a list of (steps, delay) pairs.
 // 1st value is the cumulative step count since starting from rest, 2nd value is delay in microseconds.
 // 1st value in each subsequent row must be > 1st value in previous row
 // The delay in the last row determines the maximum angular velocity.
@@ -78,6 +82,7 @@ static uint16_t defaultAccelTable[][2] = {
   
 };
 #define DEFAULT_ACCEL_TABLE_SIZE (sizeof(defaultAccelTable)/sizeof(*defaultAccelTable))
+static uint16_t scaledAccelTable[DEFAULT_ACCEL_TABLE_SIZE][2] = {0,0};
 int maxVel = defaultAccelTable[DEFAULT_ACCEL_TABLE_SIZE-1][0]; // last value in table.
 
 bool getDir(){
@@ -97,7 +102,15 @@ bool IRAM_ATTR setDir(bool d){
 
 void init_jog(){
   vel = 1;
- 
+  for(int i = 0; i < DEFAULT_ACCEL_TABLE_SIZE; i++){
+    Serial.print("table ");
+    Serial.print(i);
+    Serial.print(",");
+    Serial.println((int)(defaultAccelTable[i][1] * jog_scaler));
+    scaledAccelTable[i][0] = defaultAccelTable[i][0];
+    scaledAccelTable[i][1] = (int) (defaultAccelTable[i][1] * jog_scaler);
+  }
+  maxVel = scaledAccelTable[DEFAULT_ACCEL_TABLE_SIZE-1][0]; // last value in table.
   z_moving = false;
   z_pause = false;
   jog_done = false;
@@ -108,6 +121,13 @@ void init_jog(){
 
 void updatePosition(){
   relativePosition = toolPos * stepsPerMM;
+  toolRelPosMM = toolRelPos / stepsPerMM;
+  if(toolRelPosMM != oldToolRelPosMM){
+    //toolRelPosMM = toolRelPos * stepsPerMM;
+    Serial.print(toolRelPosMM);
+    Serial.print("#");
+    oldToolRelPosMM = toolRelPosMM;
+  }
   absolutePosition = encoder.getCount() * stepsPerMM;
 }
 
@@ -131,10 +151,10 @@ void IRAM_ATTR calcAccel(){
     }
   }
   uint8_t idx = 0;
-  while(defaultAccelTable[idx][0] < vel) {
+  while(scaledAccelTable[idx][0] < vel) {
     idx++;
   }
-  jog_delay_ticks = defaultAccelTable[idx][1];
+  jog_delay_ticks = scaledAccelTable[idx][1];
 }
 
 
@@ -191,8 +211,10 @@ void IRAM_ATTR onTimer(){
       if(!setDir(true)){
         digitalWrite(z_step_pin, HIGH);
         if(feeding_dir){
+          toolRelPos--;
           toolPos--; 
         }else{
+            toolRelPos++;
             toolPos++;  
         }
         
@@ -207,8 +229,10 @@ void IRAM_ATTR onTimer(){
         digitalWrite(z_step_pin, HIGH);
       
         if(feeding_dir){
+          toolRelPos++;
           toolPos++; 
         }else{
+            toolRelPos--;
             toolPos--;  
         }
         z_moving = true;  
@@ -245,7 +269,13 @@ void IRAM_ATTR onTimer(){
       else if(jogs <= jog_steps && !setDir(feeding_dir) && z_moving == false){
         digitalWrite(z_step_pin, HIGH);
         // TODO: figure out direction properly
-        toolPos--;
+        if(feeding_dir){
+          toolRelPos--;
+          toolPos--;
+        }else{
+          toolRelPos++;
+          toolPos++;
+        }
         jogs++;
         z_moving = true;
       }  

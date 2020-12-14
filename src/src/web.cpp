@@ -4,8 +4,8 @@
 #include "config.h"
 
 // json buffer
-StaticJsonDocument<400> doc;
-StaticJsonDocument<400> inDoc;
+StaticJsonDocument<500> doc;
+StaticJsonDocument<500> inDoc;
 
 /* Put IP Address details */
 IPAddress local_ip(192,168,1,1);
@@ -37,6 +37,7 @@ void updateConfigDoc(){
   doc["d"] = (int)display_mode;
   doc["js"] = jog_steps;
   doc["jm"] = jog_mm;
+  doc["sc"] = jog_scaler;
 
   sendConfig();
   // this needs a timer to send on interval
@@ -97,7 +98,14 @@ void parseObj(String msg){
       Serial.print("Jog steps: ");
       Serial.println(stepsPerMM * jog_mm);
       if(!jogging){
-        jog_steps = (float)stepsPerMM * jog_mm;
+        if(jog_mm < 0){
+          feeding_dir = 1;
+          jog_steps = (float)stepsPerMM * jog_mm * -1;
+        }else{
+          feeding_dir = 0;
+          jog_steps = (float)stepsPerMM * jog_mm;
+        }
+        
         jogging = true;
       }
     }else{
@@ -127,6 +135,11 @@ void parseObj(String msg){
       run_mode = RunMode(got_run_mode);
       Serial.println((int)run_mode);
       setRunMode(got_run_mode);
+    }
+    float sc = config["sc"];
+    if(sc != jog_scaler){
+      Serial.println("updating jog scaler");
+      jog_scaler = sc;
     }
     updateConfigDoc();
 
