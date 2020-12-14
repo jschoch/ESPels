@@ -132,5 +132,6 @@ extern int32_t absolutePosition;
 extern RunMode run_mode;
 extern float jog_mm;
 extern volatile float jog_scaler;
+extern double toolRelPosMM;
 
 #endif

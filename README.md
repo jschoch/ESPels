@@ -16,9 +16,7 @@ Cleanup:
 
 1. rethink "modes", right now there are display_modes and state transitions.  The GUI's mode selection should select the state machine mode needed.  
   a. get rid of the menu thing.
-2. why does neg jog not work?
-3.  why is slave mode broken?
-4. how do i track position?
+2. why is slave mode confused on position?
 
 ## Frontend
 

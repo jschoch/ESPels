@@ -127,6 +127,7 @@ void updatePosition(){
     Serial.print(toolRelPosMM);
     Serial.print("#");
     oldToolRelPosMM = toolRelPosMM;
+    updateStatusDoc();
   }
   absolutePosition = encoder.getCount() * stepsPerMM;
 }

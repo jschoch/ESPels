@@ -11,5 +11,6 @@ void init_web(void);
 void do_web(void);
 void init_ota(void);
 void updateConfigDoc();
-
+void updateStatusDoc();
 void sendConfig();
+void sendStatus();

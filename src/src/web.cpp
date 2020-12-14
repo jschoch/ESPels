@@ -6,6 +6,7 @@
 // json buffer
 StaticJsonDocument<500> doc;
 StaticJsonDocument<500> inDoc;
+StaticJsonDocument<200> statusDoc;
 
 /* Put IP Address details */
 IPAddress local_ip(192,168,1,1);
@@ -18,6 +19,12 @@ AsyncWebSocketClient * globalClient = NULL;
 bool web = true;
 char outBuffer[250]; 
 RunMode run_mode = RunMode::STARTUP;
+
+void updateStatusDoc(){
+  statusDoc["pmm"] = toolRelPosMM;
+  statusDoc["m"] = (int)run_mode;
+  sendStatus();
+}
 
 void updateConfigDoc(){
   doc["absP"] = absolutePosition;
@@ -69,6 +76,14 @@ void sendConfig(){
   Serial.println(outBuffer);
   ws.textAll(outBuffer,len2);
 
+}
+
+void sendStatus(){
+  size_t len2 = serializeJson(statusDoc, outBuffer);  
+    // send it! 
+  Serial.print("sending status: ");
+  Serial.println(outBuffer);
+  ws.textAll(outBuffer,len2);
 }
 
 void parseObj(String msg){
