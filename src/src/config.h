@@ -22,7 +22,7 @@
 #include "DebugMode.h"
 #include "c:\Users\jesse\Documents\Arduino\config.h"
 #include <yasm.h>
-
+#include "perfmon.h"
 
 
 // Encoder pins

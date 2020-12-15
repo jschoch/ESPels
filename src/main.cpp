@@ -36,7 +36,16 @@ void setup() {
 
   init_web();
 
+
+  esp_log_level_set("perfmon", ESP_LOG_DEBUG);
+  esp_err_t e = perfmon_start();
+  if(e != ESP_OK){
+    Serial.println("perfmon failed to start ");
+    Serial.println(e);
+  }
+
   Serial.println("setup done");
+
 
 }
 
