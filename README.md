@@ -97,23 +97,18 @@ If `jogging` and `!jog_done` are both true the controller will continue trying t
 - [ ] Add feed to stop mode
 - [ ] Add feed to distance (mm) mode
 - [ ] Add physical stops (adjustable hall sensors for example)
-- [ ] - [ ] Add mm position to display
+- [x] Add mm position to display
 - [ ] Add feed to stop mode
-- [ ] Add some js for frontend
+- [x ] Add some js for frontend
 - [ ] Add backlash compensation
 - [ ] turn on task monitoring and display via web ui
-- [ ] smooth RPM for display
+- [ ] smooth filter EMA RPM for display
 - [ ] store position after disengaging slave so you can re-index if you re-engage
 - [ ] Add angle measure mode like a manual turned indexing plate.
 
 
 Misc:
 
-add debug move 10mm via web ui when in debug mode
-display mm
 add diag screen for old display mode of steps vs mm
-fix display wrapping
-add slave mode
-add jog mode
 add encoder control
 figure out why fault pin use makes screen stop working
