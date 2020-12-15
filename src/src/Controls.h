@@ -38,7 +38,7 @@ void feed_parameters(void);
 void startupState(void);
 void slaveJogReadyState(void);
 void feedingState(void);
-void statusState(void);
+void slaveJogStatusState(void);
 void resetToolPos(void);
 void updateMode(display_mode_t newDisplayMode,RunMode run);
 

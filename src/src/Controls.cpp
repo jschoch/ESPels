@@ -226,14 +226,13 @@ void slaveJogReadyState(){
     
     Serial.println("ready -> status");
     
-    btn_yasm.next(statusState);
+    btn_yasm.next(slaveJogStatusState);
   }
 
-  // TODO:  Add free jogging here perhaps?
 }
 
 // This is "slave jog" status mode, "slave" status is in SlaveMode.cpp
-void statusState(){
+void slaveJogStatusState(){
   if(btn_yasm.isFirstRun()){
     updateMode(DSTATUS,RunMode::RUNNING);
     web = false;
@@ -283,10 +282,12 @@ void feedingState(){
     Serial.println("enter feedingState");
     // set the feeding flag for the stepper.
   }
+
+  // if the button is released stop moving
   if(lbd.deb->rose() || rbd.deb->rose()){
     Serial.println("feeding -> status");
     feeding = false;
-    btn_yasm.next(statusState);
+    btn_yasm.next(slaveJogStatusState);
   }
 }
 

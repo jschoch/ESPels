@@ -165,8 +165,7 @@ void IRAM_ATTR onTimer(){
 
   if(feeding){
 
-    // calculate updated delta
-    // TODO move delta out of motion.cpp
+    // TODO figure out how to sync the spindle rotations
     
     // calculate the current position in stepper pulses by multiplying encoder position by the current factor
     calculated_stepper_pulses = (int64_t)(factor * encoder.getCount());
@@ -245,7 +244,7 @@ void IRAM_ATTR onTimer(){
 
   ///////////////////////////////// Free Jogging Mode
 
- 
+  // TODO: this needs some kind of lockout
   if(jogging && !jog_done){
       
       // if paused for accel
@@ -269,7 +268,6 @@ void IRAM_ATTR onTimer(){
 
       else if(jogs <= jog_steps && !setDir(feeding_dir) && z_moving == false){
         digitalWrite(z_step_pin, HIGH);
-        // TODO: figure out direction properly
         if(feeding_dir){
           toolRelPos--;
           toolPos--;

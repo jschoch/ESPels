@@ -6,7 +6,7 @@ this is currently in test mode and pre-alpha
 
 Plan:
 
-1. update DRO with toolRelMM 
+1. [x] update DRO with toolRelMM 
 1. Slave Jog MM stepper mode
 2. get stops working, slave jog to stop mode
 3. figure out how to sync thread start
@@ -51,6 +51,38 @@ The control state machine uses the YASM library.
 
 The display is integrated on the lolin32 (ssd1306), the display will be abstracted so that other displays can be used.
 
+
+### how stepper.cpp works
+
+Step signals run in onTimer() at frequency 80MHz
+There are two types of movement, slaved and free.  Slaved movement is movement tied to the spindle encoder's position.  Speed and accel are determined by the spindle.   Free movement is independent of the spindle encoder.
+
+Init_stepper() creates the timer and sets up the STEP/DIR pins.
+
+The boolean values 'feeding' and 'jogging' control the stepper functions.
+
+`read_buttons()` will update the position button_timer's frequency in the `toolRelPosMM` value.
+
+####Slave Mode:
+
+'feeding' drives the slave mode.  If 'feeding' is set to true the motor will move.   It is set  in Controls.cpp and SlaveMode.cpp.
+
+'feeding_dir' will signal a pause before direction changes as well as modify the direction of travel.    
+
+The value 'toolPos' determines the Z position.  It essentially chases an approximation of the correct position through a delta value.  If the delta value is !0 the stepper will attempt to move the delta to zero.  The toolPos value MUST be reset when slave jogging begins.  The start routine should be 
+
+```
+    Serial.println("status -> feeding left");
+    resetToolPos();
+    feeding_dir = true;
+    feeding = true;
+    btn_yasm.next(feedingState);
+```
+Btn_yasm is a state machine to deal with transitions and track machine state.
+
+####Free Mode:
+
+If `jogging` and `!jog_done` are both true the controller will continue trying to step `jog_steps` decrementing the value.  When `jog_steps` is zero jog_done is set to true.  
 
 
 
