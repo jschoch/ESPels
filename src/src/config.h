@@ -22,7 +22,7 @@
 #include "DebugMode.h"
 #include "c:\Users\jesse\Documents\Arduino\config.h"
 #include <yasm.h>
-#include "perfmon.h"
+#include "myperfmon.h"
 
 
 // Encoder pins
@@ -133,5 +133,7 @@ extern RunMode run_mode;
 extern float jog_mm;
 extern volatile float jog_scaler;
 extern double toolRelPosMM;
+extern double targetToolRelPos;
+extern int virtEncoderCount;
 
 #endif

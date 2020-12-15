@@ -36,6 +36,7 @@ volatile int step_delta = 0;
 volatile double toolRelPos = 0;
 double toolRelPosMM = 0;
 double oldToolRelPosMM = 0;
+double targetToolRelPos = 0;
 
 int z_step_pin = 13;
 int z_dir_pin = 12;
@@ -129,6 +130,7 @@ void updatePosition(){
     oldToolRelPosMM = toolRelPosMM;
     updateStatusDoc();
   }
+
   absolutePosition = encoder.getCount() * stepsPerMM;
 }
 
@@ -166,6 +168,16 @@ void IRAM_ATTR onTimer(){
   if(feeding){
 
     // TODO figure out how to sync the spindle rotations
+    if(targetToolRelPos == toolPos&& z_pause == true){
+      feeding = false;
+      z_pause = false;
+      // TODO get rid of this
+      Serial.println("feeding off");
+      delay_ticks = 0;
+      portEXIT_CRITICAL_ISR(&timerMux);
+      xSemaphoreGiveFromISR(timerSemaphore, NULL);
+      return;
+    }
     
     // calculate the current position in stepper pulses by multiplying encoder position by the current factor
     calculated_stepper_pulses = (int64_t)(factor * encoder.getCount());

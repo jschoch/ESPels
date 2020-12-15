@@ -162,6 +162,23 @@ void read_buttons(){
   }
   if(button_print_timer.repeat()){
     //debugButtons();
+    Serial.print("enc: ");
+    Serial.print((int)encoder.getCount());
+    Serial.print(",target:");
+    Serial.print(targetToolRelPos);
+    Serial.print(",delta: ");
+    Serial.print((int)delta);
+    Serial.print(",TP: ");
+    Serial.print((int)toolPos);
+    Serial.print(",calc: ");
+    Serial.print((int)calculated_stepper_pulses);
+    Serial.print(",feed "); 
+    Serial.print(feeding);
+    Serial.print(",jogging: ");
+    Serial.print(jogging);
+    Serial.print(",jog_done: ");
+    Serial.println(jog_done);
+
   }
   if(dro_timer.repeat()){
     updatePosition();
@@ -231,6 +248,31 @@ void slaveJogReadyState(){
 
 }
 
+/*
+
+When in slaveJogReadyState if the webUI sends the "do jog" this state is entered.
+Display should prompt user to press a button to execute the jog
+*/
+void slaveJogPosState(){
+  if(btn_yasm.isFirstRun()){
+    // TODO update the modes correctly
+    //updateMode()
+
+    // TODO: should the webui be disabled?
+    // web = false;
+    Serial.println("entering slaveJogPosState() press sbd to start jogging");
+    setFactor();
+  }
+  if(sbd.deb->rose()){
+    Serial.println("start slave jog to position");
+    //toolPos = targetToolRelPos ;
+    //feeding = true;
+
+    // TODO: how do i transition from this state, feeding == false
+  }
+
+}
+
 // This is "slave jog" status mode, "slave" status is in SlaveMode.cpp
 void slaveJogStatusState(){
   if(btn_yasm.isFirstRun()){
@@ -240,6 +282,7 @@ void slaveJogStatusState(){
 
   if(lbd.deb->fell()){
     Serial.println("status -> feeding left");
+    // TODO: sync to spindle rotation
     resetToolPos();
     feeding_dir = true;
     feeding = true;
@@ -275,7 +318,7 @@ void slaveJogStatusState(){
 }
 
 
-//  WTF IS THIS?  TODO:
+//  slave jog mode feeding state
 void feedingState(){
   if(btn_yasm.isFirstRun()){
     updateMode(FEEDING,RunMode::RUNNING);

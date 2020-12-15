@@ -23,6 +23,7 @@ RunMode run_mode = RunMode::STARTUP;
 void updateStatusDoc(){
   statusDoc["pmm"] = toolRelPosMM;
   statusDoc["m"] = (int)run_mode;
+  statusDoc["tp"] = targetToolRelPos * stepsPerMM;
   sendStatus();
 }
 
@@ -104,12 +105,16 @@ void parseObj(String msg){
     Serial.println("sending config");
     sendConfig();    
     
+  }else if(strcmp(cmd,"debug") ==0){
+    int64_t c = encoder.getCount();
+    encoder.setCount(c + 2400);
+    Serial.println((int)c+2400);
   }else if(strcmp(cmd,"jog") == 0){
     Serial.println("got jog command");
     if(run_mode == RunMode::DEBUG_READY){
       JsonObject config = inDoc["config"];
       jog_mm = config["jm"].as<float>();
-      Serial.println("mode ok");
+      Serial.println("debug mode ok");
       Serial.print("Jog steps: ");
       Serial.println(stepsPerMM * jog_mm);
       if(!jogging){
@@ -122,6 +127,28 @@ void parseObj(String msg){
         }
         
         jogging = true;
+      }
+    }else if(run_mode == RunMode::SLAVE_JOG_READY){
+      JsonObject config = inDoc["config"];
+      jog_mm = config["jm"].as<float>();
+      Serial.println("slaveJog mode ok");
+      Serial.print("Jog steps: ");
+      Serial.println(stepsPerMM * jog_mm);
+      if(!feeding){
+        if(jog_mm < 0){
+          feeding_dir = 1;
+          targetToolRelPos = (float)stepsPerMM * jog_mm * -1;
+        }else{
+          feeding_dir = 0;
+          targetToolRelPos = (float)stepsPerMM * jog_mm;
+        }
+        Serial.print(targetToolRelPos);
+
+        // some prompt is needed but if spindle is turning 
+        // it would race very quickly due to it ticking while it waits for the user to confirm
+        feeding = true;
+
+        btn_yasm.next(slaveJogPosState);
       }
     }else{
       Serial.println("can't jog, failed mode check");

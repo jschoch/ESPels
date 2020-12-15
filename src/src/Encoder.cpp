@@ -13,6 +13,10 @@ ESP32Encoder encoder;
 
 Neotimer rpm_timer = Neotimer(100);
 
+int virtEncoderCount = 0;
+bool virtEncoderEnable = false;
+bool virtEncoderDir = true;
+
 void init_encoder(){
   /*   -------------------------------------   OLD   --------------------------------------
   //we must initialize rorary encoder 
