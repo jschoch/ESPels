@@ -158,12 +158,13 @@ void parseObj(String msg){
       Serial.print("Jog steps: ");
       Serial.println(stepsPerMM * jog_mm);
       if(!feeding){
+        toolPos = calculated_stepper_pulses;
         if(jog_mm < 0){
-          feeding_dir = 1;
-          targetToolRelPos = (float)stepsPerMM * jog_mm * -1;
-        }else{
           feeding_dir = 0;
-          targetToolRelPos = (float)stepsPerMM * jog_mm;
+          targetToolRelPos = (float)(calculated_stepper_pulses - ((float)stepsPerMM * jog_mm ));
+        }else{
+          feeding_dir = 1;
+          targetToolRelPos = (float)(calculated_stepper_pulses + ((float)stepsPerMM * jog_mm));
         }
         Serial.print(targetToolRelPos);
 

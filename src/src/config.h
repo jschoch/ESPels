@@ -136,5 +136,8 @@ extern volatile float jog_scaler;
 extern double toolRelPosMM;
 extern double targetToolRelPos;
 extern int virtEncoderCount;
+extern volatile bool useStops;
+extern volatile int stopPos;
+extern volatile int stepNeg;
 
 #endif
