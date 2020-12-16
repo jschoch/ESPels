@@ -263,12 +263,10 @@ void slaveJogPosState(){
     Serial.println("entering slaveJogPosState() press sbd to start jogging");
     setFactor();
   }
-  if(sbd.deb->rose()){
+  if(sbd.deb->rose() || feeding == false){
     Serial.println("start slave jog to position");
-    //toolPos = targetToolRelPos ;
-    //feeding = true;
-
-    // TODO: how do i transition from this state, feeding == false
+    updatePosition();
+    btn_yasm.next(slaveJogReadyState);
   }
 
 }

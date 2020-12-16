@@ -106,9 +106,17 @@ void parseObj(String msg){
     sendConfig();    
     
   }else if(strcmp(cmd,"debug") ==0){
+    int t = inDoc["dir"];
+    Serial.print(" got: ");
+    Serial.println(t);
     int64_t c = encoder.getCount();
-    encoder.setCount(c + 2400);
-    Serial.println((int)c+2400);
+    if(t ==1){
+      encoder.setCount(c + 2400);
+      Serial.println((int)c+2400);
+    }else{
+      encoder.setCount(c - 2400);
+      Serial.println((int) c - 2400);
+    }
   }else if(strcmp(cmd,"jog") == 0){
     Serial.println("got jog command");
     if(run_mode == RunMode::DEBUG_READY){
