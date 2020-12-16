@@ -2,6 +2,7 @@
 #ifndef _CONFIG_H
 #define _CONFIG_H
 
+#define ARDUINOJSON_USE_LONG_LONG 1
 
 
 #include <Arduino.h>

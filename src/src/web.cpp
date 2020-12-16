@@ -23,7 +23,15 @@ RunMode run_mode = RunMode::STARTUP;
 void updateStatusDoc(){
   statusDoc["pmm"] = toolRelPosMM;
   statusDoc["m"] = (int)run_mode;
-  statusDoc["tp"] = targetToolRelPos * stepsPerMM;
+  statusDoc["tp"] = toolPos;
+  statusDoc["encoderPos"] = encoder.getCount();
+  statusDoc["delta"] = delta;
+  statusDoc["calcPos"] = calculated_stepper_pulses;
+  statusDoc["targetPos"] = targetToolRelPos;
+  statusDoc["targetPosMM"] = targetToolRelPos / stepsPerMM;
+  statusDoc["feeding"] = feeding;
+  statusDoc["jogging"] = jogging;
+  statusDoc["jog_dong"] = jog_done;
   sendStatus();
 }
 
@@ -82,9 +90,16 @@ void sendConfig(){
 void sendStatus(){
   size_t len2 = serializeJson(statusDoc, outBuffer);  
     // send it! 
+  /*
   Serial.print("sending status: ");
   Serial.println(outBuffer);
+  
   ws.textAll(outBuffer,len2);
+  */
+
+  len2 = serializeMsgPack(statusDoc, outBuffer);
+  ws.binaryAll(outBuffer,len2);
+
 }
 
 void parseObj(String msg){

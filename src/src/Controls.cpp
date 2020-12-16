@@ -178,6 +178,7 @@ void read_buttons(){
     Serial.print(jogging);
     Serial.print(",jog_done: ");
     Serial.println(jog_done);
+    updateStatusDoc();
 
   }
   if(dro_timer.repeat()){
