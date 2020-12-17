@@ -6,7 +6,7 @@
 // json buffer
 StaticJsonDocument<500> doc;
 StaticJsonDocument<500> inDoc;
-StaticJsonDocument<200> statusDoc;
+StaticJsonDocument<500> statusDoc;
 
 /* Put IP Address details */
 IPAddress local_ip(192,168,1,1);
@@ -17,10 +17,11 @@ AsyncWebServer server(80);
 AsyncWebSocket ws("/test");
 AsyncWebSocketClient * globalClient = NULL;
 bool web = true;
-char outBuffer[250]; 
+char outBuffer[450]; 
 RunMode run_mode = RunMode::STARTUP;
 
 void updateStatusDoc(){
+  statusDoc["p"] = toolRelPos;
   statusDoc["pmm"] = toolRelPosMM;
   statusDoc["m"] = (int)run_mode;
   statusDoc["tp"] = toolPos;
@@ -32,6 +33,13 @@ void updateStatusDoc(){
   statusDoc["feeding"] = feeding;
   statusDoc["jogging"] = jogging;
   statusDoc["jog_dong"] = jog_done;
+  statusDoc["sne"] = stopNegEx;
+  statusDoc["spe"] = stopPosEx;
+  statusDoc["sp"] = stopPos;
+  statusDoc["sn"] = stopNeg;
+  statusDoc["c0"] = cpu0;
+  statusDoc["c1"] = cpu1;
+  statusDoc["xd"] = exDelta;
   sendStatus();
 }
 
@@ -157,22 +165,34 @@ void parseObj(String msg){
       Serial.println("slaveJog mode ok");
       Serial.print("Jog steps: ");
       Serial.println(stepsPerMM * jog_mm);
+      Serial.print("current tool position: ");
+      Serial.println(toolRelPos);
       if(!feeding){
-        toolPos = calculated_stepper_pulses;
+        encoder.setCount(factor * toolRelPos);
+        toolPos = toolRelPos;
         if(jog_mm < 0){
           feeding_dir = 0;
-          targetToolRelPos = (float)(calculated_stepper_pulses - ((float)stepsPerMM * jog_mm ));
+          // becomes negative via jog_mm
+          targetToolRelPos = (float)(toolRelPos + ((float)stepsPerMM * jog_mm ));
+          stopNeg = targetToolRelPos;
+          stopPos = toolPos;
         }else{
           feeding_dir = 1;
-          targetToolRelPos = (float)(calculated_stepper_pulses + ((float)stepsPerMM * jog_mm));
+          targetToolRelPos = (float)(toolRelPos+ ((float)stepsPerMM * jog_mm));
+          stopPos = targetToolRelPos;
+          stopNeg = toolPos;
         }
-        Serial.print(targetToolRelPos);
+        Serial.print("updated targetToolRelPos");
+        Serial.println(targetToolRelPos);
 
         // some prompt is needed but if spindle is turning 
         // it would race very quickly due to it ticking while it waits for the user to confirm
-        feeding = true;
-
+        //feeding = true;
+        init_feed();
         btn_yasm.next(slaveJogPosState);
+      }
+      else{
+        Serial.print("already feeding, can't feed");
       }
     }else{
       Serial.println("can't jog, failed mode check");

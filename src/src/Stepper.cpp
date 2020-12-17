@@ -18,7 +18,7 @@ int timertics = 10;
 
 // used to figure out how many steps we need to get to the right position
 // delta is in stepper steps
-volatile int64_t delta = 0;
+volatile int delta = 0;
 
 // this is the time between a low and the next high or dir and step
 volatile int delay_ticks = 3;
@@ -49,6 +49,12 @@ volatile int32_t jog_steps = 0;
 float jog_mm = 0;
 volatile float jog_scaler = 0.2;
 volatile uint16_t vel = 1;
+volatile int stopPos = 0;
+volatile int stopNeg = 0;
+volatile bool useStops = false;
+volatile bool stopPosEx = false;
+volatile bool stopNegEx = false;
+volatile int exDelta = 0;
 
 
 /////////////  naive acceleration
@@ -120,6 +126,19 @@ void init_jog(){
   
 }
 
+void init_feed(){
+  if(!feeding){
+    z_pause = false;
+    delay_ticks = 3;
+    previous_delay_ticks = 0;
+    z_moving = false;
+    feeding = true;
+    delta = 0;
+  }else{
+    Serial.println("already feeding cant' start new feeding");
+  }
+}
+
 void updatePosition(){
   relativePosition = toolPos * stepsPerMM;
   toolRelPosMM = toolRelPos / stepsPerMM;
@@ -165,15 +184,47 @@ void IRAM_ATTR onTimer(){
   // Increment the counter and set the time of ISR
   portENTER_CRITICAL_ISR(&timerMux);
 
+  /*
+
+    This mode will attempt to maintain a constant pitch ratio between the spindle and tool.
+    If the tool attempts to move less than stopNeg nothign should happen
+    If the tool attempts to move more than stopPos nothign should happen.
+
+    if the tool reaches the target position the mode should exit.
+
+  */
+
+  if(feeding_to_pos){
+    TODO: finish me
+  }
+
+
+  /*
+
+
+  "feeding" mode:  
+    
+    the spindle direction determines the stepper direction, this is derived from a combination of delta and feeding_dir.
+    changing feeding dir changes if the dir is + or - in relation to the spindle direction.
+    so if the spindle is turning CW and feeding_dir == 1 then the pitch would be "right handed"
+    if the spindle is turning CCW and the feeding_dir == 1 then the pitch would still be "right handed"
+    if the spindle is turning CW and the feeding dir == 0 then the pitch would be "left handed"
+    etc etc
+    
+    there isn't a way to jog negative in this mode
+
+  */
   if(feeding){
 
     // TODO figure out how to sync the spindle rotations
-    if(targetToolRelPos == toolPos&& z_pause == true){
+    if(targetToolRelPos == toolRelPos && z_pause == true){
       feeding = false;
       z_pause = false;
+      z_moving = false;
       // TODO get rid of this
       Serial.println("feeding off");
-      delay_ticks = 0;
+      delay_ticks = 3;
+      digitalWrite(z_step_pin, LOW);
       portEXIT_CRITICAL_ISR(&timerMux);
       xSemaphoreGiveFromISR(timerSemaphore, NULL);
       return;
@@ -186,8 +237,26 @@ void IRAM_ATTR onTimer(){
 
     if(feeding_dir){
       delta = toolPos - calculated_stepper_pulses;   
-    }else{
+      /*
+      if((delta + toolRelPos) < stopNeg){
+        exDelta = delta + toolRelPos;
+        //delta = 0;
+        stopNegEx = true;
+      }else{
+        stopNegEx = false;
+      }
+      */
+    }else{ // feeding dir == 0
       delta = calculated_stepper_pulses - toolPos;
+      /*
+      if((delta - toolRelPos) > stopPos){
+        exDelta = delta + toolRelPos;
+        //delta = 0;
+        stopPosEx = true;
+      }else{
+        stopPosEx = false;
+      }
+      */
     }
     
     if(delay_ticks == 0 && z_pause == true){
@@ -219,8 +288,9 @@ void IRAM_ATTR onTimer(){
 
     // if the queue is not full and we are not currently making a signal
     if(delta > 0 && z_moving == false){
-      // delta > 0 means we need to set dir to true
-      if(!setDir(true)){
+      // delta > 0 means we need to set dir to feeding_dir
+      // if no change to the stepper dir then we have waited a bit and we can createe the step signal
+      if(!setDir(feeding_dir)){
         digitalWrite(z_step_pin, HIGH);
         if(feeding_dir){
           toolRelPos--;
@@ -236,8 +306,9 @@ void IRAM_ATTR onTimer(){
     }  
 
     if(delta < 0 && z_moving == false){
-      // delta < 0 means we need to set dir to false
-      if(!setDir(false)){
+      // delta < 0 means we need to set dir !feeding_dir
+      // if no change to the stepper dir then we have waited a bit and we can createe the step signal
+      if(!setDir(!feeding_dir)){
         digitalWrite(z_step_pin, HIGH);
       
         if(feeding_dir){

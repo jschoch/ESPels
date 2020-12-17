@@ -9,5 +9,6 @@ void init_stepper(void);
 bool getDir(void);
 bool setDir(bool);
 void updatePosition();
+void init_feed();
 
 #endif

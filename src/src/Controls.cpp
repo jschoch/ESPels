@@ -162,6 +162,7 @@ void read_buttons(){
   }
   if(button_print_timer.repeat()){
     //debugButtons();
+    /*
     Serial.print("enc: ");
     Serial.print((int)encoder.getCount());
     Serial.print(",target:");
@@ -178,6 +179,7 @@ void read_buttons(){
     Serial.print(jogging);
     Serial.print(",jog_done: ");
     Serial.println(jog_done);
+    */
     updateStatusDoc();
 
   }

@@ -16,6 +16,8 @@ static const char *TAG = "perfmon";
 
 static uint64_t idle0Calls = 0;
 static uint64_t idle1Calls = 0;
+int8_t cpu0 = 0;
+int8_t cpu1 = 1;
 
 #if defined(CONFIG_ESP32_DEFAULT_CPU_FREQ_240)
 static const uint64_t MaxIdleCalls = 1855000;
@@ -93,12 +95,14 @@ static void perfmon_task(void *args)
 		idle0Calls = 0;
 		idle1Calls = 0;
 
-		int cpu0 = 100.f -  idle0 / MaxIdleCalls * 100.f;
-		int cpu1 = 100.f - idle1 / MaxIdleCalls * 100.f;
+		cpu0 = 100.f -  idle0 / MaxIdleCalls * 100.f;
+		cpu1 = 100.f - idle1 / MaxIdleCalls * 100.f;
 
+        /*
 		ESP_LOGI(TAG, "Core 0 at %d%%", cpu0);
 		ESP_LOGI(TAG, "Core 1 at %d%%", cpu1);
         pukeStats();
+        */
 		// TODO configurable delay
 		vTaskDelay(5000 / portTICK_PERIOD_MS);
 	}

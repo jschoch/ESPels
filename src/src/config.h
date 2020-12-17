@@ -78,7 +78,7 @@ extern volatile int16_t encoder0Pos;
 extern volatile int64_t spindlePos;
 
 
-extern volatile int64_t delta;
+extern volatile int delta;
 extern int32_t left_limit_max ;
 extern volatile int32_t left_limit;
 
@@ -133,11 +133,18 @@ extern int32_t absolutePosition;
 extern RunMode run_mode;
 extern float jog_mm;
 extern volatile float jog_scaler;
+extern volatile double toolRelPos;
 extern double toolRelPosMM;
 extern double targetToolRelPos;
 extern int virtEncoderCount;
 extern volatile bool useStops;
 extern volatile int stopPos;
-extern volatile int stepNeg;
+extern volatile int stopNeg;
+extern volatile bool stopPosEx;
+extern volatile bool stopNegEx;
+extern int8_t cpu0;
+extern int8_t cpu1;
+extern volatile int exDelta;
+
 
 #endif
