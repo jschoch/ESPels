@@ -222,50 +222,51 @@ void IRAM_ATTR onTimer(){
     
     // calculate the current position in stepper pulses by multiplying encoder position by the current factor
     if(!z_pause &&!z_moving){
-    calculated_stepper_pulses = (int64_t)(factor * encoder.getCount());
-    if(targetToolRelPos == toolRelPos ){
-      pos_feeding = false;
-      z_pause = false;
-      z_moving = false;
-      // TODO get rid of this
-      Serial.println("pos feeding off");
-      delay_ticks = 3;
-      digitalWrite(z_step_pin, LOW);
-      portEXIT_CRITICAL_ISR(&timerMux);
-      xSemaphoreGiveFromISR(timerSemaphore, NULL);
-      return;
-    }
 
-    if(!feeding_dir){
-      //delta = abs(toolPos) - calculated_stepper_pulses;   
-      //delta = abs(toolPos) + calculated_stepper_pulses;
-      delta = toolPos + calculated_stepper_pulses;
-    }else{
-      delta = toolPos - calculated_stepper_pulses;  
-    }
-    /*
-    if(feeding_dir){
-      delta = 
-    }
-    */
-    /*
-    if((delta + toolRelPos) < stopNeg){
-        //exDelta = delta + toolRelPos;
-        //delta = 0;
-        stopNegEx = true;
-        pos_feeding=false;
-        delta = 0;
-      }else{
-        stopNegEx = false;
+      calculated_stepper_pulses = (int64_t)(factor * encoder.getCount());
+      if(targetToolRelPos == toolRelPos ){
+        pos_feeding = false;
+        z_pause = false;
+        z_moving = false;
+        // TODO get rid of this
+        Serial.println("pos feeding off");
+        delay_ticks = 3;
+        digitalWrite(z_step_pin, LOW);
+        portEXIT_CRITICAL_ISR(&timerMux);
+        xSemaphoreGiveFromISR(timerSemaphore, NULL);
+        return;
       }
-    if((delta + toolRelPos) > stopPos){
-        //exDelta = delta + toolRelPos;
-        //delta = 0;
-        stopPosEx = true;
+
+      if(!feeding_dir){
+        //delta = abs(toolPos) - calculated_stepper_pulses;   
+        //delta = abs(toolPos) + calculated_stepper_pulses;
+        delta = toolPos + calculated_stepper_pulses;
       }else{
-        stopPosEx = false;
+        delta = toolPos - calculated_stepper_pulses;  
       }
-    */
+      /*
+      if(feeding_dir){
+        delta = 
+      }
+      */
+      /*
+      if((delta + toolRelPos) < stopNeg){
+          //exDelta = delta + toolRelPos;
+          //delta = 0;
+          stopNegEx = true;
+          pos_feeding=false;
+          delta = 0;
+        }else{
+          stopNegEx = false;
+        }
+      if((delta + toolRelPos) > stopPos){
+          //exDelta = delta + toolRelPos;
+          //delta = 0;
+          stopPosEx = true;
+        }else{
+          stopPosEx = false;
+        }
+      */
     }
 
     // delay a bit after stepping low.
@@ -292,16 +293,10 @@ void IRAM_ATTR onTimer(){
     if(delta > 0 && z_moving == false){
       // delta > 0 means we need to set dir to feeding_dir
       // if no change to the stepper dir then we have waited a bit and we can createe the step signal
-      if(!setDir(feeding_dir)){
+      if(!setDir(true)){
         digitalWrite(z_step_pin, HIGH);
-        if(feeding_dir){
-          toolRelPos--;
-          toolPos--; 
-        }else{
-            toolRelPos--;
-            toolPos--;  
-        }
-        
+        toolRelPos--;
+        toolPos--; 
         z_moving = true;
       }
       
@@ -310,16 +305,11 @@ void IRAM_ATTR onTimer(){
     if(delta < 0 && z_moving == false){
       // delta < 0 means we need to set dir !feeding_dir
       // if no change to the stepper dir then we have waited a bit and we can createe the step signal
-      if(!setDir(!feeding_dir)){
+      if(!setDir(false)){
         digitalWrite(z_step_pin, HIGH);
       
-        if(feeding_dir){
-          toolRelPos++;
-          toolPos++; 
-        }else{
-            toolRelPos++;
-            toolPos++;  
-        }
+        toolRelPos++;
+        toolPos++; 
         z_moving = true;  
       }
       
