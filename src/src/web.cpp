@@ -174,26 +174,24 @@ void parseObj(String msg){
       if(!pos_feeding){
         // TODO:  what happens when the factor changes and the encoder positoin is wrong?
         setFactor();
-        //int64_t e = (int64_t)(encoder_factor * toolRelPos);
-        //int64_t e = (int64_t)(factor * toolRelPos);
-        int64_t e = (int64_t)(toolRelPos/factor);
-        encoder.setCount(e);
-        toolPos = toolRelPos;
+        //int64_t e = (int64_t)(toolRelPos/factor);
+        spindlePos = 0;
+        encoder.setCount(spindlePos);
+
+        targetToolRelPos = (float)(toolRelPos + ((float)stepsPerMM * jog_mm ));
+        toolPos = 0;
         if(jog_mm < 0){
           feeding_dir = 0;
-          // becomes negative via jog_mm
-          targetToolRelPos = (float)(toolRelPos + ((float)stepsPerMM * jog_mm ));
           stopNeg = targetToolRelPos;
-          stopPos = toolPos;
+          stopPos = toolRelPos;
         }else{
           feeding_dir = 1;
-          targetToolRelPos = (float)(toolRelPos+ ((float)stepsPerMM * jog_mm));
           stopPos = targetToolRelPos;
-          stopNeg = toolPos;
+          stopNeg = toolRelPos;
         }
         Serial.print("updated targetToolRelPos");
         Serial.println(targetToolRelPos);
-        Serial.println((int)e);
+        Serial.println((int)spindlePos);
 
         // some prompt is needed but if spindle is turning 
         // it would race very quickly due to it ticking while it waits for the user to confirm
@@ -201,7 +199,9 @@ void parseObj(String msg){
         //init_feed();
         init_pos_feed();
         btn_yasm.next(slaveJogPosState);
-        Serial.println((int)e);
+        Serial.println((int)spindlePos);
+        Serial.print("delat");
+        Serial.println(delta);
       }
       else{
         Serial.print("already feeding, can't feed");

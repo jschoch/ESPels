@@ -237,7 +237,9 @@ void IRAM_ATTR onTimer(){
     }
 
     if(!feeding_dir){
-      delta = abs(toolPos) - calculated_stepper_pulses;   
+      //delta = abs(toolPos) - calculated_stepper_pulses;   
+      //delta = abs(toolPos) + calculated_stepper_pulses;
+      delta = toolPos + calculated_stepper_pulses;
     }else{
       delta = toolPos - calculated_stepper_pulses;  
     }
@@ -296,8 +298,8 @@ void IRAM_ATTR onTimer(){
           toolRelPos--;
           toolPos--; 
         }else{
-            toolRelPos++;
-            toolPos++;  
+            toolRelPos--;
+            toolPos--;  
         }
         
         z_moving = true;
@@ -315,8 +317,8 @@ void IRAM_ATTR onTimer(){
           toolRelPos++;
           toolPos++; 
         }else{
-            toolRelPos--;
-            toolPos--;  
+            toolRelPos++;
+            toolPos++;  
         }
         z_moving = true;  
       }
