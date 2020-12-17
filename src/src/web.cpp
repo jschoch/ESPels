@@ -43,6 +43,7 @@ void updateStatusDoc(){
   statusDoc["c1"] = cpu1;
   statusDoc["xd"] = exDelta;
   statusDoc["c"] = statusCounter++;
+  statusDoc["f"] = factor;
   sendStatus();
 }
 
@@ -171,7 +172,12 @@ void parseObj(String msg){
       Serial.print("current tool position: ");
       Serial.println(toolRelPos);
       if(!pos_feeding){
-        encoder.setCount(toolRelPos / factor );
+        // TODO:  what happens when the factor changes and the encoder positoin is wrong?
+        setFactor();
+        //int64_t e = (int64_t)(encoder_factor * toolRelPos);
+        //int64_t e = (int64_t)(factor * toolRelPos);
+        int64_t e = (int64_t)(toolRelPos/factor);
+        encoder.setCount(e);
         toolPos = toolRelPos;
         if(jog_mm < 0){
           feeding_dir = 0;
@@ -187,6 +193,7 @@ void parseObj(String msg){
         }
         Serial.print("updated targetToolRelPos");
         Serial.println(targetToolRelPos);
+        Serial.println((int)e);
 
         // some prompt is needed but if spindle is turning 
         // it would race very quickly due to it ticking while it waits for the user to confirm
@@ -194,6 +201,7 @@ void parseObj(String msg){
         //init_feed();
         init_pos_feed();
         btn_yasm.next(slaveJogPosState);
+        Serial.println((int)e);
       }
       else{
         Serial.print("already feeding, can't feed");

@@ -265,7 +265,7 @@ void slaveJogPosState(){
     // TODO: should the webui be disabled?
     // web = false;
     Serial.println("entering slaveJogPosState() press sbd to start jogging");
-    setFactor();
+    //setFactor();
   }
   if(sbd.deb->rose() || feeding == false){
     Serial.println("start slave jog to position");
@@ -342,7 +342,9 @@ void setFactor(){
     // TODO:  this needs some careful thought
     // it currently resets toolPos for slave jog mode, not sure if it works for slave mode.
     // it is unclear what happens as the spindle encoder ticks on
-    toolPos = factor * encoder.getCount();
+
+    // TODO: should this be done here or elsewhere?
+    //toolPos = factor * encoder.getCount();
   //}
   stepsPerMM = motor_steps / lead_screw_pitch;
   updatePosition();

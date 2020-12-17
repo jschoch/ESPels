@@ -15,6 +15,7 @@ float rapids = 1.0;
 float backlash = 0.0;
 uint8_t motor_type = MOTOR_TYPE;
 long mm_per_tick = 0;
+float encoder_factor = 0;
 
 void init_machine(){
 
@@ -27,6 +28,7 @@ void init_machine(){
   // motor steps per mm
   motor_steps = (microsteps * native_steps) ;
   mm_per_tick = 1 / spindle_encoder_resolution /lead_screw_pitch;
+  encoder_factor = (float)spindle_encoder_resolution / (motor_steps/lead_screw_pitch);
 }
 
 

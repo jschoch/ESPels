@@ -147,6 +147,6 @@ extern int8_t cpu1;
 extern volatile int exDelta;
 extern uint8_t statusCounter;
 extern volatile bool pos_feeding;
-
+extern float encoder_factor;
 
 #endif

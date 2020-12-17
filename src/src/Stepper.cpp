@@ -204,13 +204,10 @@ void IRAM_ATTR onTimer(){
   portENTER_CRITICAL_ISR(&timerMux);
 
   /*
-
     This mode will attempt to maintain a constant pitch ratio between the spindle and tool.
     If the tool attempts to move less than stopNeg nothign should happen
     If the tool attempts to move more than stopPos nothign should happen.
-
     if the tool reaches the target position the mode should exit.
-
   */
 
   if(pos_feeding){
@@ -329,8 +326,6 @@ void IRAM_ATTR onTimer(){
 
 
   /*
-
-
   "feeding" mode:  
     
     the spindle direction determines the stepper direction, this is derived from a combination of delta and feeding_dir.
@@ -341,7 +336,6 @@ void IRAM_ATTR onTimer(){
     etc etc
     
     there isn't a way to jog negative in this mode
-
   */
   if(feeding){
     // calculate the current position in stepper pulses by multiplying encoder position by the current factor
