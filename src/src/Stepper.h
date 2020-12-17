@@ -10,5 +10,6 @@ bool getDir(void);
 bool setDir(bool);
 void updatePosition();
 void init_feed();
+void init_pos_feed();
 
 #endif

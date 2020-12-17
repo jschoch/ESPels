@@ -19,6 +19,7 @@ AsyncWebSocketClient * globalClient = NULL;
 bool web = true;
 char outBuffer[450]; 
 RunMode run_mode = RunMode::STARTUP;
+uint8_t statusCounter = 0;
 
 void updateStatusDoc(){
   statusDoc["p"] = toolRelPos;
@@ -32,6 +33,7 @@ void updateStatusDoc(){
   statusDoc["targetPosMM"] = targetToolRelPos / stepsPerMM;
   statusDoc["feeding"] = feeding;
   statusDoc["jogging"] = jogging;
+  statusDoc["pos_feed"] = pos_feeding;
   statusDoc["jog_dong"] = jog_done;
   statusDoc["sne"] = stopNegEx;
   statusDoc["spe"] = stopPosEx;
@@ -40,6 +42,7 @@ void updateStatusDoc(){
   statusDoc["c0"] = cpu0;
   statusDoc["c1"] = cpu1;
   statusDoc["xd"] = exDelta;
+  statusDoc["c"] = statusCounter++;
   sendStatus();
 }
 
@@ -167,8 +170,8 @@ void parseObj(String msg){
       Serial.println(stepsPerMM * jog_mm);
       Serial.print("current tool position: ");
       Serial.println(toolRelPos);
-      if(!feeding){
-        encoder.setCount(factor * toolRelPos);
+      if(!pos_feeding){
+        encoder.setCount(toolRelPos / factor );
         toolPos = toolRelPos;
         if(jog_mm < 0){
           feeding_dir = 0;
@@ -188,7 +191,8 @@ void parseObj(String msg){
         // some prompt is needed but if spindle is turning 
         // it would race very quickly due to it ticking while it waits for the user to confirm
         //feeding = true;
-        init_feed();
+        //init_feed();
+        init_pos_feed();
         btn_yasm.next(slaveJogPosState);
       }
       else{

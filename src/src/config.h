@@ -145,6 +145,8 @@ extern volatile bool stopNegEx;
 extern int8_t cpu0;
 extern int8_t cpu1;
 extern volatile int exDelta;
+extern uint8_t statusCounter;
+extern volatile bool pos_feeding;
 
 
 #endif

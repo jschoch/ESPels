@@ -180,6 +180,7 @@ void read_buttons(){
     Serial.print(",jog_done: ");
     Serial.println(jog_done);
     */
+    Serial.print("%");
     updateStatusDoc();
 
   }
