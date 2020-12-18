@@ -27,6 +27,7 @@
 #include <yasm.h>
 #include "myperfmon.h"
 //#include "gear.h"
+#include "rmtStepper.h"
 
 
 // Encoder pins
@@ -151,5 +152,6 @@ extern volatile int exDelta;
 extern uint8_t statusCounter;
 extern volatile bool pos_feeding;
 extern float encoder_factor;
+extern struct rmtStepper::State xstepper;
 
 #endif

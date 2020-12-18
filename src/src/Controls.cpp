@@ -8,6 +8,7 @@
 #include <ArduinoMap.h>
 #include <yasm.h>
 #include <Vector.h>
+#include "rmtStepper.h"
 
 Neotimer button_read_timer = Neotimer(10);
 Neotimer button_print_timer = Neotimer(2000);
@@ -181,6 +182,7 @@ void read_buttons(){
     Serial.println(jog_done);
     */
     Serial.print("%");
+    xstepper.step();
     updateStatusDoc();
 
   }

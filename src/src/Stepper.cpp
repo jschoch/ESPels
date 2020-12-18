@@ -1,6 +1,7 @@
 #include "Stepper.h"
 #include <cmath>
 #include "gear.h"
+#include "rmtStepper.h"
 /////////////////////////////////////////////////
 // stepper timer stuff
 //////////////////////////////////////////////////
@@ -57,6 +58,8 @@ volatile bool stopPosEx = false;
 volatile bool stopNegEx = false;
 volatile int exDelta = 0;
 volatile bool pos_feeding = false;
+
+rmtStepper::State xstepper;
 
 /*
 
@@ -517,5 +520,30 @@ void init_stepper(){
   // wait in us
   timerAlarmWrite(timer, timertics, true);
   timerAlarmEnable(timer);
+
+  xstepper.config.channel = RMT_CHANNEL_0;
+  xstepper.config.stepPin = GPIO_NUM_25;
+  xstepper.config.dirPin = GPIO_NUM_26;
+
+  xstepper.init();
+
+
+  Serial.println("ready to x step");
+  delay(2000);
+
+  xstepper.step();
+  
+  xstepper.step();
+  delayMicroseconds(50);
+
+  xstepper.step();
+  delayMicroseconds(150);
+
+  xstepper.step();
+  delayMicroseconds(250);
+
+  Serial.println("done x stepping");
+
+
 
 }
