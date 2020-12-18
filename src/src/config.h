@@ -1,4 +1,6 @@
 #pragma once
+
+// #  Sourced from prototypicall/Didge on github.  no license when sourced
 #ifndef _CONFIG_H
 #define _CONFIG_H
 
@@ -24,6 +26,7 @@
 #include "c:\Users\jesse\Documents\Arduino\config.h"
 #include <yasm.h>
 #include "myperfmon.h"
+//#include "gear.h"
 
 
 // Encoder pins

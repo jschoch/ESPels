@@ -1,5 +1,6 @@
 #include "Stepper.h"
 #include <cmath>
+#include "gear.h"
 /////////////////////////////////////////////////
 // stepper timer stuff
 //////////////////////////////////////////////////
@@ -56,6 +57,23 @@ volatile bool stopPosEx = false;
 volatile bool stopNegEx = false;
 volatile int exDelta = 0;
 volatile bool pos_feeding = false;
+
+/*
+
+Refactoring notes:
+
+calculate max speed and create timer with slower frequency to act on encoder ticks.
+rip everything not related to step signal gen out of 80mhz timer or use RMT stepping.
+
+Add some debugging execution time checks to make sure the calculations are fast enough.
+Consider pinning tasks to cores to distribute load.  One core is pegged the other is mostly idle.
+
+try to make code testable but also can run in timer.  research how to do this.
+
+consider moving display code into state functions
+
+
+*/
 
 
 /////////////  naive acceleration
