@@ -182,7 +182,6 @@ void read_buttons(){
     Serial.println(jog_done);
     */
     Serial.print("%");
-    xstepper.step();
     updateStatusDoc();
 
   }

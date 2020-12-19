@@ -27,11 +27,13 @@ namespace gear {
   // k, the encoder count delta for the next step pulse, should fit within a short integer
 
   inline Jump next_jump_forward(int d, int n, int e, uint16_t count) {
+    // k = encoder_pulses per step
     uint16_t k = (d - 2 * e + 2 * n - 1) / (2 * n);
     return {count + k, k, e + k * n - d};
   }
 
   inline Jump next_jump_reverse(int d, int n, int e, uint16_t count) {
+    // k = encoder_pulses per step
     uint16_t k = 1 + ((d + 2 * e) / (2 * n));
     return {count - k, k, e - k * n + d};
   }

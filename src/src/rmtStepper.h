@@ -33,7 +33,8 @@ namespace rmtStepper {
         }
         bool setDir(bool newdir){
             if(dir != newdir){
-                digitalWrite(config.dirPin, newdir);
+                // XOR the dir for the inversion bool
+                digitalWrite(config.dirPin, newdir ^ config.invert_step_pin);
                 dir = newdir;
             }
             return dir;
