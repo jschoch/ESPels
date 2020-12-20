@@ -5,10 +5,10 @@
 #include <iostream>
 
 
-void printJump(gear::Jump j){
-    std::cout << "jump delta " << j.delta  << "\n";
-    std::cout << "jump count " << j.count << "\n";
-    std::cout << "jump error" << j.error<< "\n";
+void printJump(char *s,gear::Jump j){
+    std::cout << s << "jump delta " << j.delta  << " , ";
+    std::cout << "count " << j.count << " , ";
+    std::cout << "error" << j.error<< "\n";
 
 
 }
@@ -54,63 +54,44 @@ int main( int argc, char **argv) {
     gear::state.N = nom;
     gear::state.D = dem;
     std::cout << "test empty " << gear::state.output_position << "\n";
-    std::cout << gear::state.N << "\n";
     
 
 
-    std::cout << " gear range next count" << gear::range.next.count << " \n";
-    bool dir = false;
-    int steps = 0;
-    gear::state.output_position = 50;
-    gear::range.next_jump(dir,50);
-    for(int i = 50; i < 100;i++){
-        gear::state.output_position++;
+    gear::state.output_position = 0;
+    int d = gear::state.D;
+    int n = gear::state.N;
+    std::cout << "d: " << d << " n: " << n <<"\n";
+    int e = 0;
 
-        if(i == gear::range.next.count){
-            // calculate next jumps only after the encoder reaches the value
 
-            gear::range.next_jump(dir,i);
-            gear::state.err = gear::range.next.error;
-            std::cout << "\n\t\t\t\t STEP on encoder count: " << i << "\n" ;
-            steps++;
-        }else{
+    // this changes the formula
+    bool dir = true;
+    gear::calc_jumps(0,dir);
+    
+    for(int i = 0;i < 301;i++){
+        // if the "encoder" is incrementing
 
-            std::cout << "else on count " << i << "\n";
+        // calculate both forward and reverse
+        
+        if(i == gear::state.jumps.next ) {
+            gear::calc_jumps(i,dir);
+            //std::cout << "+ p:" << gear::state.jumps.prev << " -- count: "<<  i << " -- n: " 
+                //<< gear::state.jumps.next << "+";
+            std::cout << "+" << i << " ";
         }
+
+
     }
 
+    std::cout << "\nREVERSE\n\n";
+    std::cout << "prev is: " << gear::state.jumps.prev << " err: " << gear::state.perror << "\n";
 
-    std::cout << "total steps: " << steps << "\n";
-
-    gear::state.output_position = 96;
-
-    std::cout << "reversing encoder for 50 tics\n";
-    dir = !dir;
-    gear::state.err = gear::range.prev.error;
-    gear::range.next_jump(dir,96);
-
-    for(int i = 96; i > 50;i--){
-        // ?? doing this correctly?
-        gear::state.output_position--;
-
-        if(i == gear::range.next.count){
-            // calculate next jumps only after the encoder reaches the value
-
-            gear::range.next_jump(dir,i);
-            gear::state.err = gear::range.next.error;
-            std::cout << "\n\t\t\t\t STEP on encoder count: " << i << "\n" ;
-            steps++;
+    for(int i = 400;i > -1;i--){
+        if(i == gear::state.jumps.prev){
+            gear::calc_jumps(i,dir);
+            std::cout << "-" << i << " ";
         }
-
-        else{
-            std::cout << "else calculated on encoder count: " << i << "\n" ;
-            steps--;
-        }
-
     }
-    // manual calculation of jump based on input N and D
-    gear::Jump j = gear::next_jump_forward(1,1,0,0);
-    printJump(j);
 
     return 0;
     UNITY_END();

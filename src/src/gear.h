@@ -3,24 +3,19 @@
 
 
 namespace gear {
-
-  struct State {
-    int D, N; // pulse ratio : N/D
-    int err = 0;
-    // what units is this, seems to be encoder tics
-    int output_position = 0;
-  };
-
-   volatile State state; // = {4, 1};
-   //state.D = 4;
-   //state.N = 1;
-  
   struct Jump {
     uint16_t count;
     uint16_t delta;
     int error;
   };
 
+  // encoder counts where we have our next and previous jumps
+  struct Jumps{
+    int next;
+    int prev;
+  };
+
+  
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wnarrowing"  
   // Narrowing comes due to integer promotion in arithmetic operations
@@ -38,10 +33,47 @@ namespace gear {
     return {count - k, k, e - k * n + d};
   }
 
+  struct State {
+    int D, N; // pulse ratio : N/D
+    //int err = 0;
+    int nerror = 0;
+    int perror = 0;
+    // what units is this, seems to be encoder tics
+    int output_position = 0;
+    Jumps jumps = {0,0};
+    
+  };
+
+  volatile State state;
+
+  void calc_jumps(int encoder_count,bool dir){
+      int d = state.D, n = state.N;
+      if(dir){
+
+      }else{
+
+      }
+      Jump nx = next_jump_forward(d,n,state.nerror,encoder_count);
+      Jump px = next_jump_reverse(d,n,state.perror,encoder_count); 
+      state.jumps.next =  nx.count;
+      state.nerror = nx.error;
+      if(dir){
+          state.jumps.prev = px.count ;
+          state.perror = nx.error + d -n;
+      }else{
+        state.jumps.prev = px.count + 1;
+        state.perror = nx.error + d +n;
+      }
+
+
+    }
+
   struct Range {
     Jump next{}, prev{};
 
-    void next_jump(bool dir, uint16_t count) {
+    const char* next_jump(bool dir, uint16_t count) {
+      return "THIS IS BORKED NOW, I changed next_jump_reverse\n";
+      /*
       int d = state.D, n = state.N, e = state.err;
       if (!dir) {
         next = next_jump_forward(d, n, e, count);
@@ -50,7 +82,9 @@ namespace gear {
         next = next_jump_reverse(d, n, e, count);
         prev = {count + 1, 1u, next.error - d + n};
       }
+      */
     }
+    
   };
 #pragma GCC diagnostic pop
 
@@ -60,7 +94,8 @@ namespace gear {
   void configure(const RationalNumber& ratio, uint16_t start_position) {
     state.D = ratio.denominator();
     state.N = ratio.numerator();
-    state.err = 0;
+    state.nerror = 0;
+    state.perror = 0;
     range.next = next_jump_forward(ratio.denominator(), ratio.numerator(), 0, start_position);
     range.prev = next_jump_reverse(ratio.denominator(), ratio.numerator(), 0, start_position);
   }
