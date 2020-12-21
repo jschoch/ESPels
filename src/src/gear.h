@@ -4,8 +4,9 @@
 
 namespace gear {
   struct Jump {
-    uint16_t count;
-    uint16_t delta;
+    //uint16_t count;
+    int32_t count;
+    int32_t delta;
     int error;
   };
 
@@ -23,15 +24,15 @@ namespace gear {
   // Narrowing comes due to integer promotion in arithmetic operations
   // k, the encoder count delta for the next step pulse, should fit within a short integer
 
-  inline Jump next_jump_forward(int d, int n, int e, uint16_t count) {
+  inline Jump next_jump_forward(int d, int n, int e, int32_t count) {
     // k = encoder_pulses per step
-    uint16_t k = (d - 2 * e + 2 * n - 1) / (2 * n);
+    int32_t k = (d - 2 * e + 2 * n - 1) / (2 * n);
     return {count + k, k, e + k * n - d};
   }
 
-  inline Jump next_jump_reverse(int d, int n, int e, uint16_t count) {
+  inline Jump next_jump_reverse(int d, int n, int e, int32_t count) {
     // k = encoder_pulses per step
-    uint16_t k = 1 + ((d + 2 * e) / (2 * n));
+    int32_t k = 1 + ((d + 2 * e) / (2 * n));
     return {count - k, k, e - k * n + d};
   }
 
@@ -73,7 +74,7 @@ namespace gear {
   struct Range {
     Jump next{}, prev{};
 
-    const char* next_jump(bool dir, uint16_t count) {
+    const char* next_jump(bool dir, int32_t count) {
       return "THIS IS BORKED NOW, I changed next_jump_reverse\n";
       /*
       int d = state.D, n = state.N, e = state.err;
@@ -102,7 +103,7 @@ namespace gear {
   Range range;
 
   template <typename RationalNumber>
-  void configure(const RationalNumber& ratio, uint16_t start_position) {
+  void configure(const RationalNumber& ratio, int32_t start_position) {
     state.D = ratio.denominator();
     state.N = ratio.numerator();
     state.nerror = 0;
@@ -111,7 +112,7 @@ namespace gear {
     range.prev = next_jump_reverse(ratio.denominator(), ratio.numerator(), 0, start_position);
   }
   
-  inline unsigned phase_delay(uint16_t input_period, int e) {
+  inline unsigned phase_delay(int32_t input_period, int e) {
     if (e < 0) e = -e;
     return (input_period * e) / (state.N);
   }
