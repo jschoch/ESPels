@@ -15,6 +15,8 @@ namespace gear {
     int prev;
   };
 
+
+  // need a set nominator/denominator that checks to ensure the slope < 1 for bresenham
   
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wnarrowing"  
@@ -86,6 +88,15 @@ namespace gear {
     }
     
   };
+
+  bool setRatio(int nom, int den){
+    if (nom > den){
+      return false;
+    }
+    state.D = den;
+    state.N = nom;
+    return true;
+  }
 #pragma GCC diagnostic pop
 
   Range range;

@@ -41,26 +41,29 @@ int main( int argc, char **argv) {
 
    */
 
+
     gear::state.output_position = 0;
-    int motor_steps = 200 * 32;
-    float pitch = 0.1;
+    int micro_steps = 8;
+    int motor_steps = 200 * micro_steps;
+    //float pitch = 4;
+    float pitch = 0.01;
     float lead_screw_pitch = 2.0;
     int enc_res = 2400;
 
-    int dem = lead_screw_pitch * enc_res;
+    int den = lead_screw_pitch * enc_res;
     int nom = motor_steps * pitch;
 
-    std::cout << "nom: " << nom << " dem: " << dem << "\n";
-    gear::state.N = nom;
-    gear::state.D = dem;
+    std::cout << "nom: " << nom << " den: " << den << "\n";
     std::cout << "test empty " << gear::state.output_position << "\n";
     
 
 
     gear::state.output_position = 0;
-    int d = gear::state.D;
-    int n = gear::state.N;
-    std::cout << "d: " << d << " n: " << n <<"\n";
+    bool test = gear::setRatio(nom,den);
+
+    TEST_ASSERT_EQUAL_INT(1,(int)test);
+
+    std::cout << "d: " << den << " n: " << nom <<"\n";
     int e = 0;
 
 
