@@ -40,8 +40,11 @@ void IRAM_ATTR do_pos_feeding(){
     int64_t encPos = encoder.getCount();
 
     // nothing to do if the encoder hasn't moved
-    if(encPos != prevEncPos){
-
+    if(encPos != prevEncPos || xstepper.gear.is_setting_dir ){
+      if(xstepper.gear.is_setting_dir){
+        xstepper.gear.is_setting_dir = false;
+        return;
+      }
       
       // evaluate done?
 
@@ -51,22 +54,26 @@ void IRAM_ATTR do_pos_feeding(){
       // TODO: make next/prev relative to starting position so they don't have to be int64_t
       if(encPos == xstepper.gear.jumps.next){
         //Serial.print(".");
-        xstepper.setDir(true);
-        xstepper.step();
-        xstepper.gear.calc_jumps(encPos,xstepper.dir);
-        toolPos++;
-        toolRelPos++;
-      }else{
-        //Serial.print("*");
+
+        // if the dir doesn't change
+        if(xstepper.setDir(true)){
+          xstepper.step();
+          xstepper.gear.calc_jumps(encPos,xstepper.dir);
+          toolPos++;
+          toolRelPos++;
+          prevEncPos = encPos;
+        }
       }
 
       if(encPos == xstepper.gear.jumps.prev){
-        //Serial.print("#");
-        xstepper.setDir(false);
-        xstepper.step();
-        xstepper.gear.calc_jumps(encPos,xstepper.dir);
-        toolPos--;
-        toolRelPos--;
+        // if dir doesn't need to change
+        if(xstepper.setDir(false)){
+          xstepper.step();
+          xstepper.gear.calc_jumps(encPos,xstepper.dir);
+          toolPos--;
+          toolRelPos--;
+          prevEncPos = encPos;
+        }
       }
 
 
@@ -78,7 +85,7 @@ void IRAM_ATTR do_pos_feeding(){
 
       // issue step?
 
-      prevEncPos = encPos;
+      
     }
   }
 

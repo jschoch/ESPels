@@ -35,6 +35,7 @@ namespace rmtStepper {
             }
         }
         bool setDir(bool newdir){
+            bool olddir = dir;
             if(dir != newdir){
                 // XOR the dir for the inversion bool
                 gear.is_setting_dir = true;
@@ -44,7 +45,7 @@ namespace rmtStepper {
                 digitalWrite(config.dirPin, newdir);
                 dir = newdir;
             }
-            return dir;
+            return olddir == newdir;
         }
 
         void init(){
