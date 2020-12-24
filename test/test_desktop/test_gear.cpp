@@ -41,8 +41,8 @@ int main( int argc, char **argv) {
 
    */
 
-
-    gear::state.output_position = 0;
+    gear::State state;
+    state.output_position = 0;
     int micro_steps = 8;
     int motor_steps = 200 * micro_steps;
     //float pitch = 4;
@@ -54,13 +54,13 @@ int main( int argc, char **argv) {
     int nom = motor_steps * pitch;
 
     std::cout << "nom: " << nom << " / den: " << den << "\n";
-    std::cout << "test empty " << gear::state.output_position << "\n";
+    std::cout << "test empty " << state.output_position << "\n";
     
 
 
     int start = -1000;
-    gear::state.output_position = start;
-    bool test = gear::setRatio(nom,den);
+    state.output_position = start;
+    bool test = state.setRatio(nom,den);
 
     TEST_ASSERT_EQUAL_INT(1,(int)test);
 
@@ -69,17 +69,17 @@ int main( int argc, char **argv) {
 
     // this changes the formula
     bool dir = true;
-    gear::calc_jumps(start,dir);
+    state.calc_jumps(start,dir);
 
-    std::cout << "starting jumps: " << gear::state.jumps.prev << " - " << gear::state.jumps.next << "\n";
+    std::cout << "starting jumps: " << state.jumps.prev << " - " << state.jumps.next << "\n";
     
     for(int i = start;i < 301;i++){
         // if the "encoder" is incrementing
 
         // calculate both forward and reverse
         
-        if(i == gear::state.jumps.next ) {
-            gear::calc_jumps(i,dir);
+        if(i == state.jumps.next ) {
+            state.calc_jumps(i,dir);
             //std::cout << "+ p:" << gear::state.jumps.prev << " -- count: "<<  i << " -- n: " 
                 //<< gear::state.jumps.next << "+";
             std::cout << "+" << i << " ";
@@ -89,11 +89,11 @@ int main( int argc, char **argv) {
     }
 
     std::cout << "\nREVERSE\n\n";
-    std::cout << "prev is: " << gear::state.jumps.prev << " err: " << gear::state.perror << "\n";
+    std::cout << "prev is: " << state.jumps.prev << " err: " << state.perror << "\n";
 
     for(int i = 400;i > (start + 1);i--){
-        if(i == gear::state.jumps.prev){
-            gear::calc_jumps(i,dir);
+        if(i == state.jumps.prev){
+            state.calc_jumps(i,dir);
             std::cout << "-" << i << " ";
         }
     }

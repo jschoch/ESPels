@@ -44,62 +44,37 @@ namespace gear {
     // what units is this, seems to be encoder tics
     int output_position = 0;
     Jumps jumps = {0,0};
-    
-  };
+    bool is_setting_dir = false;
 
-  volatile State state;
-
-  void calc_jumps(int encoder_count,bool dir){
-      int d = state.D, n = state.N;
+    void calc_jumps(int encoder_count,bool dir){
+      Jump nx = next_jump_forward(D,N,nerror,encoder_count);
+      Jump px = next_jump_reverse(D,N,perror,encoder_count); 
+      jumps.next =  nx.count;
+      nerror = nx.error;
       if(dir){
-
+          jumps.prev = px.count ;
+          perror = nx.error + D -N;
       }else{
-
-      }
-      Jump nx = next_jump_forward(d,n,state.nerror,encoder_count);
-      Jump px = next_jump_reverse(d,n,state.perror,encoder_count); 
-      state.jumps.next =  nx.count;
-      state.nerror = nx.error;
-      if(dir){
-          state.jumps.prev = px.count ;
-          state.perror = nx.error + d -n;
-      }else{
-        state.jumps.prev = px.count + 1;
-        state.perror = nx.error + d +n;
+        jumps.prev = px.count + 1;
+        perror = nx.error + D +N;
       }
 
 
     }
-
-  struct Range {
-    Jump next{}, prev{};
-
-    const char* next_jump(bool dir, int32_t count) {
-      return "THIS IS BORKED NOW, I changed next_jump_reverse\n";
-      /*
-      int d = state.D, n = state.N, e = state.err;
-      if (!dir) {
-        next = next_jump_forward(d, n, e, count);
-        prev = {count - 1, 1u, next.error + d - n};
-      } else {
-        next = next_jump_reverse(d, n, e, count);
-        prev = {count + 1, 1u, next.error - d + n};
+    bool setRatio(int nom, int den){
+      if (nom > den){
+        return false;
       }
-      */
+      D = den;
+      N = nom;
+      return true;
     }
     
   };
 
-  bool setRatio(int nom, int den){
-    if (nom > den){
-      return false;
-    }
-    state.D = den;
-    state.N = nom;
-    return true;
-  }
-#pragma GCC diagnostic pop
+  
 
+  /*  not using this yet
   Range range;
 
   template <typename RationalNumber>
@@ -116,5 +91,6 @@ namespace gear {
     if (e < 0) e = -e;
     return (input_period * e) / (state.N);
   }
+  */
   
 }

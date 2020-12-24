@@ -8,28 +8,86 @@ volatile SemaphoreHandle_t timer2Semaphore;
 portMUX_TYPE timer2Mux = portMUX_INITIALIZER_UNLOCKED;
 int timer2tics = 2;
 
-void IRAM_ATTR do_pos_feeding(volatile bool pos_feeding){
+int64_t prevEncPos = 0;
+
+void init_pos_feed(){
+  if(!pos_feeding){
+    int den = lead_screw_pitch * spindle_encoder_resolution ;
+    int nom = motor_steps * pitch;
+    Serial.printf("nom: %d den: %d",nom,den);
+    if (!xstepper.gear.setRatio(nom,den)){
+      // TODO:  send error to GUI
+      Serial.println(" ratio no good!!!!  too big!!!!");
+      pos_feeding = false;
+      return;
+    }
+    xstepper.gear.is_setting_dir = false;
+    xstepper.gear.calc_jumps(0,xstepper.dir);
+    Serial.print(" jumps: ");
+    Serial.print(xstepper.gear.jumps.next);
+    Serial.print(" prev: ");
+    Serial.println(xstepper.gear.jumps.prev);
+    // TODO:  DRO object attached to the stepper to track stops and positions?
+    pos_feeding = true;
+  }else{
+  Serial.println("already pos feeding cant' start new feeding");
+  }
+}
+
+void IRAM_ATTR do_pos_feeding(){
   if(pos_feeding){
-    // evaluate done?
+    // read encoder
+    int64_t encPos = encoder.getCount();
 
-    // calculate jumps and delta
+    // nothing to do if the encoder hasn't moved
+    if(encPos != prevEncPos){
 
-    // evaluate stops, no motion if motion would exceed stops
+      
+      // evaluate done?
 
-    // handle feeding_dir
 
-    // handle dir change
+      // calculate jumps and delta
 
-    // issue step?
+      // TODO: make next/prev relative to starting position so they don't have to be int64_t
+      if(encPos == xstepper.gear.jumps.next){
+        //Serial.print(".");
+        xstepper.setDir(true);
+        xstepper.step();
+        xstepper.gear.calc_jumps(encPos,xstepper.dir);
+        toolPos++;
+        toolRelPos++;
+      }else{
+        //Serial.print("*");
+      }
+
+      if(encPos == xstepper.gear.jumps.prev){
+        //Serial.print("#");
+        xstepper.setDir(false);
+        xstepper.step();
+        xstepper.gear.calc_jumps(encPos,xstepper.dir);
+        toolPos--;
+        toolRelPos--;
+      }
+
+
+      // evaluate stops, no motion if motion would exceed stops
+
+      // handle feeding_dir
+
+      // handle dir change
+
+      // issue step?
+
+      prevEncPos = encPos;
+    }
   }
 
 }
 void IRAM_ATTR onTimer2(){
   portENTER_CRITICAL_ISR(&timer2Mux);
 
-  xstepper.step();
 
-  do_pos_feeding(pos_feeding);
+  do_pos_feeding();
   portEXIT_CRITICAL_ISR(&timer2Mux);
   // Give a semaphore that we can check in the loop
   xSemaphoreGiveFromISR(timer2Semaphore, NULL);

@@ -132,6 +132,7 @@ void parseObj(String msg){
     Serial.println("sending config");
     sendConfig();    
     
+  // Fake encoder commands
   }else if(strcmp(cmd,"debug") ==0){
     int t = inDoc["dir"];
     Serial.print(" got: ");
@@ -139,11 +140,18 @@ void parseObj(String msg){
     int64_t c = encoder.getCount();
     if(t ==1){
       encoder.setCount(c + 2400);
-      Serial.println((int)c+2400);
-    }else{
+    }else if (t == 0){
       encoder.setCount(c - 2400);
-      Serial.println((int) c - 2400);
+    }else if( t==2){
+      c++;
+      encoder.setCount(c);
+    }else if (t == 3){
+      c--;
+      encoder.setCount(c);
     }
+    Serial.print("enc now: ");
+    Serial.println((int)encoder.getCount());
+  //  JOG COMMANDS
   }else if(strcmp(cmd,"jog") == 0){
     Serial.println("got jog command");
     if(run_mode == RunMode::DEBUG_READY){

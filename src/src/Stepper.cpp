@@ -161,23 +161,7 @@ void init_feed(){
   }
 }
 
-void init_pos_feed(){
-if(!pos_feeding){
-  z_pause = false;
-  delay_ticks = 3;
-  previous_delay_ticks = 0;
-  z_moving = false;
-  stopNegEx = false;
-  stopPosEx = false;
-  delta = 0;
-  Serial.println("Feed to Position initialized");
-  pos_feeding = true;
 
-}else{
-  Serial.println("already pos feeding cant' start new feeding");
-}
-
-}
 
 void updatePosition(){
   relativePosition = toolPos * stepsPerMM;
@@ -232,109 +216,7 @@ void IRAM_ATTR onTimer(){
   */
 
   if(pos_feeding){
- 
-    // stepping done and waiting done, clear flags
-
-    if(delay_ticks == 0 && z_pause == true){
-      z_pause = false;
-      z_moving = false;
-
-    }   
-    
-    // calculate the current position in stepper pulses by multiplying encoder position by the current factor
-    if(!z_pause &&!z_moving){
-
-      calculated_stepper_pulses = (int64_t)(factor * encoder.getCount());
-      if(targetToolRelPos == toolRelPos ){
-        pos_feeding = false;
-        z_pause = false;
-        z_moving = false;
-        // TODO get rid of this
-        Serial.println("pos feeding off");
-        delay_ticks = 3;
-        digitalWrite(z_step_pin, LOW);
-        portEXIT_CRITICAL_ISR(&timerMux);
-        xSemaphoreGiveFromISR(timerSemaphore, NULL);
-        return;
-      }
-
-      if(!feeding_dir){
-        //delta = abs(toolPos) - calculated_stepper_pulses;   
-        //delta = abs(toolPos) + calculated_stepper_pulses;
-        delta = toolPos + calculated_stepper_pulses;
-      }else{
-        delta = toolPos - calculated_stepper_pulses;  
-      }
-      /*
-      if(feeding_dir){
-        delta = 
-      }
-      */
-      /*
-      if((delta + toolRelPos) < stopNeg){
-          //exDelta = delta + toolRelPos;
-          //delta = 0;
-          stopNegEx = true;
-          pos_feeding=false;
-          delta = 0;
-        }else{
-          stopNegEx = false;
-        }
-      if((delta + toolRelPos) > stopPos){
-          //exDelta = delta + toolRelPos;
-          //delta = 0;
-          stopPosEx = true;
-        }else{
-          stopPosEx = false;
-        }
-      */
-    }
-
-    // delay a bit after stepping low.
-    if(z_pause == true && delay_ticks > 0){
-      delay_ticks--;      
-      portEXIT_CRITICAL_ISR(&timerMux);
-      xSemaphoreGiveFromISR(timerSemaphore, NULL);
-      return;
-    }
-
-    
-    // turn the pulse off if we were moving.
-    if(z_moving == true){
-      digitalWrite(z_step_pin, LOW);    
-      z_pause = true;
-      
-      // figure out how long to delay
-      //delay_ticks = tbl[speed];
-    }
-
-    
-
-    // if the queue is not full and we are not currently making a signal
-    if(delta > 0 && z_moving == false){
-      // delta > 0 means we need to set dir to feeding_dir
-      // if no change to the stepper dir then we have waited a bit and we can createe the step signal
-      if(!setDir(true)){
-        digitalWrite(z_step_pin, HIGH);
-        toolRelPos--;
-        toolPos--; 
-        z_moving = true;
-      }
-      
-    }  
-
-    if(delta < 0 && z_moving == false){
-      // delta < 0 means we need to set dir !feeding_dir
-      // if no change to the stepper dir then we have waited a bit and we can createe the step signal
-      if(!setDir(false)){
-        digitalWrite(z_step_pin, HIGH);
-      
-        toolRelPos++;
-        toolPos++; 
-        z_moving = true;  
-      }
-      
-    } 
+    // MOVED INTO motion.cpp timer
   }
 
 
@@ -512,6 +394,8 @@ void init_stepper(){
 
   toolPos = 0;
   stepsPerMM = motor_steps / lead_screw_pitch;
+
+  /*  depricated
   // setup a timer to handle stepper pulses
   timerSemaphore = xSemaphoreCreateBinary();
   timer = timerBegin(0, 80, true);
@@ -520,10 +404,14 @@ void init_stepper(){
   // wait in us
   timerAlarmWrite(timer, timertics, true);
   timerAlarmEnable(timer);
+  */
+
+
+  // TODO: rename this to zstepper
 
   xstepper.config.channel = RMT_CHANNEL_0;
-  xstepper.config.stepPin = GPIO_NUM_25;
-  xstepper.config.dirPin = GPIO_NUM_26;
+  xstepper.config.stepPin = GPIO_NUM_13;
+  xstepper.config.dirPin = GPIO_NUM_12;
 
   xstepper.init();
 

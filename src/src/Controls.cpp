@@ -242,6 +242,7 @@ void startupState(){
 void slaveJogReadyState(){
   if(btn_yasm.isFirstRun()){
     updateMode(READY,RunMode::SLAVE_JOG_READY);
+    setFactor();
     web = true;
   }
   if(lbd.deb->rose()){
