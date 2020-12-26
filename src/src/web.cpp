@@ -151,6 +151,15 @@ void parseObj(String msg){
     }
     Serial.print("enc now: ");
     Serial.println((int)encoder.getCount());
+    Serial.print(xstepper.gear.jumps.next);
+    Serial.print(", prev ");
+    Serial.print(xstepper.gear.jumps.prev);
+    Serial.print(", last ");
+    Serial.print(xstepper.gear.jumps.last);
+    Serial.print(", ");
+    Serial.println((int)prevEncPos);
+
+
   //  JOG COMMANDS
   }else if(strcmp(cmd,"jog") == 0){
     Serial.println("got jog command");

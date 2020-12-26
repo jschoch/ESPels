@@ -16,7 +16,7 @@ namespace rmtStepper {
     
 
     struct State {
-        volatile bool dir = false;
+        volatile bool dir = true;
         int pos = 0;
         Config config;
         rmt_item32_t items[2];

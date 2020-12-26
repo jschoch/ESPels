@@ -153,5 +153,6 @@ extern uint8_t statusCounter;
 extern volatile bool pos_feeding;
 extern float encoder_factor;
 extern struct rmtStepper::State xstepper;
+extern int64_t prevEncPos;
 
 #endif

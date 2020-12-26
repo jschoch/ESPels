@@ -58,7 +58,8 @@ int main( int argc, char **argv) {
     
 
 
-    int start = -1000;
+    int start = -10;
+    int stop = 29;
     state.output_position = start;
     bool test = state.setRatio(nom,den);
 
@@ -73,7 +74,7 @@ int main( int argc, char **argv) {
 
     std::cout << "starting jumps: " << state.jumps.prev << " - " << state.jumps.next << "\n";
     
-    for(int i = start;i < 301;i++){
+    for(int i = start;i < stop + 1;i++){
         // if the "encoder" is incrementing
 
         // calculate both forward and reverse
@@ -82,19 +83,23 @@ int main( int argc, char **argv) {
             state.calc_jumps(i,dir);
             //std::cout << "+ p:" << gear::state.jumps.prev << " -- count: "<<  i << " -- n: " 
                 //<< gear::state.jumps.next << "+";
-            std::cout << "+" << i << " ";
+            std::cout << "*" << i << "," << state.jumps.next << "," << state.jumps.prev << " ";
         }
 
 
     }
 
+    //state.calc_jumps(stop,dir);
+    state.jumps.prev = state.jumps.last;
     std::cout << "\nREVERSE\n\n";
-    std::cout << "prev is: " << state.jumps.prev << " err: " << state.perror << "\n";
+    std::cout << "next: " << state.jumps.next << " prev: " << state.jumps.prev << " err: " << state.perror << "\n";
 
-    for(int i = 400;i > (start + 1);i--){
+    for(int i = stop +2;i > (start + 1);i--){
         if(i == state.jumps.prev){
             state.calc_jumps(i,dir);
-            std::cout << "-" << i << " ";
+            //std::cout << "@" << i << " ";
+            std::cout << "@" << i << "," << state.jumps.next << "," << state.jumps.prev << " ";
+            //std::cout << "next: " << state.jumps.next << " prev: " << state.jumps.prev << "\n";
         }
     }
 

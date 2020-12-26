@@ -14,6 +14,7 @@ namespace gear {
   struct Jumps{
     int next;
     int prev;
+    int last;
   };
 
 
@@ -50,12 +51,19 @@ namespace gear {
       Jump nx = next_jump_forward(D,N,nerror,encoder_count);
       Jump px = next_jump_reverse(D,N,perror,encoder_count); 
       jumps.next =  nx.count;
+      jumps.last = encoder_count;
       nerror = nx.error;
       if(dir){
+          // if we change the direction the "previous" jump will be the current position
           jumps.prev = px.count ;
+          //jumps.prev = encoder_count;
           perror = nx.error + D -N;
-      }else{
+      }
+      // this doesn't seem to work for !dir 
+      else{
+        //jumps.next = encoder_count;
         jumps.prev = px.count + 1;
+        //jumps.prev = px.count;
         perror = nx.error + D +N;
       }
 

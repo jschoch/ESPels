@@ -23,6 +23,7 @@ void init_pos_feed(){
     }
     xstepper.gear.is_setting_dir = false;
     xstepper.gear.calc_jumps(0,xstepper.dir);
+    xstepper.gear.jumps.last = xstepper.gear.jumps.prev;
     Serial.print(" jumps: ");
     Serial.print(xstepper.gear.jumps.next);
     Serial.print(" prev: ");
@@ -39,10 +40,23 @@ void IRAM_ATTR do_pos_feeding(){
     // read encoder
     int64_t encPos = encoder.getCount();
 
+    if(encPos < prevEncPos && xstepper.dir){
+      xstepper.setDir(false);
+      return;
+    }
+
+    if(encPos > prevEncPos && !xstepper.dir){
+      xstepper.setDir(true);
+      return;
+    }
+
     // nothing to do if the encoder hasn't moved
     if(encPos != prevEncPos || xstepper.gear.is_setting_dir ){
+
+      // Skip a timer tick if we have changed direction
       if(xstepper.gear.is_setting_dir){
         xstepper.gear.is_setting_dir = false;
+        xstepper.gear.jumps.prev = xstepper.gear.jumps.last;
         return;
       }
       
@@ -56,26 +70,24 @@ void IRAM_ATTR do_pos_feeding(){
         //Serial.print(".");
 
         // if the dir doesn't change
-        if(xstepper.setDir(true)){
+        //if(xstepper.setDir(true)){
           xstepper.step();
-          xstepper.gear.calc_jumps(encPos,xstepper.dir);
+          xstepper.gear.calc_jumps(encPos,true);
           toolPos++;
           toolRelPos++;
-          prevEncPos = encPos;
-        }
+        //}
       }
 
       if(encPos == xstepper.gear.jumps.prev){
         // if dir doesn't need to change
-        if(xstepper.setDir(false)){
+        //if(xstepper.setDir(false)){
           xstepper.step();
-          xstepper.gear.calc_jumps(encPos,xstepper.dir);
+          xstepper.gear.calc_jumps(encPos,true);
           toolPos--;
           toolRelPos--;
-          prevEncPos = encPos;
-        }
+        //}
       }
-
+      prevEncPos = encPos;
 
       // evaluate stops, no motion if motion would exceed stops
 
@@ -86,7 +98,7 @@ void IRAM_ATTR do_pos_feeding(){
       // issue step?
 
       
-    }
+    }// guard for encPos != pevEncPos
   }
 
 }
