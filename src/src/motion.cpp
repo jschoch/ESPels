@@ -56,7 +56,15 @@ void IRAM_ATTR do_pos_feeding(){
       // Skip a timer tick if we have changed direction
       if(xstepper.gear.is_setting_dir){
         xstepper.gear.is_setting_dir = false;
-        xstepper.gear.jumps.prev = xstepper.gear.jumps.last;
+        if(!xstepper.dir){
+          xstepper.gear.jumps.prev = xstepper.gear.jumps.last;
+          xstepper.gear.jumps.last = xstepper.gear.jumps.next;
+
+        }else{
+
+          xstepper.gear.jumps.next = xstepper.gear.jumps.last;
+          xstepper.gear.jumps.last = xstepper.gear.jumps.prev;
+        }
         return;
       }
       

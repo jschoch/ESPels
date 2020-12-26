@@ -46,7 +46,7 @@ int main( int argc, char **argv) {
     int micro_steps = 8;
     int motor_steps = 200 * micro_steps;
     //float pitch = 4;
-    float pitch = 0.5;
+    float pitch = 0.1;
     float lead_screw_pitch = 2.0;
     int enc_res = 2400;
 
@@ -59,7 +59,7 @@ int main( int argc, char **argv) {
 
 
     int start = -10;
-    int stop = 29;
+    int stop = 169;
     state.output_position = start;
     bool test = state.setRatio(nom,den);
 
