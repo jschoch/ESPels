@@ -108,10 +108,19 @@ void IRAM_ATTR do_pos_feeding(){
       // handle dir change
 
       // evaluate done?
-      if ((feeding_dir == zPos && toolRelPosMM >= targetToolRelPosMM) || (feeding_dir == zNeg && toolRelPosMM <= targetToolRelPosMM)){
+      if (feeding_dir == zPos && toolRelPosMM >= targetToolRelPosMM){
+      
         // TODO: need to tell everything we are done e.g move the lever to neutral!
         //el.error("Tool reached target");
-        el.addMsg("Tool reached target");
+        el.addMsg("Tool reached Pos target");
+        el.hasError = true;
+        pos_feeding = false;
+        return;
+      }
+      if(feeding_dir == zNeg && toolRelPosMM <= targetToolRelPosMM){
+        // TODO: need to tell everything we are done e.g move the lever to neutral!
+        //el.error("Tool reached target");
+        el.addMsg("Tool reached Neg target");
         el.hasError = true;
         pos_feeding = false;
         return;
@@ -122,6 +131,14 @@ void IRAM_ATTR do_pos_feeding(){
         //el.error("Tool past stopNeg: HALT");
         el.addMsg("Tool past stopNeg: HALT");
         el.hasError = true;
+        pos_feeding = false;
+      }
+
+      if(toolRelPosMM > stopPos){
+        el.addMsg("tool past stopPos: HALT");
+        el.hasError = true;
+
+        // TODO: should we halt or just stop feeding?
         pos_feeding = false;
       }
 

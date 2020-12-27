@@ -27,7 +27,7 @@ enum feed_mode_t {
 
 
 #define zPos  1
-#define zNeg  -1
+#define zNeg  0
 
 // button data definition
 

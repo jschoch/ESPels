@@ -46,6 +46,7 @@ void updateStatusDoc(){
   statusDoc["c"] = statusCounter++;
   statusDoc["f"] = factor;
   statusDoc["cmd"] = "status";
+  statusDoc["fd"] = feeding_dir;
   sendStatus();
 }
 
@@ -205,8 +206,8 @@ void parseObj(String msg){
         toolPos = 0;
         if(jog_mm < 0){
           feeding_dir = zNeg;
-          stopNeg = targetToolRelPosMM;
-          stopPos = toolRelPosMM - jog_mm;
+          stopNeg = toolRelPosMM + jog_mm;
+          stopPos = toolRelPosMM;
         }else{
           feeding_dir = zPos;
           stopPos = targetToolRelPosMM;
@@ -220,11 +221,12 @@ void parseObj(String msg){
         // it would race very quickly due to it ticking while it waits for the user to confirm
         //feeding = true;
         //init_feed();
+        updateStatusDoc();
         init_pos_feed();
         btn_yasm.next(slaveJogPosState);
-        Serial.println((int)spindlePos);
-        Serial.print("delat");
-        Serial.println(delta);
+        //Serial.println((int)spindlePos);
+        //Serial.print("delat");
+        //Serial.println(delta);
       }
       else{
         //Serial.print("already feeding, can't feed");
