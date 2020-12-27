@@ -351,9 +351,17 @@ void setFactor(){
   Serial.printf("nom: %d den: %d",nom,den);
     if (!xstepper.gear.setRatio(nom,den)){
       // TODO:  send error to GUI
-      Serial.println(" ratio no good!!!!  too big!!!!");
-      pos_feeding = false;
-      btn_yasm.next(startupState);
+      //Serial.println(" ratio no good!!!!  too big!!!!");
+      Log::Msg m;
+      m.level = Log::Level::ERROR;
+      m.t = Log::T::WS;
+      //strcpy(m.buf,"Bad ratio!");
+      sprintf(m.buf,"Bad Ratio: Den: %d Nom: %d\n",den,nom);
+      Log::send(m);
+      sendLog(m);
+      pitch = oldPitch;
+      //pos_feeding = false;
+      //btn_yasm.next(startupState);
       return;
     }
 

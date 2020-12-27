@@ -6,6 +6,7 @@
 //#include "c:\Users\jesse\Documents\Arduino\config.h"
 #include <ESPmDNS.h>
 #include <ArduinoJson.h>
+#include "log.h"
 
 void init_web(void);
 void do_web(void);
@@ -14,3 +15,4 @@ void updateConfigDoc();
 void updateStatusDoc();
 void sendConfig();
 void sendStatus();
+void sendLog(Log::Msg &msg);

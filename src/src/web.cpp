@@ -7,6 +7,7 @@
 StaticJsonDocument<500> doc;
 StaticJsonDocument<500> inDoc;
 StaticJsonDocument<500> statusDoc;
+StaticJsonDocument<500> logDoc;
 
 /* Put IP Address details */
 IPAddress local_ip(192,168,1,1);
@@ -44,6 +45,7 @@ void updateStatusDoc(){
   statusDoc["xd"] = exDelta;
   statusDoc["c"] = statusCounter++;
   statusDoc["f"] = factor;
+  statusDoc["cmd"] = "status";
   sendStatus();
 }
 
@@ -99,16 +101,16 @@ void sendConfig(){
 
 }
 
+void sendLog(Log::Msg &msg){
+  logDoc["msg"] = msg.buf;
+  logDoc["level"] = (int)msg.level;
+  logDoc["cmd"] = "log";
+  size_t len = serializeMsgPack(logDoc,outBuffer);
+  ws.binaryAll(outBuffer,len);
+}
+
 void sendStatus(){
   size_t len2 = serializeJson(statusDoc, outBuffer);  
-    // send it! 
-  /*
-  Serial.print("sending status: ");
-  Serial.println(outBuffer);
-  
-  ws.textAll(outBuffer,len2);
-  */
-
   len2 = serializeMsgPack(statusDoc, outBuffer);
   ws.binaryAll(outBuffer,len2);
 
@@ -239,6 +241,7 @@ void parseObj(String msg){
       Serial.println("new pitch");
 
       //doc["pitch"] = p;
+      oldPitch = pitch;
       pitch = p;
       setFactor();
     }

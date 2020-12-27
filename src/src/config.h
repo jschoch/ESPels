@@ -19,6 +19,7 @@
 #include "Encoder.h"
 #include "motion.h"
 #include "freertos/task.h"
+
 #include "web.h"
 #include "Vector.h"
 #include "SlaveMode.h"
@@ -28,6 +29,7 @@
 #include "myperfmon.h"
 //#include "gear.h"
 #include "rmtStepper.h"
+#include "log.h"
 
 
 // Encoder pins
@@ -155,5 +157,6 @@ extern float encoder_factor;
 extern struct rmtStepper::State xstepper;
 extern int64_t prevEncPos;
 extern double mmPerStep;
+extern float oldPitch;
 
 #endif
