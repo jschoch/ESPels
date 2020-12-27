@@ -54,16 +54,12 @@ namespace gear {
       jumps.last = encoder_count;
       nerror = nx.error;
       if(dir){
-          // if we change the direction the "previous" jump will be the current position
           jumps.prev = px.count;
-          //jumps.prev = encoder_count;
           perror = nx.error + D -N;
       }
       // this doesn't seem to work for !dir 
       else{
-        //jumps.next = encoder_count;
         jumps.prev = px.count + 1;
-        //jumps.prev = px.count;
         perror = nx.error + D +N;
       }
 

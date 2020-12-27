@@ -18,10 +18,6 @@ void debugState(){
             resetToolPos();
             // distance to jog in revolutions
             float turns = 10.0;
-            // set pitch to 1.0
-            pitch_menu = 11;
-            // update factor
-            feed_parameters();
             Serial.print("factor: ");
             Serial.println(String(factor,9));
             jog_steps = (spindle_encoder_resolution * turns) * factor;

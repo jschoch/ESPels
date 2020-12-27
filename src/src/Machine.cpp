@@ -3,7 +3,7 @@
 #include "Machine.h"
 
 float lead_screw_pitch = 2.0;
-int microsteps = 32;
+int microsteps = 16;
 int native_steps = 200;
 int motor_steps = 0;
 volatile double factor = 0.0;

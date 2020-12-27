@@ -7,11 +7,14 @@ hw_timer_t * timer2 = NULL;
 volatile SemaphoreHandle_t timer2Semaphore;
 portMUX_TYPE timer2Mux = portMUX_INITIALIZER_UNLOCKED;
 int timer2tics = 2;
-
+double mmPerStep = 0;
 int64_t prevEncPos = 0;
 
 void init_pos_feed(){
   if(!pos_feeding){
+
+    //  TODO: timer refactor this was moved to controls setFactor()
+    /*
     int den = lead_screw_pitch * spindle_encoder_resolution ;
     int nom = motor_steps * pitch;
     Serial.printf("nom: %d den: %d",nom,den);
@@ -21,6 +24,7 @@ void init_pos_feed(){
       pos_feeding = false;
       return;
     }
+    */
     xstepper.gear.is_setting_dir = false;
     xstepper.gear.calc_jumps(0,xstepper.dir);
     xstepper.gear.jumps.last = xstepper.gear.jumps.prev;
@@ -57,13 +61,18 @@ void IRAM_ATTR do_pos_feeding(){
       if(xstepper.gear.is_setting_dir){
         xstepper.gear.is_setting_dir = false;
         if(!xstepper.dir){
-          xstepper.gear.jumps.prev = xstepper.gear.jumps.last;
-          xstepper.gear.jumps.last = xstepper.gear.jumps.next;
+          // reset stuff for dir changes guard against swapping when we just moved
+          if(xstepper.gear.jumps.last < encPos){
+            xstepper.gear.jumps.prev = xstepper.gear.jumps.last;
+            xstepper.gear.jumps.last = xstepper.gear.jumps.next;
+          }
 
         }else{
-
-          xstepper.gear.jumps.next = xstepper.gear.jumps.last;
-          xstepper.gear.jumps.last = xstepper.gear.jumps.prev;
+          // reset stuff for dir changes
+          if(xstepper.gear.jumps.last  > encPos){
+            xstepper.gear.jumps.next = xstepper.gear.jumps.last;
+            xstepper.gear.jumps.last = xstepper.gear.jumps.prev;
+          }
         }
         return;
       }
@@ -75,25 +84,19 @@ void IRAM_ATTR do_pos_feeding(){
 
       // TODO: make next/prev relative to starting position so they don't have to be int64_t
       if(encPos == xstepper.gear.jumps.next){
-        //Serial.print(".");
-
-        // if the dir doesn't change
-        //if(xstepper.setDir(true)){
           xstepper.step();
           xstepper.gear.calc_jumps(encPos,true);
           toolPos++;
           toolRelPos++;
-        //}
+          toolRelPosMM += mmPerStep;
       }
 
       if(encPos == xstepper.gear.jumps.prev){
-        // if dir doesn't need to change
-        //if(xstepper.setDir(false)){
           xstepper.step();
           xstepper.gear.calc_jumps(encPos,true);
           toolPos--;
           toolRelPos--;
-        //}
+          toolRelPosMM -= mmPerStep;
       }
       prevEncPos = encPos;
 

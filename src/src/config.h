@@ -5,7 +5,7 @@
 #define _CONFIG_H
 
 #define ARDUINOJSON_USE_LONG_LONG 1
-
+#define ARDUINOJSON_USE_DOUBLE 1
 
 #include <Arduino.h>
 #include <ESP32Encoder.h>
@@ -154,5 +154,6 @@ extern volatile bool pos_feeding;
 extern float encoder_factor;
 extern struct rmtStepper::State xstepper;
 extern int64_t prevEncPos;
+extern double mmPerStep;
 
 #endif

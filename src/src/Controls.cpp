@@ -339,16 +339,23 @@ void feedingState(){
 }
 
 void setFactor(){
-  //if(menu<4){
-    factor= (motor_steps*pitch)/(lead_screw_pitch*spindle_encoder_resolution);            
-    // TODO:  this needs some careful thought
-    // it currently resets toolPos for slave jog mode, not sure if it works for slave mode.
-    // it is unclear what happens as the spindle encoder ticks on
 
-    // TODO: should this be done here or elsewhere?
-    //toolPos = factor * encoder.getCount();
-  //}
+  // TODO: timer refactor  get rid of factor and all related code
+  //factor= (motor_steps*pitch)/(lead_screw_pitch*spindle_encoder_resolution);            
   stepsPerMM = motor_steps / lead_screw_pitch;
+  mmPerStep = (double) 1/stepsPerMM;
+  int den = lead_screw_pitch * spindle_encoder_resolution ;
+  int nom = motor_steps * pitch;
+
+  Serial.printf("nom: %d den: %d",nom,den);
+    if (!xstepper.gear.setRatio(nom,den)){
+      // TODO:  send error to GUI
+      Serial.println(" ratio no good!!!!  too big!!!!");
+      pos_feeding = false;
+      btn_yasm.next(startupState);
+      return;
+    }
+
   updatePosition();
   /*   TODO: add back imperial threads
   else

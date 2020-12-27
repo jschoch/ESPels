@@ -165,6 +165,9 @@ void init_feed(){
 
 void updatePosition(){
   relativePosition = toolPos * stepsPerMM;
+
+  /*  timer refactor, this is calculated elsewhere (motion.cpp?)
+  //    Should update in main update timer
   toolRelPosMM = toolRelPos / stepsPerMM;
   if(toolRelPosMM != oldToolRelPosMM){
     //toolRelPosMM = toolRelPos * stepsPerMM;
@@ -173,7 +176,9 @@ void updatePosition(){
     oldToolRelPosMM = toolRelPosMM;
     updateStatusDoc();
   }
+  */
 
+  // TODO: timer refactor this is no good
   absolutePosition = encoder.getCount() * stepsPerMM;
 }
 
