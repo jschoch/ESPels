@@ -187,6 +187,7 @@ void read_buttons(){
   }
   if(dro_timer.repeat()){
     updatePosition();
+    updateStatusDoc();
   }
      
 }

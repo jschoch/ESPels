@@ -129,8 +129,9 @@ void parseObj(String msg){
   if(strcmp(cmd,"fetch") == 0){
     // regenerate config and send it along
 
-    Serial.println("sending config");
-    sendConfig();    
+    Serial.println("fetch received: sending config");
+    //sendConfig();    
+    updateConfigDoc();
     
   // Fake encoder commands
   }else if(strcmp(cmd,"debug") ==0){
@@ -156,7 +157,9 @@ void parseObj(String msg){
     Serial.print(xstepper.gear.jumps.prev);
     Serial.print(", last ");
     Serial.print(xstepper.gear.jumps.last);
-    Serial.print(", ");
+    Serial.print(", toolMM");
+    Serial.print(toolRelPosMM);
+    Serial.print(",");
     Serial.println((int)prevEncPos);
 
 
