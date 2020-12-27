@@ -42,7 +42,6 @@ void init_pos_feed(){
 }
 
 void IRAM_ATTR do_pos_feeding(){
-  if(pos_feeding){
     // read encoder
     int64_t encPos = encoder.getCount();
 
@@ -111,32 +110,39 @@ void IRAM_ATTR do_pos_feeding(){
       // evaluate done?
       if ((feeding_dir == zPos && toolRelPosMM >= targetToolRelPosMM) || (feeding_dir == zNeg && toolRelPosMM <= targetToolRelPosMM)){
         // TODO: need to tell everything we are done e.g move the lever to neutral!
-        el.error("Tool reached target");
+        //el.error("Tool reached target");
+        el.addMsg("Tool reached target");
+        el.hasError = true;
         pos_feeding = false;
         return;
       }
 
       if(toolRelPosMM < stopNeg){
         //Log.error();
-        el.error("Tool past stopNeg: HALT");
+        //el.error("Tool past stopNeg: HALT");
+        el.addMsg("Tool past stopNeg: HALT");
+        el.hasError = true;
         pos_feeding = false;
       }
 
       
     }// guard for encPos != pevEncPos
-  }
 
 }
 void IRAM_ATTR onTimer2(){
   portENTER_CRITICAL_ISR(&timer2Mux);
 
-
-  do_pos_feeding();
+  if(pos_feeding){
+    do_pos_feeding();
+  }
   portEXIT_CRITICAL_ISR(&timer2Mux);
   // Give a semaphore that we can check in the loop
   xSemaphoreGiveFromISR(timer2Semaphore, NULL);
   // It is safe to use digitalRead/Write here if you want to toggle an output
-
+  if(el.hasError){
+    el.errorTask();
+    el.hasError = false;
+  }
   
 }
 

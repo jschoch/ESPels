@@ -12,7 +12,7 @@
 
 Neotimer button_read_timer = Neotimer(10);
 Neotimer button_print_timer = Neotimer(2000);
-Neotimer dro_timer = Neotimer(200);
+Neotimer dro_timer = Neotimer(400);
 Log::Msg el;
 
 

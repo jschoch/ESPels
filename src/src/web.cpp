@@ -201,16 +201,16 @@ void parseObj(String msg){
         encoder.setCount(spindlePos);
 
         //targetToolRelPos = (float)(toolRelPos + ((float)stepsPerMM * jog_mm ));
-        targetToolRelPosMM = jog_mm;
+        targetToolRelPosMM = toolRelPosMM + jog_mm;
         toolPos = 0;
         if(jog_mm < 0){
           feeding_dir = zNeg;
-          stopNeg = targetToolRelPos;
-          stopPos = toolRelPos;
+          stopNeg = targetToolRelPosMM;
+          stopPos = toolRelPosMM - jog_mm;
         }else{
           feeding_dir = zPos;
-          stopPos = targetToolRelPos;
-          stopNeg = toolRelPos;
+          stopPos = targetToolRelPosMM;
+          stopNeg = toolRelPosMM;
         }
         Serial.print("updated targetToolRelPos");
         Serial.println(targetToolRelPos);
