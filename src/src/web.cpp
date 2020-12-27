@@ -31,7 +31,7 @@ void updateStatusDoc(){
   statusDoc["delta"] = delta;
   statusDoc["calcPos"] = calculated_stepper_pulses;
   statusDoc["targetPos"] = targetToolRelPos;
-  statusDoc["targetPosMM"] = targetToolRelPos / stepsPerMM;
+  statusDoc["targetPosMM"] = targetToolRelPosMM;
   statusDoc["feeding"] = feeding;
   statusDoc["jogging"] = jogging;
   statusDoc["pos_feed"] = pos_feeding;
@@ -200,7 +200,8 @@ void parseObj(String msg){
         spindlePos = 0;
         encoder.setCount(spindlePos);
 
-        targetToolRelPos = (float)(toolRelPos + ((float)stepsPerMM * jog_mm ));
+        //targetToolRelPos = (float)(toolRelPos + ((float)stepsPerMM * jog_mm ));
+        targetToolRelPosMM = jog_mm;
         toolPos = 0;
         if(jog_mm < 0){
           feeding_dir = 0;

@@ -9,6 +9,7 @@ portMUX_TYPE timer2Mux = portMUX_INITIALIZER_UNLOCKED;
 int timer2tics = 2;
 double mmPerStep = 0;
 int64_t prevEncPos = 0;
+double targetToolRelPosMM = 0.0;
 
 void init_pos_feed(){
   if(!pos_feeding){
@@ -106,7 +107,11 @@ void IRAM_ATTR do_pos_feeding(){
 
       // handle dir change
 
-      // issue step?
+      // evaluate done?
+      if (toolRelPosMM == targetToolRelPosMM){
+        // TODO: need to tell everything we are done e.g move the lever to neutral!
+        pos_feeding = false;
+      }
 
       
     }// guard for encPos != pevEncPos
