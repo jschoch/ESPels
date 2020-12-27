@@ -25,6 +25,10 @@ enum feed_mode_t {
   THREAD
 } ;
 
+
+#define zPos  1
+#define zNeg  -1
+
 // button data definition
 
 struct Bd{

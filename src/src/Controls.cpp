@@ -13,7 +13,7 @@
 Neotimer button_read_timer = Neotimer(10);
 Neotimer button_print_timer = Neotimer(2000);
 Neotimer dro_timer = Neotimer(200);
-
+Log::Msg el;
 
 
 uint8_t menu = 3; 
@@ -37,6 +37,7 @@ char stats[ 2048];
 #endif
 
 YASM btn_yasm;
+
 
 enum class BtnState{
   Startup,
@@ -352,13 +353,10 @@ void setFactor(){
     if (!xstepper.gear.setRatio(nom,den)){
       // TODO:  send error to GUI
       //Serial.println(" ratio no good!!!!  too big!!!!");
-      Log::Msg m;
-      m.level = Log::Level::ERROR;
-      m.t = Log::T::WS;
-      //strcpy(m.buf,"Bad ratio!");
-      sprintf(m.buf,"Bad Ratio: Den: %d Nom: %d\n",den,nom);
-      Log::send(m);
-      sendLog(m);
+      sprintf(el.buf,"Bad Ratio: Den: %d Nom: %d\n",nom,den);
+      el.error();
+      //Log::send(m);
+      //sendLog(m);
       pitch = oldPitch;
       //pos_feeding = false;
       //btn_yasm.next(startupState);

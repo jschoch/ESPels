@@ -101,9 +101,9 @@ void sendConfig(){
 
 }
 
-void sendLog(Log::Msg &msg){
-  logDoc["msg"] = msg.buf;
-  logDoc["level"] = (int)msg.level;
+void sendLogP(Log::Msg *msg){
+  logDoc["msg"] = msg->buf;
+  logDoc["level"] = (int)msg->level;
   logDoc["cmd"] = "log";
   size_t len = serializeMsgPack(logDoc,outBuffer);
   ws.binaryAll(outBuffer,len);
@@ -176,10 +176,10 @@ void parseObj(String msg){
       Serial.println(stepsPerMM * jog_mm);
       if(!jogging){
         if(jog_mm < 0){
-          feeding_dir = 1;
+          feeding_dir = zNeg;
           jog_steps = (float)stepsPerMM * jog_mm * -1;
         }else{
-          feeding_dir = 0;
+          feeding_dir = zPos;
           jog_steps = (float)stepsPerMM * jog_mm;
         }
         
@@ -204,11 +204,11 @@ void parseObj(String msg){
         targetToolRelPosMM = jog_mm;
         toolPos = 0;
         if(jog_mm < 0){
-          feeding_dir = 0;
+          feeding_dir = zNeg;
           stopNeg = targetToolRelPos;
           stopPos = toolRelPos;
         }else{
-          feeding_dir = 1;
+          feeding_dir = zPos;
           stopPos = targetToolRelPos;
           stopNeg = toolRelPos;
         }
@@ -227,10 +227,12 @@ void parseObj(String msg){
         Serial.println(delta);
       }
       else{
-        Serial.print("already feeding, can't feed");
+        //Serial.print("already feeding, can't feed");
+        el.error("already set feeding, wait till done or cancel");
       }
     }else{
-      Serial.println("can't jog, failed mode check");
+      //Serial.println("can't jog, failed mode check");
+      el.error("can't jog, no jogging mode is set ");
     }
   }else if(strcmp(cmd,"send") == 0){
     JsonObject config = inDoc["config"];

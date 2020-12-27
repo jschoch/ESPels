@@ -10,6 +10,7 @@ int timer2tics = 2;
 double mmPerStep = 0;
 int64_t prevEncPos = 0;
 double targetToolRelPosMM = 0.0;
+double toolRelPosMM = 0;
 
 void init_pos_feed(){
   if(!pos_feeding){
@@ -108,8 +109,16 @@ void IRAM_ATTR do_pos_feeding(){
       // handle dir change
 
       // evaluate done?
-      if (toolRelPosMM == targetToolRelPosMM){
+      if ((feeding_dir == zPos && toolRelPosMM >= targetToolRelPosMM) || (feeding_dir == zNeg && toolRelPosMM <= targetToolRelPosMM)){
         // TODO: need to tell everything we are done e.g move the lever to neutral!
+        el.error("Tool reached target");
+        pos_feeding = false;
+        return;
+      }
+
+      if(toolRelPosMM < stopNeg){
+        //Log.error();
+        el.error("Tool past stopNeg: HALT");
         pos_feeding = false;
       }
 

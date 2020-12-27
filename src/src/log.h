@@ -2,6 +2,8 @@
 
 #include "config.h"
 
+#include "web.h"
+
 namespace Log{
     enum class T {
             WEB,
@@ -13,18 +15,13 @@ namespace Log{
         WARN,
         INFO
     };
-    struct Msg{
+    class Msg{
+        public:
         T t = T::WS;
         char buf[500] = "";
         Level level = Level::ERROR;
+        void error();
+        void error(const char*);
     };
-
-    inline void send(Msg msg){
-        Serial.print("\nWS Log: ");
-        Serial.println(msg.buf);
-        //sendLog(msg);
-
-    }
-
 
 }

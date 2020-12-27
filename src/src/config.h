@@ -19,7 +19,10 @@
 #include "Encoder.h"
 #include "motion.h"
 #include "freertos/task.h"
-
+//#include "log.h"
+namespace Log{
+    class Msg;
+};
 #include "web.h"
 #include "Vector.h"
 #include "SlaveMode.h"
@@ -30,6 +33,7 @@
 //#include "gear.h"
 #include "rmtStepper.h"
 #include "log.h"
+
 
 
 // Encoder pins
@@ -159,5 +163,6 @@ extern struct rmtStepper::State xstepper;
 extern int64_t prevEncPos;
 extern double mmPerStep;
 extern float oldPitch;
+extern class Log::Msg el;
 
 #endif

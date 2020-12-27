@@ -36,7 +36,7 @@ volatile bool jogging = false;
 volatile int32_t jogs = 0;
 volatile int step_delta = 0;
 volatile double toolRelPos = 0;
-double toolRelPosMM = 0;
+//double toolRelPosMM = 0;
 double oldToolRelPosMM = 0;
 double targetToolRelPos = 0;
 
