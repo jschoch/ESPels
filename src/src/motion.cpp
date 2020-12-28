@@ -11,6 +11,7 @@ double mmPerStep = 0;
 int64_t prevEncPos = 0;
 double targetToolRelPosMM = 0.0;
 double toolRelPosMM = 0;
+bool feeding_left = true;
 
 void init_pos_feed(){
   if(!pos_feeding){
@@ -41,18 +42,46 @@ void init_pos_feed(){
   }
 }
 
+void IRAM_ATTR stepPos(){
+  xstepper.step();
+  //xstepper.gear.calc_jumps(encPos,true);
+  toolPos++;
+  toolRelPos++;
+  toolRelPosMM += mmPerStep;
+}
+void IRAM_ATTR stepNeg(){
+  xstepper.step();
+  //xstepper.gear.calc_jumps(encPos,true);
+  toolPos--;
+  toolRelPos--;
+  toolRelPosMM -= mmPerStep;
+}
+
 void IRAM_ATTR do_pos_feeding(){
     // read encoder
     int64_t encPos = encoder.getCount();
 
-    if(encPos < prevEncPos && xstepper.dir){
-      xstepper.setDir(false);
-      return;
+
+    // CLUSTERFUCK
+    if(encPos < prevEncPos && !xstepper.gear.is_setting_dir){ // && xstepper.dir){
+      if(feeding_left && feeding_dir && !xstepper.dir){
+          xstepper.setDir(true);
+          return;
+      }else if(feeding_left && !feeding_dir && xstepper.dir){
+        xstepper.setDir(false);
+        return;
+      }
     }
 
-    if(encPos > prevEncPos && !xstepper.dir){
-      xstepper.setDir(true);
-      return;
+    if(encPos > prevEncPos && !xstepper.gear.is_setting_dir){   // && !xstepper.dir){
+      if(feeding_left && feeding_dir && xstepper.dir){
+        xstepper.setDir(false);
+        return;
+      }else if(feeding_left && !feeding_dir && !xstepper.dir){
+        xstepper.setDir(true);
+        return;
+      }
+      //xstepper.setDir(true);
     }
 
     // nothing to do if the encoder hasn't moved
@@ -85,20 +114,22 @@ void IRAM_ATTR do_pos_feeding(){
 
       // TODO: make next/prev relative to starting position so they don't have to be int64_t
       if(encPos == xstepper.gear.jumps.next){
-          xstepper.step();
-          xstepper.gear.calc_jumps(encPos,true);
-          toolPos++;
-          toolRelPos++;
-          toolRelPosMM += mmPerStep;
+        xstepper.gear.calc_jumps(encPos,true);
+        if(feeding_dir && feeding_left){
+          stepNeg();
+        }else{
+          stepPos();
+       }
       }
 
       if(encPos == xstepper.gear.jumps.prev){
-          xstepper.step();
-          xstepper.gear.calc_jumps(encPos,true);
-          toolPos--;
-          toolRelPos--;
-          toolRelPosMM -= mmPerStep;
-      }
+        xstepper.gear.calc_jumps(encPos,true);
+          if(feeding_dir && feeding_left){
+            stepPos();
+          }else{
+            stepNeg();
+          }
+     }
       prevEncPos = encPos;
 
       // evaluate stops, no motion if motion would exceed stops
@@ -108,7 +139,7 @@ void IRAM_ATTR do_pos_feeding(){
       // handle dir change
 
       // evaluate done?
-      if (feeding_dir == zPos && toolRelPosMM >= targetToolRelPosMM){
+      if (feeding_dir == zNeg && toolRelPosMM >= targetToolRelPosMM){
       
         // TODO: need to tell everything we are done e.g move the lever to neutral!
         //el.error("Tool reached target");
@@ -117,7 +148,7 @@ void IRAM_ATTR do_pos_feeding(){
         pos_feeding = false;
         return;
       }
-      if(feeding_dir == zNeg && toolRelPosMM <= targetToolRelPosMM){
+      if(feeding_dir == zPos && toolRelPosMM <= targetToolRelPosMM){
         // TODO: need to tell everything we are done e.g move the lever to neutral!
         //el.error("Tool reached target");
         el.addMsg("Tool reached Neg target");

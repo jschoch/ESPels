@@ -167,6 +167,9 @@ void parseObj(String msg){
 
 
   //  JOG COMMANDS
+  }else if(strcmp(cmd,"jogcancel") == 0){
+    // TODO wheat cleanup needs to be done?
+    pos_feeding = false;  
   }else if(strcmp(cmd,"jog") == 0){
     Serial.println("got jog command");
     if(run_mode == RunMode::DEBUG_READY){
@@ -205,11 +208,11 @@ void parseObj(String msg){
         targetToolRelPosMM = toolRelPosMM + jog_mm;
         toolPos = 0;
         if(jog_mm < 0){
-          feeding_dir = zNeg;
+          feeding_dir = zPos;
           stopNeg = toolRelPosMM + jog_mm;
           stopPos = toolRelPosMM;
         }else{
-          feeding_dir = zPos;
+          feeding_dir = zNeg;
           stopPos = targetToolRelPosMM;
           stopNeg = toolRelPosMM;
         }

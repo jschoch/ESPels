@@ -5,8 +5,8 @@
 namespace gear {
   struct Jump {
     //uint16_t count;
-    int32_t count;
-    int32_t delta;
+    int64_t count;
+    int16_t delta;
     int error;
   };
 
