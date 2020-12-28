@@ -15,30 +15,20 @@ bool feeding_left = true;
 
 void init_pos_feed(){
   if(!pos_feeding){
-
-    //  TODO: timer refactor this was moved to controls setFactor()
-    /*
-    int den = lead_screw_pitch * spindle_encoder_resolution ;
-    int nom = motor_steps * pitch;
-    Serial.printf("nom: %d den: %d",nom,den);
-    if (!xstepper.gear.setRatio(nom,den)){
-      // TODO:  send error to GUI
-      Serial.println(" ratio no good!!!!  too big!!!!");
-      pos_feeding = false;
-      return;
-    }
-    */
     xstepper.gear.is_setting_dir = false;
-    xstepper.gear.calc_jumps(0,xstepper.dir);
+    xstepper.gear.calc_jumps(encoder.getCount(),xstepper.dir);
     xstepper.gear.jumps.last = xstepper.gear.jumps.prev;
+    /*
     Serial.print(" jumps: ");
     Serial.print(xstepper.gear.jumps.next);
     Serial.print(" prev: ");
     Serial.println(xstepper.gear.jumps.prev);
+    */
     // TODO:  DRO object attached to the stepper to track stops and positions?
     pos_feeding = true;
   }else{
-  Serial.println("already pos feeding cant' start new feeding");
+  //Serial.println("already pos feeding cant' start new feeding");
+  el.error("already started pos_feeding, can't do it again");
   }
 }
 
@@ -64,21 +54,21 @@ void IRAM_ATTR do_pos_feeding(){
 
     // CLUSTERFUCK
     if(encPos < prevEncPos && !xstepper.gear.is_setting_dir){ // && xstepper.dir){
-      if(feeding_left && feeding_dir && !xstepper.dir){
-          xstepper.setDir(true);
+      if(feeding_left && feeding_dir && xstepper.dir){
+          xstepper.setDir(false);
           return;
-      }else if(feeding_left && !feeding_dir && xstepper.dir){
-        xstepper.setDir(false);
+      }else if(feeding_left && !feeding_dir && !xstepper.dir){
+        xstepper.setDir(true);
         return;
       }
     }
 
     if(encPos > prevEncPos && !xstepper.gear.is_setting_dir){   // && !xstepper.dir){
-      if(feeding_left && feeding_dir && xstepper.dir){
-        xstepper.setDir(false);
-        return;
-      }else if(feeding_left && !feeding_dir && !xstepper.dir){
+      if(feeding_left && feeding_dir && !xstepper.dir){
         xstepper.setDir(true);
+        return;
+      }else if(feeding_left && !feeding_dir && xstepper.dir){
+        xstepper.setDir(false);
         return;
       }
       //xstepper.setDir(true);
