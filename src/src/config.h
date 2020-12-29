@@ -164,5 +164,6 @@ extern int64_t prevEncPos;
 extern double mmPerStep;
 extern float oldPitch;
 extern class Log::Msg el;
+extern volatile int64_t encPos;
 
 #endif

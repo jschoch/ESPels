@@ -4,10 +4,14 @@
 #include "config.h"
 
 // json buffer
-StaticJsonDocument<500> doc;
-StaticJsonDocument<500> inDoc;
-StaticJsonDocument<500> statusDoc;
-StaticJsonDocument<500> logDoc;
+
+// config doc
+StaticJsonDocument<600> doc;
+
+// used for inbound msgs
+StaticJsonDocument<600> inDoc;
+StaticJsonDocument<600> statusDoc;
+StaticJsonDocument<600> logDoc;
 
 /* Put IP Address details */
 IPAddress local_ip(192,168,1,1);
@@ -271,7 +275,7 @@ void parseObj(String msg){
 }
 
 void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len){
-  Serial.println("ws event");
+  //Serial.println("ws event");
   if(type == WS_EVT_CONNECT){
  
     Serial.println("Websocket client connection received");
@@ -284,11 +288,13 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
  
   } else if(type == WS_EVT_DATA){
     AwsFrameInfo * info = (AwsFrameInfo*)arg;
+    /*
     Serial.print("Data received: ");
  
     for(int i=0; i < len; i++) {
           Serial.print((char) data[i]);
     }
+    */
     if(info->final && info->index == 0 && info->len == len){
 
       if(info->opcode == WS_TEXT){

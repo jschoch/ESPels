@@ -3,12 +3,14 @@
 #include "config.h"
 
 
+
 hw_timer_t * timer2 = NULL;
 volatile SemaphoreHandle_t timer2Semaphore;
 portMUX_TYPE timer2Mux = portMUX_INITIALIZER_UNLOCKED;
-int timer2tics = 2;
+int timer2tics = 10;
 double mmPerStep = 0;
 int64_t prevEncPos = 0;
+volatile int64_t encPos = 0;
 double targetToolRelPosMM = 0.0;
 double toolRelPosMM = 0;
 bool feeding_left = true;
@@ -48,10 +50,25 @@ void IRAM_ATTR stepNeg(){
 }
 
 void IRAM_ATTR do_pos_feeding(){
-    // read encoder
-    int64_t encPos = encoder.getCount();
+    // read encoder, this is not a volatile value
+    // moved to main loop
+    encPos = encoder.getCount();
 
 
+    // Sanity check
+
+    if(encPos > xstepper.gear.jumps.next+1 || encPos < xstepper.gear.jumps.prev -1){
+      char err[100] = "";
+      sprintf(err,"Tool outside expected range.  prevEnc %lld encPos: %lld next: %i  pos %i dirChang? %i",
+        prevEncPos,
+        encPos,xstepper.gear.jumps.next,
+        xstepper.gear.jumps.prev,
+        xstepper.gear.is_setting_dir);
+      el.addMsg(err);
+      el.hasError = true;
+      pos_feeding = false;
+      return;
+    }
     // CLUSTERFUCK
     if(encPos < prevEncPos && !xstepper.gear.is_setting_dir){ // && xstepper.dir){
       if(feeding_left && feeding_dir && xstepper.dir){
@@ -132,17 +149,20 @@ void IRAM_ATTR do_pos_feeding(){
       if (feeding_dir == zNeg && toolRelPosMM >= targetToolRelPosMM){
       
         // TODO: need to tell everything we are done e.g move the lever to neutral!
+        // popup here is annoying
         //el.error("Tool reached target");
-        el.addMsg("Tool reached Pos target");
-        el.hasError = true;
+        //el.addMsg("Tool reached Pos target");
+        //el.hasError = true;
         pos_feeding = false;
         return;
       }
       if(feeding_dir == zPos && toolRelPosMM <= targetToolRelPosMM){
         // TODO: need to tell everything we are done e.g move the lever to neutral!
-        //el.error("Tool reached target");
-        el.addMsg("Tool reached Neg target");
-        el.hasError = true;
+
+
+        // popup annoying
+        //el.addMsg("Tool reached Neg target");
+        //el.hasError = true;
         pos_feeding = false;
         return;
       }
@@ -192,11 +212,16 @@ void init_motion(){
   // Setup timer to check encoder and decide if steps are needed
   timer2Semaphore = xSemaphoreCreateBinary();
 
+  //  The below doesn't work, it somehow misses encoder pulses
+
   // divisor 400 should run this loop at 200 khz and should be plenty for the encoder signals.
   // Assuming an encoder ppr of 1024 and a speed of 5000 RPM the encoder frequency shoudl be 
   // generating pulses at 85khz.  timerticks = 2 runs at 100khz.
 
-  timer2 = timerBegin(1, 400, true);
+  //timer2 = timerBegin(1, 400, true);
+
+  // changed to 80 to see if timer ticks are not missed
+  timer2 = timerBegin(1,80,true);
   timerAttachInterrupt(timer2, &onTimer2, true);
 
   // wait in us
