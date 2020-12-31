@@ -15,7 +15,7 @@ void debugState(){
         
         //freeJog(10.0);
         if(!jogging){
-            resetToolPos();
+            //resetToolPos();
             // distance to jog in revolutions
             float turns = 10.0;
             Serial.print("factor: ");

@@ -130,9 +130,6 @@ void init_controls(){
   Serial.println(display_mode);
 }
 
-void resetToolPos(){
-  toolPos = factor * encoder.getCount();
-}
 
 void debugButtons(){
   updatePosition();
@@ -289,7 +286,7 @@ void slaveJogStatusState(){
   if(lbd.deb->fell()){
     Serial.println("status -> feeding left");
     // TODO: sync to spindle rotation
-    resetToolPos();
+    //resetToolPos();
     feeding_dir = true;
     feeding = true;
     
@@ -298,7 +295,7 @@ void slaveJogStatusState(){
   }
   if(rbd.deb->fell()){
     Serial.println("status -> feeding right");
-    resetToolPos();
+    //resetToolPos();
     feeding_dir = false;
 
     feeding = true;
@@ -434,7 +431,6 @@ void thread_parameters()
     case(35):    pitch=7.0;   break;
     }
   // TODO: this is a bit of a hack, changing feed changes the factor which changes the delta.  not sure of a good way to update this and maintain positions.
-  //toolPos = factor * encoder.getCount();
   setFactor();
 
   */
@@ -473,6 +469,5 @@ void feed_parameters(){
 
   setFactor();
   // TODO:  this needs some thought
-  //toolPos = factor * encoder.getCount();
   updateConfigDoc();
 }

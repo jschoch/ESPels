@@ -28,12 +28,10 @@ void slaveStatusState(){
     }
     if(lbd.deb->rose()){
         Serial.println("slave_status -> slave feed left");
-        resetToolPos();
         feeding_dir = true;
         btn_yasm.next(slaveFeedingState);
     }
     if(rbd.deb->rose()){
-        resetToolPos();
         feeding_dir = false;
         Serial.println("slave_status -> slave feed right");
         btn_yasm.next(slaveFeedingState);

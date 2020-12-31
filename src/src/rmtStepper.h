@@ -25,7 +25,7 @@ namespace rmtStepper {
 
         gear::State gear;
 
-        void step(){
+        inline void step(){
             RMT.conf_ch[RMT_CHANNEL_0].conf1.mem_rd_rst = 1;
             RMT.conf_ch[RMT_CHANNEL_0].conf1.tx_start   = 1;
             if(dir){
@@ -34,7 +34,7 @@ namespace rmtStepper {
                 pos--;
             }
         }
-        bool setDir(bool newdir){
+        inline bool setDir(bool newdir){
             bool olddir = dir;
             if(dir != newdir){
                 // XOR the dir for the inversion bool

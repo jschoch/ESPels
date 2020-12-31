@@ -37,10 +37,11 @@ void init_encoder(){
 
 void do_rpm(){
   if(rpm_timer.repeat()){
-    int64_t count = encoder.getCount();
-    long count_diff = abs(last_count - count);
+    // TODO: put this in the webUI
+    static int64_t c = encoder.getCount();
+    long count_diff = abs(last_count - c);
     float revolutions = (float) count_diff / spindle_encoder_resolution;
     rpm = revolutions * 10 * 60;
-    last_count = count;    
+    last_count = c;    
   }
 }

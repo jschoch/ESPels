@@ -25,13 +25,13 @@ namespace gear {
   // Narrowing comes due to integer promotion in arithmetic operations
   // k, the encoder count delta for the next step pulse, should fit within a short integer
 
-  inline Jump next_jump_forward(int d, int n, int e, int32_t count) {
+  inline Jump next_jump_forward(int d, int n, int e, int64_t count) {
     // k = encoder_pulses per step
     int32_t k = (d - 2 * e + 2 * n - 1) / (2 * n);
     return {count + k, k, e + k * n - d};
   }
 
-  inline Jump next_jump_reverse(int d, int n, int e, int32_t count) {
+  inline Jump next_jump_reverse(int d, int n, int e, int64_t count) {
     // k = encoder_pulses per step
     int32_t k = 1 + ((d + 2 * e) / (2 * n));
     return {count - k, k, e - k * n + d};

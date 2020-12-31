@@ -9,10 +9,10 @@ volatile SemaphoreHandle_t timer2Semaphore;
 portMUX_TYPE timer2Mux = portMUX_INITIALIZER_UNLOCKED;
 int timer2tics = 10;
 double mmPerStep = 0;
-int64_t prevEncPos = 0;
+volatile int64_t prevEncPos = 0;
 volatile int64_t encPos = 0;
-double targetToolRelPosMM = 0.0;
-double toolRelPosMM = 0;
+volatile double targetToolRelPosMM = 0.0;
+volatile double toolRelPosMM = 0;
 bool feeding_left = true;
 
 void init_pos_feed(){
