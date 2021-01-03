@@ -31,7 +31,7 @@ void updateStatusDoc(){
   statusDoc["pmm"] = toolRelPosMM;
   statusDoc["m"] = (int)run_mode;
   statusDoc["tp"] = toolPos;
-  statusDoc["encoderPos"] = encPos;
+  statusDoc["encoderPos"] = encoder.pulse_counter;
   statusDoc["delta"] = delta;
   statusDoc["calcPos"] = calculated_stepper_pulses;
   statusDoc["targetPos"] = targetToolRelPos;
@@ -146,16 +146,16 @@ void parseObj(String msg){
     Serial.print(" got: ");
     Serial.println(t);
     if(t ==1){
-      encoder.setCount(encPos + 2400);
+      encoder.setCount(encoder.pulse_counter+ 2400);
     }else if (t == 0){
-      encoder.setCount(encPos - 2400);
+      encoder.setCount(encoder.pulse_counter- 2400);
     }else if( t==2){
-      encoder.setCount(encPos++);
+      encoder.setCount((encoder.pulse_counter+ 1));
     }else if (t == 3){
-      encoder.setCount(encPos--);
+      encoder.setCount((encoder.pulse_counter - 1));
     }
     Serial.print("enc now: ");
-    Serial.println((int)encPos);
+    Serial.println((int)encoder.pulse_counter);
     Serial.print(xstepper.gear.jumps.next);
     Serial.print(", prev ");
     Serial.print(xstepper.gear.jumps.prev);
@@ -164,7 +164,7 @@ void parseObj(String msg){
     Serial.print(", toolMM");
     Serial.print(toolRelPosMM);
     Serial.print(",");
-    Serial.println((int)prevEncPos);
+    Serial.println((int)encoder.prev_pulse_counter);
 
 
   //  JOG COMMANDS

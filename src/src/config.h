@@ -95,7 +95,7 @@ extern volatile int32_t left_limit;
 extern uint8_t menu ; 
 
 extern volatile int64_t toolPos;
-extern volatile uint8_t err;
+//extern volatile uint8_t err;
 
  
 extern int spindle_encoder_resolution;   // the number of pulses per revolution of the spindle encoder
@@ -112,7 +112,8 @@ extern const char* DISPLAY_MODE [];
 extern volatile bool z_moving;
 extern volatile bool z_pause;
 extern volatile int delay_ticks;
-extern ESP32Encoder encoder;
+//extern ESP32Encoder encoder;
+extern class Encoder encoder;
 extern volatile bool feeding;
 extern volatile bool feeding_dir;
 //extern class BtnState btnState;
@@ -164,6 +165,5 @@ extern volatile int64_t prevEncPos;
 extern double mmPerStep;
 extern float oldPitch;
 extern class Log::Msg el;
-extern volatile int64_t encPos;
 
 #endif

@@ -110,12 +110,6 @@ int maxVel = defaultAccelTable[DEFAULT_ACCEL_TABLE_SIZE-1][0]; // last value in 
 
 
 
-void updatePosition(){
-  relativePosition = toolPos * stepsPerMM;
-
-  // TODO: timer refactor this is no good
-  absolutePosition = encPos * stepsPerMM;
-}
 
 
 void init_stepper(){

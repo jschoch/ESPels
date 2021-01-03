@@ -45,7 +45,7 @@ namespace gear {
     // what units is this, seems to be encoder tics
     int output_position = 0;
     Jumps jumps = {0,0};
-    bool is_setting_dir = false;
+    volatile bool is_setting_dir = false;
 
     void calc_jumps(int encoder_count,bool dir){
       Jump nx = next_jump_forward(D,N,nerror,encoder_count);

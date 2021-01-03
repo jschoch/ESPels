@@ -132,7 +132,6 @@ void init_controls(){
 
 
 void debugButtons(){
-  updatePosition();
   for(int i = 0; i < NUM_BUTTONS;i++){
     Bd bd = bdata[i];
     
@@ -184,7 +183,6 @@ void read_buttons(){
 
   }
   if(dro_timer.repeat()){
-    updatePosition();
     updateStatusDoc();
   }
      
@@ -270,7 +268,6 @@ void slaveJogPosState(){
   }
   if(sbd.deb->rose() || feeding == false){
     Serial.println("start slave jog to position");
-    updatePosition();
     btn_yasm.next(slaveJogReadyState);
   }
 
@@ -360,7 +357,6 @@ void setFactor(){
       return;
     }
 
-  updatePosition();
   /*   TODO: add back imperial threads
   else
     {

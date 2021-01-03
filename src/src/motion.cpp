@@ -9,11 +9,18 @@ volatile SemaphoreHandle_t timer2Semaphore;
 portMUX_TYPE timer2Mux = portMUX_INITIALIZER_UNLOCKED;
 int timer2tics = 10;
 double mmPerStep = 0;
-volatile int64_t prevEncPos = 0;
-volatile int64_t encPos = 0;
 volatile double targetToolRelPosMM = 0.0;
 volatile double toolRelPosMM = 0;
+volatile int64_t thetimes = 0;
+volatile int badTicks = 0;
+char err[100] = "";
+
+
+// TODO this should be set via gui or btns
 bool feeding_left = true;
+volatile bool tick = false;
+
+int perfCount = 0;
 
 void init_pos_feed(){
   if(!pos_feeding){
@@ -34,34 +41,29 @@ void init_pos_feed(){
   }
 }
 
-void IRAM_ATTR stepPos(){
+void stepPos(){
   xstepper.step();
-  //xstepper.gear.calc_jumps(encPos,true);
   toolPos++;
   toolRelPos++;
   toolRelPosMM += mmPerStep;
 }
-void IRAM_ATTR stepNeg(){
+void stepNeg(){
   xstepper.step();
-  //xstepper.gear.calc_jumps(encPos,true);
   toolPos--;
   toolRelPos--;
   toolRelPosMM -= mmPerStep;
 }
 
-void IRAM_ATTR do_pos_feeding(){
-    // read encoder, this is not a volatile value
-    // moved to main loop
-    encPos = encoder.getCount();
-
+void do_pos_feeding(){
 
     // Sanity check
+    //  make sure we are not getting a huge jump in encoder values
 
-    if(encPos > xstepper.gear.jumps.next+1 || encPos < xstepper.gear.jumps.prev -1){
-      char err[100] = "";
+    if(encoder.pulse_counter > xstepper.gear.jumps.next+1 || encoder.pulse_counter < xstepper.gear.jumps.prev -1){
       sprintf(err,"Tool outside expected range.  prevEnc %lld encPos: %lld next: %i  pos %i dirChang? %i",
-        prevEncPos,
-        encPos,xstepper.gear.jumps.next,
+        encoder.prev_pulse_counter,
+        encoder.pulse_counter,
+        xstepper.gear.jumps.next,
         xstepper.gear.jumps.prev,
         xstepper.gear.is_setting_dir);
       el.addMsg(err);
@@ -69,8 +71,9 @@ void IRAM_ATTR do_pos_feeding(){
       pos_feeding = false;
       return;
     }
-    // CLUSTERFUCK
-    if(encPos < prevEncPos && !xstepper.gear.is_setting_dir){ // && xstepper.dir){
+
+    // Deal with direction changes
+    if(encoder.pulse_counter < encoder.prev_pulse_counter && !xstepper.gear.is_setting_dir){ // dir neg and not pausing for the direction change
       if(feeding_left && feeding_dir && xstepper.dir){
           xstepper.setDir(false);
           return;
@@ -80,7 +83,7 @@ void IRAM_ATTR do_pos_feeding(){
       }
     }
 
-    if(encPos > prevEncPos && !xstepper.gear.is_setting_dir){   // && !xstepper.dir){
+    if(encoder.pulse_counter> encoder.prev_pulse_counter && !xstepper.gear.is_setting_dir){   //
       if(feeding_left && feeding_dir && !xstepper.dir){
         xstepper.setDir(true);
         return;
@@ -91,22 +94,20 @@ void IRAM_ATTR do_pos_feeding(){
       //xstepper.setDir(true);
     }
 
-    // nothing to do if the encoder hasn't moved
-    if(encPos != prevEncPos || xstepper.gear.is_setting_dir ){
 
       // Skip a timer tick if we have changed direction
       if(xstepper.gear.is_setting_dir){
         xstepper.gear.is_setting_dir = false;
         if(!xstepper.dir){
           // reset stuff for dir changes guard against swapping when we just moved
-          if(xstepper.gear.jumps.last < encPos){
+          if(xstepper.gear.jumps.last < encoder.pulse_counter){
             xstepper.gear.jumps.prev = xstepper.gear.jumps.last;
             xstepper.gear.jumps.last = xstepper.gear.jumps.next;
           }
 
         }else{
           // reset stuff for dir changes
-          if(xstepper.gear.jumps.last  > encPos){
+          if(xstepper.gear.jumps.last  > encoder.pulse_counter){
             xstepper.gear.jumps.next = xstepper.gear.jumps.last;
             xstepper.gear.jumps.last = xstepper.gear.jumps.prev;
           }
@@ -120,8 +121,8 @@ void IRAM_ATTR do_pos_feeding(){
       // calculate jumps and delta
 
       // TODO: make next/prev relative to starting position so they don't have to be int64_t
-      if(encPos == xstepper.gear.jumps.next){
-        xstepper.gear.calc_jumps(encPos,true);
+      if(encoder.pulse_counter== xstepper.gear.jumps.next){
+        xstepper.gear.calc_jumps(encoder.pulse_counter,true);
         if(feeding_dir && feeding_left){
           stepNeg();
         }else{
@@ -129,15 +130,14 @@ void IRAM_ATTR do_pos_feeding(){
        }
       }
 
-      if(encPos == xstepper.gear.jumps.prev){
-        xstepper.gear.calc_jumps(encPos,true);
+      if(encoder.pulse_counter == xstepper.gear.jumps.prev){
+        xstepper.gear.calc_jumps(encoder.pulse_counter,true);
           if(feeding_dir && feeding_left){
             stepPos();
           }else{
             stepNeg();
           }
      }
-      prevEncPos = encPos;
 
       // evaluate stops, no motion if motion would exceed stops
 
@@ -184,47 +184,44 @@ void IRAM_ATTR do_pos_feeding(){
       }
 
       
-    }// guard for encPos != pevEncPos
 
 }
-void IRAM_ATTR onTimer2(){
-  portENTER_CRITICAL_ISR(&timer2Mux);
+void IRAM_ATTR processMotion(){
 
-  if(pos_feeding){
-    do_pos_feeding();
-  }
-  portEXIT_CRITICAL_ISR(&timer2Mux);
-  // Give a semaphore that we can check in the loop
-  xSemaphoreGiveFromISR(timer2Semaphore, NULL);
-  // It is safe to use digitalRead/Write here if you want to toggle an output
+  //int64_t startTime = esp_timer_get_time();
+    if(pos_feeding){
+      do_pos_feeding();
+    }
+    
+    /*
+    if(perfCount >= 100000){
+      int avgTime = thetimes / 100000;
+      sprintf(err,"Time took %i badTicks was %i\n",avgTime,badTicks);
+      el.addMsg(err);
+      el.hasError = true;
+      perfCount = 0;
+      badTicks = 0;
+      thetimes = 0;
+      startTime = esp_timer_get_time();
+    }
+    */
+    tick = false;
+
+  //thetimes += esp_timer_get_time() - startTime;
+  perfCount++;
   if(el.hasError){
-    el.errorTask();
-    el.hasError = false;
-  }
-  
+      el.errorTask();
+      el.hasError = false;
+    }
+
+
 }
 
 
 void init_motion(){
+  esp_timer_init();
   setFactor();
 
 
-  // Setup timer to check encoder and decide if steps are needed
-  timer2Semaphore = xSemaphoreCreateBinary();
 
-  //  The below doesn't work, it somehow misses encoder pulses
-
-  // divisor 400 should run this loop at 200 khz and should be plenty for the encoder signals.
-  // Assuming an encoder ppr of 1024 and a speed of 5000 RPM the encoder frequency shoudl be 
-  // generating pulses at 85khz.  timerticks = 2 runs at 100khz.
-
-  //timer2 = timerBegin(1, 400, true);
-
-  // changed to 80 to see if timer ticks are not missed
-  timer2 = timerBegin(1,80,true);
-  timerAttachInterrupt(timer2, &onTimer2, true);
-
-  // wait in us
-  timerAlarmWrite(timer2, timer2tics, true);
-  timerAlarmEnable(timer2);
 }
