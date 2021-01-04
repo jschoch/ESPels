@@ -50,7 +50,7 @@ void updateStatusDoc(){
   statusDoc["c"] = statusCounter++;
   statusDoc["f"] = factor;
   statusDoc["cmd"] = "status";
-  statusDoc["fd"] = feeding_dir;
+  statusDoc["fd"] = z_feeding_dir;
   sendStatus();
 }
 
@@ -73,6 +73,7 @@ void updateConfigDoc(){
   doc["js"] = jog_steps;
   doc["jm"] = jog_mm;
   doc["sc"] = jog_scaler;
+  doc["f"] = feeding_ccw;
 
   sendConfig();
   // this needs a timer to send on interval
@@ -143,8 +144,10 @@ void parseObj(String msg){
   // Fake encoder commands
   }else if(strcmp(cmd,"debug") ==0){
     int t = inDoc["dir"];
+    /*
     Serial.print(" got: ");
     Serial.println(t);
+    */
     if(t ==1){
       encoder.setCount(encoder.pulse_counter+ 2400);
     }else if (t == 0){
@@ -154,6 +157,7 @@ void parseObj(String msg){
     }else if (t == 3){
       encoder.setCount((encoder.pulse_counter - 1));
     }
+    /*
     Serial.print("enc now: ");
     Serial.println((int)encoder.pulse_counter);
     Serial.print(xstepper.gear.jumps.next);
@@ -162,9 +166,9 @@ void parseObj(String msg){
     Serial.print(", last ");
     Serial.print(xstepper.gear.jumps.last);
     Serial.print(", toolMM");
-    Serial.print(toolRelPosMM);
-    Serial.print(",");
-    Serial.println((int)encoder.prev_pulse_counter);
+    Serial.println(toolRelPosMM);
+    Serial.printf("fz: %d  fccw: %d sd: %d prevEnc: %lli \n",z_feeding_dir,feeding_ccw,xstepper.dir, encoder.prev_pulse_counter);
+    */
 
 
   //  JOG COMMANDS
@@ -180,11 +184,12 @@ void parseObj(String msg){
       Serial.print("Jog steps: ");
       Serial.println(stepsPerMM * jog_mm);
       if(!jogging){
+        feeding_ccw = config["f"];
         if(jog_mm < 0){
-          feeding_dir = zNeg;
+          z_feeding_dir = false;
           jog_steps = (float)stepsPerMM * jog_mm * -1;
         }else{
-          feeding_dir = zPos;
+          z_feeding_dir = true;
           jog_steps = (float)stepsPerMM * jog_mm;
         }
         
@@ -193,29 +198,36 @@ void parseObj(String msg){
     }else if(run_mode == RunMode::SLAVE_JOG_READY){
       JsonObject config = inDoc["config"];
       jog_mm = config["jm"].as<float>();
+      /*
       Serial.println("slaveJog mode ok");
       Serial.print("Jog steps: ");
       Serial.println(stepsPerMM * jog_mm);
       Serial.print("current tool position: ");
       Serial.println(toolRelPos);
+      */
       if(!pos_feeding){
         // TODO:  what happens when the factor changes and the encoder positoin is wrong?
         setFactor();
-        //int64_t e = (int64_t)(toolRelPos/factor);
-        //spindlePos = 0;
-        //encoder.setCount(spindlePos);
-
-        //targetToolRelPos = (float)(toolRelPos + ((float)stepsPerMM * jog_mm ));
         targetToolRelPosMM = toolRelPosMM + jog_mm;
-        //toolPos = 0;
+        feeding_ccw = (bool)config["f"];
         if(jog_mm < 0){
-          feeding_dir = zPos;
+          z_feeding_dir = false;
           stopNeg = toolRelPosMM + jog_mm;
           stopPos = toolRelPosMM;
-        }else{
-          feeding_dir = zNeg;
+          if(feeding_ccw){
+            encoder.prev_pulse_counter = encoder.pulse_counter - 1;
+          }else{
+            encoder.prev_pulse_counter = encoder.pulse_counter + 1;
+          }
+       }else{
+          z_feeding_dir = true;
           stopPos = targetToolRelPosMM;
           stopNeg = toolRelPosMM;
+          if(feeding_ccw){
+            encoder.prev_pulse_counter = encoder.pulse_counter + 1;
+          }else{
+            encoder.prev_pulse_counter = encoder.pulse_counter - 1;
+          }
         }
         //Serial.print("updated targetToolRelPos");
         //Serial.println(targetToolRelPos);

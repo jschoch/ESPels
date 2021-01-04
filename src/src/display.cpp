@@ -73,7 +73,7 @@ void do_status_display2(){
   display.drawString(0,21,"P:" + String(pitch,3) + "RPM: " + String(rpm));
 
   if(feeding){
-    display.drawString(110,51,"F:"+ String(feeding_dir));
+    display.drawString(110,51,"F:"+ String(z_feeding_dir));
   }
     
   if(getDir()){

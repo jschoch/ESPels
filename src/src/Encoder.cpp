@@ -17,7 +17,7 @@ int virtEncoderCount = 0;
 bool virtEncoderEnable = false;
 bool virtEncoderDir = true;
 // encoder instance
-Encoder encoder = Encoder(25, 26, 500);
+Encoder encoder = Encoder(25, 26, 600);
 
 void doA(){encoder.handleA();}
 void doB(){encoder.handleB();}
@@ -105,7 +105,7 @@ Encoder::Encoder(int _encA, int _encB , float _ppr){
   // velocity calculation variables
   prev_Th = 0;
   pulse_per_second = 0;
-  prev_pulse_counter = 0;
+  prev_pulse_counter = 100;
   prev_timestamp_us = esp_timer_get_time();//_micros();
 
   // extern pullup as default
@@ -143,7 +143,7 @@ void Encoder::init(){
   // velocity calculation variables
   prev_Th = 0;
   pulse_per_second = 0;
-  prev_pulse_counter = 0;
+  prev_pulse_counter = -1;
   prev_timestamp_us = esp_timer_get_time();//_micros();
 
   // initial cpr = PPR

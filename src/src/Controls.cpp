@@ -19,7 +19,7 @@ Log::Msg el;
 uint8_t menu = 3; 
 int pitch_menu= 1;
 volatile bool feeding = false;
-volatile bool feeding_dir = true;
+volatile bool z_feeding_dir = true;
 
 
 
@@ -284,7 +284,7 @@ void slaveJogStatusState(){
     Serial.println("status -> feeding left");
     // TODO: sync to spindle rotation
     //resetToolPos();
-    feeding_dir = true;
+    z_feeding_dir = true;
     feeding = true;
     
     btn_yasm.next(feedingState);
@@ -293,7 +293,7 @@ void slaveJogStatusState(){
   if(rbd.deb->fell()){
     Serial.println("status -> feeding right");
     //resetToolPos();
-    feeding_dir = false;
+    z_feeding_dir = false;
 
     feeding = true;
 

@@ -8,7 +8,7 @@
 #define ARDUINOJSON_USE_DOUBLE 1
 
 #include <Arduino.h>
-#include <ESP32Encoder.h>
+//#include <ESP32Encoder.h>
 
 #include "neotimer.h"
 #include "util.h"
@@ -115,7 +115,8 @@ extern volatile int delay_ticks;
 //extern ESP32Encoder encoder;
 extern class Encoder encoder;
 extern volatile bool feeding;
-extern volatile bool feeding_dir;
+extern volatile bool z_feeding_dir;
+extern volatile bool feeding_ccw;
 //extern class BtnState btnState;
 extern int rpm;
 extern float rapids;
@@ -161,7 +162,6 @@ extern uint8_t statusCounter;
 extern volatile bool pos_feeding;
 extern float encoder_factor;
 extern struct rmtStepper::State xstepper;
-extern volatile int64_t prevEncPos;
 extern double mmPerStep;
 extern float oldPitch;
 extern class Log::Msg el;
