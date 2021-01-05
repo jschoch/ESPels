@@ -53,7 +53,7 @@ volatile bool stopNegEx = false;
 volatile int exDelta = 0;
 volatile bool pos_feeding = false;
 
-rmtStepper::State xstepper;
+rmtStepper::State zstepper;
 
 /*
 
@@ -122,11 +122,11 @@ void init_stepper(){
 
   // TODO: rename this to zstepper
 
-  xstepper.config.channel = RMT_CHANNEL_0;
-  xstepper.config.stepPin = GPIO_NUM_13;
-  xstepper.config.dirPin = GPIO_NUM_12;
+  zstepper.config.channel = RMT_CHANNEL_0;
+  zstepper.config.stepPin = GPIO_NUM_13;
+  zstepper.config.dirPin = GPIO_NUM_12;
 
-  xstepper.init();
+  zstepper.init();
 
 
 }

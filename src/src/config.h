@@ -161,7 +161,7 @@ extern volatile int exDelta;
 extern uint8_t statusCounter;
 extern volatile bool pos_feeding;
 extern float encoder_factor;
-extern struct rmtStepper::State xstepper;
+extern struct rmtStepper::State zstepper;
 extern double mmPerStep;
 extern float oldPitch;
 extern class Log::Msg el;

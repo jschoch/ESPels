@@ -100,11 +100,10 @@ void setRunMode(int mode){
 
 void sendConfig(){
   size_t len2 = serializeJson(doc, outBuffer);  
-    // send it! 
-  Serial.print("sending config: ");
-  Serial.println(outBuffer);
+  //Serial.print("sending config: ");
+  //Serial.println(outBuffer);
+  // send it! 
   ws.textAll(outBuffer,len2);
-
 }
 
 void sendLogP(Log::Msg *msg){
@@ -123,8 +122,6 @@ void sendStatus(){
 }
 
 void parseObj(String msg){
-  //const size_t capacity = JSON_OBJECT_SIZE(2) + 10;
-  //DynamicJsonDocument buf(capacity);
   DeserializationError error = deserializeJson(inDoc, msg);
   if (error) {
     Serial.print(F("deserializeJson() failed: "));
@@ -144,32 +141,19 @@ void parseObj(String msg){
   // Fake encoder commands
   }else if(strcmp(cmd,"debug") ==0){
     int t = inDoc["dir"];
-    /*
-    Serial.print(" got: ");
-    Serial.println(t);
-    */
     if(t ==1){
       encoder.setCount(encoder.pulse_counter+ 2400);
     }else if (t == 0){
       encoder.setCount(encoder.pulse_counter- 2400);
     }else if( t==2){
+      encoder.dir = true;
       encoder.setCount((encoder.pulse_counter+ 1));
     }else if (t == 3){
+      encoder.dir = false;
       encoder.setCount((encoder.pulse_counter - 1));
     }
-    /*
-    Serial.print("enc now: ");
-    Serial.println((int)encoder.pulse_counter);
-    Serial.print(xstepper.gear.jumps.next);
-    Serial.print(", prev ");
-    Serial.print(xstepper.gear.jumps.prev);
-    Serial.print(", last ");
-    Serial.print(xstepper.gear.jumps.last);
-    Serial.print(", toolMM");
-    Serial.println(toolRelPosMM);
-    Serial.printf("fz: %d  fccw: %d sd: %d prevEnc: %lli \n",z_feeding_dir,feeding_ccw,xstepper.dir, encoder.prev_pulse_counter);
-    */
 
+    Serial.printf("fccw: %d  fz: %d sd: %d encDir: %i \n",feeding_ccw,z_feeding_dir,zstepper.dir, encoder.dir);
 
   //  JOG COMMANDS
   }else if(strcmp(cmd,"jogcancel") == 0){
@@ -214,6 +198,7 @@ void parseObj(String msg){
           z_feeding_dir = false;
           stopNeg = toolRelPosMM + jog_mm;
           stopPos = toolRelPosMM;
+          zstepper.setDir(false);
           if(feeding_ccw){
             encoder.prev_pulse_counter = encoder.pulse_counter - 1;
           }else{
@@ -223,6 +208,7 @@ void parseObj(String msg){
           z_feeding_dir = true;
           stopPos = targetToolRelPosMM;
           stopNeg = toolRelPosMM;
+          zstepper.setDir(true);
           if(feeding_ccw){
             encoder.prev_pulse_counter = encoder.pulse_counter + 1;
           }else{
@@ -252,8 +238,6 @@ void parseObj(String msg){
     Serial.println(p);
     if(p != pitch){
       Serial.println("new pitch");
-
-      //doc["pitch"] = p;
       oldPitch = pitch;
       pitch = p;
       setFactor();
@@ -299,11 +283,11 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
     AwsFrameInfo * info = (AwsFrameInfo*)arg;
     /*
     Serial.print("Data received: ");
- 
     for(int i=0; i < len; i++) {
           Serial.print((char) data[i]);
     }
     */
+
     if(info->final && info->index == 0 && info->len == len){
 
       if(info->opcode == WS_TEXT){
@@ -312,7 +296,6 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
       }
     }
  
-    Serial.println();
   }
 }
 void init_web(){
@@ -340,16 +323,9 @@ void init_web(){
   MDNS.addService("http", "tcp", 80);
   ws.onEvent(onWsEvent);
   server.addHandler(&ws);
-
-
-
-  
-
   server.begin();
   Serial.println("HTTP websocket server started");
-
   updateConfigDoc();
-
   init_ota();
 }
 

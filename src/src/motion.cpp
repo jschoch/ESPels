@@ -2,18 +2,12 @@
 #include "motion.h"
 #include "config.h"
 
-
-
-hw_timer_t * timer2 = NULL;
-volatile SemaphoreHandle_t timer2Semaphore;
-portMUX_TYPE timer2Mux = portMUX_INITIALIZER_UNLOCKED;
-int timer2tics = 10;
 double mmPerStep = 0;
 volatile double targetToolRelPosMM = 0.0;
 volatile double toolRelPosMM = 0;
 volatile int64_t thetimes = 0;
 volatile int badTicks = 0;
-char err[100] = "";
+char err[200] = "";
 
 
 // TODO this should be set via gui or btns
@@ -24,53 +18,62 @@ int perfCount = 0;
 
 void init_pos_feed(){
   if(!pos_feeding){
-    xstepper.gear.is_setting_dir = false;
-    xstepper.gear.calc_jumps(encoder.getCount(),xstepper.dir);
-    xstepper.gear.jumps.last = xstepper.gear.jumps.prev;
-    /*
-    Serial.print(" jumps: ");
-    Serial.print(xstepper.gear.jumps.next);
-    Serial.print(" prev: ");
-    Serial.println(xstepper.gear.jumps.prev);
-    */
-    // TODO:  DRO object attached to the stepper to track stops and positions?
+    zstepper.gear.is_setting_dir = false;
+    zstepper.gear.calc_jumps(encoder.getCount(),true);
+    zstepper.gear.jumps.last = zstepper.gear.jumps.prev;
     pos_feeding = true;
   }else{
-  //Serial.println("already pos feeding cant' start new feeding");
   el.error("already started pos_feeding, can't do it again");
   }
 }
 
 void stepPos(){
-  xstepper.step();
+  zstepper.step();
   toolPos++;
   toolRelPos++;
   toolRelPosMM += mmPerStep;
 }
 void stepNeg(){
-  xstepper.step();
+  zstepper.step();
   toolPos--;
   toolRelPos--;
   toolRelPosMM -= mmPerStep;
+}
+
+void waitForDir(){
+  if(zstepper.gear.is_setting_dir){
+    while(zstepper.gear.is_setting_dir && ((zstepper.dir_change_timer + 5) - esp_timer_get_time() > 0)){
+        zstepper.gear.is_setting_dir = false;
+        if(!zstepper.dir){
+          // reset stuff for dir changes guard against swapping when we just moved
+          if(zstepper.gear.jumps.last < encoder.pulse_counter){
+            zstepper.gear.jumps.prev = zstepper.gear.jumps.last;
+            zstepper.gear.jumps.last = zstepper.gear.jumps.next;
+          }
+
+        }else{
+          // reset stuff for dir changes
+          if(zstepper.gear.jumps.last  > encoder.pulse_counter){
+            zstepper.gear.jumps.next = zstepper.gear.jumps.last;
+            zstepper.gear.jumps.last = zstepper.gear.jumps.prev;
+          }
+        }
+    }
+  }
 }
 
 void do_pos_feeding(){
 
     // Sanity check
     //  make sure we are not getting a huge jump in encoder values
-    if(encoder.pulse_counter == encoder.prev_pulse_counter){
-      //Serial.println("IMPOSSIBLE");
-      encoder.prev_pulse_counter = encoder.prev_pulse_counter;
-      return;
-    }
 
-    if(encoder.pulse_counter > xstepper.gear.jumps.next+1 || encoder.pulse_counter < xstepper.gear.jumps.prev -1){
+    if(encoder.pulse_counter > zstepper.gear.jumps.next+1 || encoder.pulse_counter < zstepper.gear.jumps.prev -1){
       sprintf(err,"Tool outside expected range.  prevEnc %lld encPos: %lld next: %i  pos %i dirChang? %i",
         encoder.prev_pulse_counter,
         encoder.pulse_counter,
-        xstepper.gear.jumps.next,
-        xstepper.gear.jumps.prev,
-        xstepper.gear.is_setting_dir);
+        zstepper.gear.jumps.next,
+        zstepper.gear.jumps.prev,
+        zstepper.gear.is_setting_dir);
       el.addMsg(err);
       el.hasError = true;
       pos_feeding = false;
@@ -79,107 +82,66 @@ void do_pos_feeding(){
 
     // Deal with direction changes
     // Encoder decrementing
-    if((encoder.pulse_counter < encoder.prev_pulse_counter) && !xstepper.gear.is_setting_dir){ // dir neg and not pausing for the direction change
-      if(feeding_ccw && z_feeding_dir && xstepper.dir){
-        xstepper.setDir(false);
-        return;
-      }else if(feeding_ccw && !z_feeding_dir && !xstepper.dir){
-        xstepper.setDir(true);
-        return;
-      }else if(!feeding_ccw && !z_feeding_dir && !xstepper.dir){
-        xstepper.setDir(true);
-        return;
-      }else if(!feeding_ccw && z_feeding_dir && xstepper.dir){
-        xstepper.setDir(false);
-        return;
-      }
-    }
-
-    // encoder incrementing
-    if((encoder.pulse_counter > encoder.prev_pulse_counter) && !xstepper.gear.is_setting_dir){   //
-      if(feeding_ccw && z_feeding_dir && !xstepper.dir){
-        xstepper.setDir(true);
-        return;
-      }else if(feeding_ccw && !z_feeding_dir && xstepper.dir){
-        xstepper.setDir(false);
-        return;
-      }else if(!feeding_ccw && !z_feeding_dir && xstepper.dir){
-        xstepper.setDir(false);
-        return;
-      }else if(!feeding_ccw && z_feeding_dir && !xstepper.dir){
-        xstepper.setDir(true);
-        return;
-      }
-      //xstepper.setDir(true);
-    }
-
-
-      // Skip a timer tick if we have changed direction
-      if(xstepper.gear.is_setting_dir){
-        xstepper.gear.is_setting_dir = false;
-        if(!xstepper.dir){
-          // reset stuff for dir changes guard against swapping when we just moved
-          if(xstepper.gear.jumps.last < encoder.pulse_counter){
-            xstepper.gear.jumps.prev = xstepper.gear.jumps.last;
-            xstepper.gear.jumps.last = xstepper.gear.jumps.next;
-          }
-
-        }else{
-          // reset stuff for dir changes
-          if(xstepper.gear.jumps.last  > encoder.pulse_counter){
-            xstepper.gear.jumps.next = xstepper.gear.jumps.last;
-            xstepper.gear.jumps.last = xstepper.gear.jumps.prev;
-          }
-        }
-        return;
+    if(!encoder.dir){ // dir neg and not pausing for the direction change
+      if(feeding_ccw && z_feeding_dir && zstepper.dir){
+        zstepper.setDir(false);
+      }else if(feeding_ccw && !z_feeding_dir && !zstepper.dir){
+        zstepper.setDir(true);
       }
       
-      // evaluate done?
+      // reverse spindle case 
+      else if(!feeding_ccw && !z_feeding_dir && zstepper.dir){
+        zstepper.setDir(false);
+      }else if(!feeding_ccw && z_feeding_dir && !zstepper.dir){
+        zstepper.setDir(true);
+      }
+      waitForDir();
+    }else {
 
+    // encoder incrementing
+    //if((encoder.dir) && !zstepper.gear.is_setting_dir){   //
+      if(feeding_ccw && z_feeding_dir && !zstepper.dir){
+        zstepper.setDir(true);
+      }else if(feeding_ccw && !z_feeding_dir && zstepper.dir){
+        zstepper.setDir(false);
+      }
+      
+     // reverse spindle case 
+      else if(!feeding_ccw && !z_feeding_dir && !zstepper.dir){
+        zstepper.setDir(true);
+      }else if(!feeding_ccw && z_feeding_dir && zstepper.dir){
+        zstepper.setDir(false);
+      }
+      waitForDir();  
+    }
 
       // calculate jumps and delta
 
-      // TODO: make next/prev relative to starting position so they don't have to be int64_t
-      //  Encoder increasing case
-      //if(encoder.pulse_counter== xstepper.gear.jumps.next ){
-      if((encoder.pulse_counter == xstepper.gear.jumps.next) || (encoder.pulse_counter== xstepper.gear.jumps.prev)){
-        xstepper.gear.calc_jumps(encoder.pulse_counter,true);
-        //xstepper.gear.calc_jumps(encoder.pulse_counter,feeding_ccw);
-        if(feeding_ccw && z_feeding_dir ){
+      //if(encoder.pulse_counter== zstepper.gear.jumps.next ){
+      if((encoder.pulse_counter == zstepper.gear.jumps.next) || (encoder.pulse_counter== zstepper.gear.jumps.prev)){
+        zstepper.gear.calc_jumps(encoder.pulse_counter,true);
+
+        if(zstepper.dir){
           stepPos();
-        }else if(!feeding_ccw && !z_feeding_dir){
+        }else{
           stepNeg();
-       }else if(!feeding_ccw && z_feeding_dir){
-         stepPos();
-       }else{
-         stepNeg();
-       }
+        }
       }
 
 
       /*
       // Encoder decreasing
-      if(encoder.pulse_counter == xstepper.gear.jumps.prev){
-        xstepper.gear.calc_jumps(encoder.pulse_counter,true);
-          if(z_feeding_dir){
-            stepPos();
-          }else{
-            stepNeg();
-          }
+      if(encoder.pulse_counter == zstepper.gear.jumps.prev){
+        zstepper.gear.calc_jumps(encoder.pulse_counter,true);
      }
       */
 
       // evaluate stops, no motion if motion would exceed stops
 
-      // handle feeding_dir
-
-      // handle dir change
-
-      // evaluate done?
       if (z_feeding_dir == true && toolRelPosMM >= targetToolRelPosMM){
       
         // TODO: need to tell everything we are done e.g move the lever to neutral!
-        // popup here is annoying
+        // popup here is annoying maybe log a msg
         //el.error("Tool reached target");
         //el.addMsg("Tool reached Pos target");
         //el.hasError = true;
@@ -188,8 +150,6 @@ void do_pos_feeding(){
       }
       if(z_feeding_dir == false && toolRelPosMM <= targetToolRelPosMM){
         // TODO: need to tell everything we are done e.g move the lever to neutral!
-
-
         // popup annoying
         //el.addMsg("Tool reached Neg target");
         //el.hasError = true;
@@ -198,8 +158,6 @@ void do_pos_feeding(){
       }
 
       if(toolRelPosMM < stopNeg){
-        //Log.error();
-        //el.error("Tool past stopNeg: HALT");
         el.addMsg("Tool past stopNeg: HALT");
         el.hasError = true;
         pos_feeding = false;

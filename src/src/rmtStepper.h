@@ -20,10 +20,9 @@ namespace rmtStepper {
         int pos = 0;
         Config config;
         rmt_item32_t items[2];
-
         rmt_config_t rconfig;
-
         gear::State gear;
+        int64_t dir_change_timer;
 
         void step(){
             RMT.conf_ch[RMT_CHANNEL_0].conf1.mem_rd_rst = 1;
@@ -40,12 +39,18 @@ namespace rmtStepper {
                 // XOR the dir for the inversion bool
                 gear.is_setting_dir = true;
 
-                // TODO need a delay here per dir setup spec
+                // TODO need  to be able to invert
                 //digitalWrite(config.dirPin, newdir ^ config.invert_step_pin);
                 digitalWrite(config.dirPin, newdir);
                 dir = newdir;
+                dir_change_timer = esp_timer_get_time();
             }
             return olddir == newdir;
+        }
+
+        void setDir(bool newdir,bool now){
+            digitalWrite(config.dirPin, newdir);
+            dir = newdir;
         }
 
         void init(){

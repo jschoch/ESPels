@@ -46,7 +46,8 @@ void Encoder::handleB() {
     case Quadrature::ON:
   //     // CPR = 4xPPR
       if ( B != B_active ) {
-        pulse_counter += (A_active != B_active) ? 1 : -1;
+        dir = (A_active != B_active);
+        pulse_counter += dir ? 1 : -1;
         pulse_timestamp = esp_timer_get_time();// _micros();
         B_active = B;
         processMotion();
@@ -56,6 +57,7 @@ void Encoder::handleB() {
       // CPR = PPR
       if(B && !digitalRead(pinA)){
         pulse_counter--;
+        dir = false;
         pulse_timestamp =  esp_timer_get_time();//_micros();
         processMotion();
       }
@@ -71,7 +73,8 @@ void Encoder::handleA() {
     case Quadrature::ON:
       // CPR = 4xPPR
       if ( A != A_active ) {
-        pulse_counter += (A_active == B_active) ? 1 : -1;
+        dir = (A_active == B_active);
+        pulse_counter += dir ? 1 : -1;
         pulse_timestamp = esp_timer_get_time();// _micros();
         A_active = A;
         processMotion();
@@ -81,6 +84,7 @@ void Encoder::handleA() {
       // CPR = PPR
       if(A && !digitalRead(pinB)){
         pulse_counter++;
+        dir = true;
         pulse_timestamp = esp_timer_get_time();//_micros();
         processMotion();
       }
@@ -145,6 +149,7 @@ void Encoder::init(){
   pulse_per_second = 0;
   prev_pulse_counter = -1;
   prev_timestamp_us = esp_timer_get_time();//_micros();
+  dir = true;
 
   // initial cpr = PPR
   // change it if the mode is quadrature

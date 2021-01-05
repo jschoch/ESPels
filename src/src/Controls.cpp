@@ -344,7 +344,7 @@ void setFactor(){
   int nom = motor_steps * pitch;
 
   Serial.printf("nom: %d den: %d",nom,den);
-    if (!xstepper.gear.setRatio(nom,den)){
+    if (!zstepper.gear.setRatio(nom,den)){
       // TODO:  send error to GUI
       //Serial.println(" ratio no good!!!!  too big!!!!");
       sprintf(el.buf,"Bad Ratio: Den: %d Nom: %d\n",nom,den);
