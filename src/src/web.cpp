@@ -26,6 +26,8 @@ char outBuffer[450];
 RunMode run_mode = RunMode::STARTUP;
 uint8_t statusCounter = 0;
 
+double jogAbs = 0;
+
 void updateStatusDoc(){
   statusDoc["p"] = toolRelPos;
   statusDoc["pmm"] = toolRelPosMM;
@@ -74,6 +76,7 @@ void updateConfigDoc(){
   doc["jm"] = jog_mm;
   doc["sc"] = jog_scaler;
   doc["f"] = feeding_ccw;
+  doc["ja"] = jogAbs;
 
   sendConfig();
   // this needs a timer to send on interval
@@ -121,46 +124,45 @@ void sendStatus(){
 
 }
 
-void parseObj(String msg){
-  DeserializationError error = deserializeJson(inDoc, msg);
-  if (error) {
-    Serial.print(F("deserializeJson() failed: "));
-    Serial.println(error.f_str());
-    return;
-  }
-  
-  const char * cmd = inDoc["cmd"];
-
-  if(strcmp(cmd,"fetch") == 0){
-    // regenerate config and send it along
-
-    Serial.println("fetch received: sending config");
-    //sendConfig();    
-    updateConfigDoc();
-    
-  // Fake encoder commands
-  }else if(strcmp(cmd,"debug") ==0){
-    int t = inDoc["dir"];
-    if(t ==1){
-      encoder.setCount(encoder.pulse_counter+ 2400);
-    }else if (t == 0){
-      encoder.setCount(encoder.pulse_counter- 2400);
-    }else if( t==2){
-      encoder.dir = true;
-      encoder.setCount((encoder.pulse_counter+ 1));
-    }else if (t == 3){
-      encoder.dir = false;
-      encoder.setCount((encoder.pulse_counter - 1));
+void handleJogAbs(){
+  JsonObject config = inDoc["config"];
+  jogAbs = config["ja"];
+  targetToolRelPosMM = jogAbs;
+  if(!jogging){
+    Serial.println(jogAbs);
+    if(config["f"]){
+      if((toolRelPosMM - jogAbs) < 0 ){
+        z_feeding_dir = true;
+        stopPos = jogAbs;
+        stopNeg = toolRelPosMM;
+        zstepper.setDir(true);
+      }
+      else{
+        z_feeding_dir = false;
+        stopNeg = jogAbs;
+        stopPos = toolRelPosMM;
+      }
+    }else{
+      if((toolRelPosMM - jogAbs) > 0 ){
+        z_feeding_dir = true;
+        stopPos = jogAbs;
+        stopNeg = toolRelPosMM;
+        zstepper.setDir(true);
+      }
+      else{
+        z_feeding_dir = false;
+        stopNeg = jogAbs;
+        stopPos = toolRelPosMM;
+      }
     }
+    init_pos_feed();
+    updateStatusDoc();
+    btn_yasm.next(slaveJogPosState);
+  }
+}
 
-    Serial.printf("fccw: %d  fz: %d sd: %d encDir: %i \n",feeding_ccw,z_feeding_dir,zstepper.dir, encoder.dir);
-
-  //  JOG COMMANDS
-  }else if(strcmp(cmd,"jogcancel") == 0){
-    // TODO wheat cleanup needs to be done?
-    pos_feeding = false;  
-  }else if(strcmp(cmd,"jog") == 0){
-    Serial.println("got jog command");
+void handleJog(){
+  Serial.println("got jog command");
     if(run_mode == RunMode::DEBUG_READY){
       JsonObject config = inDoc["config"];
       jog_mm = config["jm"].as<float>();
@@ -230,6 +232,50 @@ void parseObj(String msg){
       //Serial.println("can't jog, failed mode check");
       el.error("can't jog, no jogging mode is set ");
     }
+}
+
+void parseObj(String msg){
+  DeserializationError error = deserializeJson(inDoc, msg);
+  if (error) {
+    Serial.print(F("deserializeJson() failed: "));
+    Serial.println(error.f_str());
+    return;
+  }
+  
+  const char * cmd = inDoc["cmd"];
+
+  if(strcmp(cmd,"fetch") == 0){
+    // regenerate config and send it along
+
+    Serial.println("fetch received: sending config");
+    //sendConfig();    
+    updateConfigDoc();
+    
+  // Fake encoder commands
+  }else if(strcmp(cmd,"debug") ==0){
+    int t = inDoc["dir"];
+    if(t ==1){
+      encoder.setCount(encoder.pulse_counter+ 2400);
+    }else if (t == 0){
+      encoder.setCount(encoder.pulse_counter- 2400);
+    }else if( t==2){
+      encoder.dir = true;
+      encoder.setCount((encoder.pulse_counter+ 1));
+    }else if (t == 3){
+      encoder.dir = false;
+      encoder.setCount((encoder.pulse_counter - 1));
+    }
+
+    //Serial.printf("fccw: %d  fz: %d sd: %d encDir: %i \n",feeding_ccw,z_feeding_dir,zstepper.dir, encoder.dir);
+
+  //  JOG COMMANDS
+  }else if(strcmp(cmd,"jogcancel") == 0){
+    // TODO wheat cleanup needs to be done?
+    pos_feeding = false;  
+  }else if(strcmp(cmd,"jogAbs") == 0){
+    handleJogAbs();  
+  }else if(strcmp(cmd,"jog") == 0){
+    handleJog();
   }else if(strcmp(cmd,"send") == 0){
     JsonObject config = inDoc["config"];
     Serial.println("getting config");
