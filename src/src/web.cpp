@@ -53,6 +53,7 @@ void updateStatusDoc(){
   statusDoc["f"] = factor;
   statusDoc["cmd"] = "status";
   statusDoc["fd"] = z_feeding_dir;
+  statusDoc["sw"] = syncWaiting;
   sendStatus();
 }
 
@@ -77,6 +78,7 @@ void updateConfigDoc(){
   doc["sc"] = jog_scaler;
   doc["f"] = feeding_ccw;
   doc["ja"] = jogAbs;
+  doc["s"] = syncStart;
 
   sendConfig();
   // this needs a timer to send on interval
@@ -127,6 +129,7 @@ void sendStatus(){
 void handleJogAbs(){
   JsonObject config = inDoc["config"];
   jogAbs = config["ja"];
+  syncStart = config["s"];
   targetToolRelPosMM = jogAbs;
   if(!jogging){
     Serial.println(jogAbs);
@@ -163,6 +166,7 @@ void handleJogAbs(){
 
 void handleJog(){
   Serial.println("got jog command");
+    /*  TODO  needs refactor
     if(run_mode == RunMode::DEBUG_READY){
       JsonObject config = inDoc["config"];
       jog_mm = config["jm"].as<float>();
@@ -182,6 +186,9 @@ void handleJog(){
         jogging = true;
       }
     }else if(run_mode == RunMode::SLAVE_JOG_READY){
+    */
+
+    if(run_mode == RunMode::SLAVE_JOG_READY){
       JsonObject config = inDoc["config"];
       jog_mm = config["jm"].as<float>();
       /*
@@ -201,21 +208,11 @@ void handleJog(){
           stopNeg = toolRelPosMM + jog_mm;
           stopPos = toolRelPosMM;
           zstepper.setDir(false);
-          if(feeding_ccw){
-            encoder.prev_pulse_counter = encoder.pulse_counter - 1;
-          }else{
-            encoder.prev_pulse_counter = encoder.pulse_counter + 1;
-          }
        }else{
           z_feeding_dir = true;
           stopPos = targetToolRelPosMM;
           stopNeg = toolRelPosMM;
           zstepper.setDir(true);
-          if(feeding_ccw){
-            encoder.prev_pulse_counter = encoder.pulse_counter + 1;
-          }else{
-            encoder.prev_pulse_counter = encoder.pulse_counter - 1;
-          }
         }
         //Serial.print("updated targetToolRelPos");
         //Serial.println(targetToolRelPos);

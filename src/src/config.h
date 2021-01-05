@@ -165,5 +165,7 @@ extern struct rmtStepper::State zstepper;
 extern double mmPerStep;
 extern float oldPitch;
 extern class Log::Msg el;
+extern bool syncStart;
+extern bool syncWaiting;
 
 #endif

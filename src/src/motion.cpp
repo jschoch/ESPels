@@ -8,6 +8,8 @@ volatile double toolRelPosMM = 0;
 volatile int64_t thetimes = 0;
 volatile int badTicks = 0;
 char err[200] = "";
+bool syncStart = true;
+bool syncWaiting = false;
 
 
 // TODO this should be set via gui or btns
@@ -16,12 +18,39 @@ volatile bool tick = false;
 
 int perfCount = 0;
 
-void init_pos_feed(){
-  if(!pos_feeding){
+void init_gear(){
     zstepper.gear.is_setting_dir = false;
     zstepper.gear.calc_jumps(encoder.getCount(),true);
     zstepper.gear.jumps.last = zstepper.gear.jumps.prev;
-    pos_feeding = true;
+
+
+}
+
+void waitForSyncStart(void * param){
+  while(encoder.pulse_counter % encoder.start != 0){
+    // this may be too slow
+    vTaskDelay(1);
+  }
+  init_gear();
+  pos_feeding = true;
+  syncWaiting = false;
+  updateStatusDoc();
+  vTaskDelete(NULL);
+}
+
+
+void init_pos_feed(){
+  if(!pos_feeding){
+    
+    //wait for the start to come around
+    if(syncStart){
+      syncWaiting = true;
+      xTaskCreate(waitForSyncStart,"syncTask",2048,NULL, 2,NULL);
+    }
+    else{
+      init_gear();
+       pos_feeding = true;
+    }
   }else{
   el.error("already started pos_feeding, can't do it again");
   }
@@ -68,8 +97,7 @@ void do_pos_feeding(){
     //  make sure we are not getting a huge jump in encoder values
 
     if(encoder.pulse_counter > zstepper.gear.jumps.next+1 || encoder.pulse_counter < zstepper.gear.jumps.prev -1){
-      sprintf(err,"Tool outside expected range.  prevEnc %lld encPos: %lld next: %i  pos %i dirChang? %i",
-        encoder.prev_pulse_counter,
+      sprintf(err,"Tool outside expected range.  encPos: %lld next: %i  pos %i dirChang? %i",
         encoder.pulse_counter,
         zstepper.gear.jumps.next,
         zstepper.gear.jumps.prev,
@@ -202,7 +230,6 @@ void IRAM_ATTR processMotion(){
       el.hasError = false;
     }
 
-  encoder.prev_pulse_counter = encoder.pulse_counter;
 }
 
 

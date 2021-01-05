@@ -69,6 +69,7 @@ class Encoder {
     volatile int64_t pulse_counter;
     volatile int64_t prev_pulse_counter;
     volatile bool dir;
+    volatile int start;
 
 private:
     //!< current pulse counter

@@ -154,6 +154,7 @@ void Encoder::init(){
   // initial cpr = PPR
   // change it if the mode is quadrature
   if(quadrature == Quadrature::ON) cpr = 4*cpr;
+  start = cpr;
 
 }
 
