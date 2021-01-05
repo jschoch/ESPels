@@ -26,6 +26,8 @@ void init_gear(){
 
 }
 
+
+// this was too slow
 void waitForSyncStart(void * param){
   while(encoder.pulse_counter % encoder.start != 0){
     // this may be too slow
@@ -45,7 +47,8 @@ void init_pos_feed(){
     //wait for the start to come around
     if(syncStart){
       syncWaiting = true;
-      xTaskCreate(waitForSyncStart,"syncTask",2048,NULL, 2,NULL);
+      //xTaskCreate(waitForSyncStart,"syncTask",2048,NULL, 2,NULL);
+      pos_feeding = true;
     }
     else{
       init_gear();
@@ -205,7 +208,14 @@ void do_pos_feeding(){
 void IRAM_ATTR processMotion(){
 
   //int64_t startTime = esp_timer_get_time();
-    if(pos_feeding){
+  if(syncWaiting && pos_feeding){
+    if(encoder.pulse_counter % encoder.start == 0){
+      syncWaiting = false;
+      init_gear();
+      do_pos_feeding();
+    }
+  }
+  else if(pos_feeding){
       do_pos_feeding();
     }
     
