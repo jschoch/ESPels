@@ -2,6 +2,7 @@
 
 #include "config.h"
 #include <driver/rmt.h>
+#include "gear.h"
 
 
 namespace rmtStepper {
@@ -12,15 +13,16 @@ namespace rmtStepper {
         bool invert_step_pin = false;
     };
 
+    
 
     struct State {
-        bool dir = false;
+        volatile bool dir = true;
         int pos = 0;
         Config config;
         rmt_item32_t items[2];
-    
-
         rmt_config_t rconfig;
+        gear::State gear;
+        int64_t dir_change_timer;
 
         void step(){
             RMT.conf_ch[RMT_CHANNEL_0].conf1.mem_rd_rst = 1;
@@ -32,11 +34,23 @@ namespace rmtStepper {
             }
         }
         bool setDir(bool newdir){
+            bool olddir = dir;
             if(dir != newdir){
+                // XOR the dir for the inversion bool
+                gear.is_setting_dir = true;
+
+                // TODO need  to be able to invert
+                //digitalWrite(config.dirPin, newdir ^ config.invert_step_pin);
                 digitalWrite(config.dirPin, newdir);
                 dir = newdir;
+                dir_change_timer = esp_timer_get_time();
             }
-            return dir;
+            return olddir == newdir;
+        }
+
+        void setDir(bool newdir,bool now){
+            digitalWrite(config.dirPin, newdir);
+            dir = newdir;
         }
 
         void init(){
@@ -65,7 +79,7 @@ namespace rmtStepper {
 
             rmt_config(&rconfig);
             rmt_fill_tx_items(rconfig.channel, &items[0], rconfig.mem_block_num, 0);
-
+            digitalWrite(config.dirPin,dir);
         }
     };
 }

@@ -5,10 +5,10 @@
 #define _CONFIG_H
 
 #define ARDUINOJSON_USE_LONG_LONG 1
-
+#define ARDUINOJSON_USE_DOUBLE 1
 
 #include <Arduino.h>
-#include <ESP32Encoder.h>
+//#include <ESP32Encoder.h>
 
 #include "neotimer.h"
 #include "util.h"
@@ -19,6 +19,10 @@
 #include "Encoder.h"
 #include "motion.h"
 #include "freertos/task.h"
+//#include "log.h"
+namespace Log{
+    class Msg;
+};
 #include "web.h"
 #include "Vector.h"
 #include "SlaveMode.h"
@@ -28,6 +32,8 @@
 #include "myperfmon.h"
 //#include "gear.h"
 #include "rmtStepper.h"
+#include "log.h"
+
 
 
 // Encoder pins
@@ -89,7 +95,7 @@ extern volatile int32_t left_limit;
 extern uint8_t menu ; 
 
 extern volatile int64_t toolPos;
-extern volatile uint8_t err;
+//extern volatile uint8_t err;
 
  
 extern int spindle_encoder_resolution;   // the number of pulses per revolution of the spindle encoder
@@ -106,9 +112,11 @@ extern const char* DISPLAY_MODE [];
 extern volatile bool z_moving;
 extern volatile bool z_pause;
 extern volatile int delay_ticks;
-extern ESP32Encoder encoder;
+//extern ESP32Encoder encoder;
+extern class Encoder encoder;
 extern volatile bool feeding;
-extern volatile bool feeding_dir;
+extern volatile bool z_feeding_dir;
+extern volatile bool feeding_ccw;
 //extern class BtnState btnState;
 extern int rpm;
 extern float rapids;
@@ -138,12 +146,13 @@ extern RunMode run_mode;
 extern float jog_mm;
 extern volatile float jog_scaler;
 extern volatile double toolRelPos;
-extern double toolRelPosMM;
-extern double targetToolRelPos;
+extern volatile double toolRelPosMM;
+extern volatile double targetToolRelPos;
+extern volatile double targetToolRelPosMM;
 extern int virtEncoderCount;
 extern volatile bool useStops;
-extern volatile int stopPos;
-extern volatile int stopNeg;
+extern volatile double stopPos;
+extern volatile double stopNeg;
 extern volatile bool stopPosEx;
 extern volatile bool stopNegEx;
 extern int8_t cpu0;
@@ -152,6 +161,11 @@ extern volatile int exDelta;
 extern uint8_t statusCounter;
 extern volatile bool pos_feeding;
 extern float encoder_factor;
-extern struct rmtStepper::State xstepper;
+extern struct rmtStepper::State zstepper;
+extern double mmPerStep;
+extern float oldPitch;
+extern class Log::Msg el;
+extern bool syncStart;
+extern bool syncWaiting;
 
 #endif

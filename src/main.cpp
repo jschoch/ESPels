@@ -24,6 +24,8 @@ void setup() {
 
   init_stepper();
 
+  init_motion();
+
   init_machine();
 
   // setup buttons
@@ -50,22 +52,9 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-   // TODO: why is this run so frequently?
-  
-
-  // calculate how far to move
-  calcDelta();  
-
-  
   do_display();
   
   do_web();
-  //????
-  // update factor 
-  //if(factor_timer.repeat()){
-    //setFactor();
-  //}
 
   // read controls
   read_buttons();

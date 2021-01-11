@@ -14,3 +14,4 @@ void updateConfigDoc();
 void updateStatusDoc();
 void sendConfig();
 void sendStatus();
+void sendLogP(Log::Msg *msg);

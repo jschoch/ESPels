@@ -12,14 +12,14 @@
 
 Neotimer button_read_timer = Neotimer(10);
 Neotimer button_print_timer = Neotimer(2000);
-Neotimer dro_timer = Neotimer(200);
-
+Neotimer dro_timer = Neotimer(400);
+Log::Msg el;
 
 
 uint8_t menu = 3; 
 int pitch_menu= 1;
 volatile bool feeding = false;
-volatile bool feeding_dir = true;
+volatile bool z_feeding_dir = true;
 
 
 
@@ -37,6 +37,7 @@ char stats[ 2048];
 #endif
 
 YASM btn_yasm;
+
 
 enum class BtnState{
   Startup,
@@ -129,12 +130,8 @@ void init_controls(){
   Serial.println(display_mode);
 }
 
-void resetToolPos(){
-  toolPos = factor * encoder.getCount();
-}
 
 void debugButtons(){
-  updatePosition();
   for(int i = 0; i < NUM_BUTTONS;i++){
     Bd bd = bdata[i];
     
@@ -182,12 +179,11 @@ void read_buttons(){
     Serial.println(jog_done);
     */
     Serial.print("%");
-    xstepper.step();
     updateStatusDoc();
 
   }
   if(dro_timer.repeat()){
-    updatePosition();
+    updateStatusDoc();
   }
      
 }
@@ -243,6 +239,7 @@ void startupState(){
 void slaveJogReadyState(){
   if(btn_yasm.isFirstRun()){
     updateMode(READY,RunMode::SLAVE_JOG_READY);
+    setFactor();
     web = true;
   }
   if(lbd.deb->rose()){
@@ -271,7 +268,6 @@ void slaveJogPosState(){
   }
   if(sbd.deb->rose() || feeding == false){
     Serial.println("start slave jog to position");
-    updatePosition();
     btn_yasm.next(slaveJogReadyState);
   }
 
@@ -287,8 +283,8 @@ void slaveJogStatusState(){
   if(lbd.deb->fell()){
     Serial.println("status -> feeding left");
     // TODO: sync to spindle rotation
-    resetToolPos();
-    feeding_dir = true;
+    //resetToolPos();
+    z_feeding_dir = true;
     feeding = true;
     
     btn_yasm.next(feedingState);
@@ -296,8 +292,8 @@ void slaveJogStatusState(){
   }
   if(rbd.deb->fell()){
     Serial.println("status -> feeding right");
-    resetToolPos();
-    feeding_dir = false;
+    //resetToolPos();
+    z_feeding_dir = false;
 
     feeding = true;
 
@@ -339,17 +335,28 @@ void feedingState(){
 }
 
 void setFactor(){
-  //if(menu<4){
-    factor= (motor_steps*pitch)/(lead_screw_pitch*spindle_encoder_resolution);            
-    // TODO:  this needs some careful thought
-    // it currently resets toolPos for slave jog mode, not sure if it works for slave mode.
-    // it is unclear what happens as the spindle encoder ticks on
 
-    // TODO: should this be done here or elsewhere?
-    //toolPos = factor * encoder.getCount();
-  //}
+  // TODO: timer refactor  get rid of factor and all related code
+  //factor= (motor_steps*pitch)/(lead_screw_pitch*spindle_encoder_resolution);            
   stepsPerMM = motor_steps / lead_screw_pitch;
-  updatePosition();
+  mmPerStep = (double) 1/stepsPerMM;
+  int den = lead_screw_pitch * spindle_encoder_resolution ;
+  int nom = motor_steps * pitch;
+
+  Serial.printf("nom: %d den: %d",nom,den);
+    if (!zstepper.gear.setRatio(nom,den)){
+      // TODO:  send error to GUI
+      //Serial.println(" ratio no good!!!!  too big!!!!");
+      sprintf(el.buf,"Bad Ratio: Den: %d Nom: %d\n",nom,den);
+      el.error();
+      //Log::send(m);
+      //sendLog(m);
+      pitch = oldPitch;
+      //pos_feeding = false;
+      //btn_yasm.next(startupState);
+      return;
+    }
+
   /*   TODO: add back imperial threads
   else
     {
@@ -420,7 +427,6 @@ void thread_parameters()
     case(35):    pitch=7.0;   break;
     }
   // TODO: this is a bit of a hack, changing feed changes the factor which changes the delta.  not sure of a good way to update this and maintain positions.
-  //toolPos = factor * encoder.getCount();
   setFactor();
 
   */
@@ -459,6 +465,5 @@ void feed_parameters(){
 
   setFactor();
   // TODO:  this needs some thought
-  //toolPos = factor * encoder.getCount();
   updateConfigDoc();
 }
