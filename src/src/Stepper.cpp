@@ -34,8 +34,9 @@ volatile double toolRelPos = 0;
 double oldToolRelPosMM = 0;
 volatile double targetToolRelPos = 0;
 
-int z_step_pin = 13;
-int z_dir_pin = 12;
+// pins defined in config.h
+int z_step_pin = Z_STEP_PIN;
+int z_dir_pin = Z_DIR_PIN;
 
 int use_limit = false;
 volatile int64_t calculated_stepper_pulses=0;

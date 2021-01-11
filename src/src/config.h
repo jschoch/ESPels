@@ -8,8 +8,6 @@
 #define ARDUINOJSON_USE_DOUBLE 1
 
 #include <Arduino.h>
-//#include <ESP32Encoder.h>
-
 #include "neotimer.h"
 #include "util.h"
 #include "display.h"
@@ -19,22 +17,24 @@
 #include "Encoder.h"
 #include "motion.h"
 #include "freertos/task.h"
-//#include "log.h"
 namespace Log{
     class Msg;
 };
 #include "web.h"
-#include "Vector.h"
 #include "SlaveMode.h"
 #include "DebugMode.h"
-#include "c:\Users\jesse\Documents\Arduino\config.h"
+
 #include <yasm.h>
 #include "myperfmon.h"
-//#include "gear.h"
 #include "rmtStepper.h"
 #include "log.h"
 
 
+
+// Pins
+
+#define Z_STEP_PIN 13
+#define Z_DIR_PIN 12
 
 // Encoder pins
 #define EA 25
@@ -124,8 +124,6 @@ extern uint8_t motor_type;
 extern float backlash;
 extern bool web;
 extern long mm_per_tick;
-typedef Vector<const char*> Menu;
-extern Menu feed_menu_items;
 extern class YASM btn_yasm;
 extern struct Bd lbd;
 extern int pitch_menu;

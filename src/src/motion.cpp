@@ -27,19 +27,6 @@ void init_gear(){
 }
 
 
-// this was too slow
-void waitForSyncStart(void * param){
-  while(encoder.pulse_counter % encoder.start != 0){
-    // this may be too slow
-    vTaskDelay(1);
-  }
-  init_gear();
-  pos_feeding = true;
-  syncWaiting = false;
-  updateStatusDoc();
-  vTaskDelete(NULL);
-}
-
 
 void init_pos_feed(){
   if(!pos_feeding){

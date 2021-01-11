@@ -44,7 +44,7 @@ namespace gear {
     int perror = 0;
     // what units is this, seems to be encoder tics
     int output_position = 0;
-    Jumps jumps = {0,0};
+    Jumps jumps = {0,0,0};
     volatile bool is_setting_dir = false;
 
     void calc_jumps(int encoder_count,bool dir){
