@@ -12,7 +12,7 @@ Disclaimer out of the way: i've been using it for a week and it has not freaked 
 
 ## Frontend
 
-!(sample)[https://user-images.githubusercontent.com/20271/104212553-33b6c200-53ea-11eb-899b-3ec2c22e56c2.png]
+![sample](https://user-images.githubusercontent.com/20271/104212553-33b6c200-53ea-11eb-899b-3ec2c22e56c2.png)
 
 the webfrontend can be found here [https://github.com/jschoch/espELSfrontend]
 
