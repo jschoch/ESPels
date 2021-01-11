@@ -8,7 +8,7 @@
 #include "neotimer.h"
 
 SSD1306Wire  display(0x3c, 5, 4);
-Neotimer display_timer = Neotimer(100);
+Neotimer display_timer = Neotimer(500);
 Neotimer print_timer = Neotimer(1000);
 
 int display_mode = STARTUP;
@@ -43,47 +43,20 @@ static String sp = String(" ");
 // this is the feed mode
 void do_startup_display(){
  
-  display.drawString(0,0,"Mode: up/down ") ;
-  display.drawString(0,11,"Left to start");  
-  display.drawString(0,21, "Feed Mode: " + String(feed_menu_items[feed_mode_select]));
-  
+  display.drawString(0,0,"Display gutted ") ;
   display.display();
 }
 
 void do_ready_display(){
-  display.drawString(0,0," Menu to go back") ;
-  display.drawString(0,11,"Mod to start");
-  display.drawString(0,22, "pitch: " + String(pitch) + " Mode: "  + String(feed_menu_items[feed_mode_select]));
-  
+  display.drawString(0,0," Display gutted") ;
   display.display();
 }
 // this is the config mode
 void do_configure_display(){
- 
   display.drawString(0,0, "config: ");
   display.display();
 }
 
-
-void do_status_display2(){
-  
-  display.drawString(0,0, "enc: " + String((int32_t)encoder.getCount()) + " T: " + String((int32_t)toolPos));
-  display.drawString(0,11,"f: " +String(factor,2) + " D: " + String((int32_t)delta));
-
-  display.drawString(0,21,"P:" + String(pitch,3) + "RPM: " + String(rpm));
-
-  if(feeding){
-    display.drawString(110,51,"F:"+ String(z_feeding_dir));
-  }
-    
-  if(getDir()){
-    display.drawString(100,51,"L");
-  }else{
-    display.drawString(100,51,"R");
-  }
-
-  display.display();
-}
 
 void do_debug_ready_display(){
   display.drawString(0,0,"Debug Jog" + String(vel));
@@ -137,12 +110,5 @@ void do_display(){
   }
   
   if (print_timer.repeat()){
-    /*
-    Serial.print("display mode ");
-    Serial.print(DISPLAY_MODE[display_mode]);
-    Serial.print(" Feed Mode: ");
-    Serial.print(feed_menu_items[feed_mode_select]);
-    Serial.println();
-    */
   }
 }

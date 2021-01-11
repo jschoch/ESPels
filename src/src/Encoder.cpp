@@ -17,7 +17,8 @@ int virtEncoderCount = 0;
 bool virtEncoderEnable = false;
 bool virtEncoderDir = true;
 // encoder instance
-Encoder encoder = Encoder(25, 26, 600);
+// Pins defines in config.h
+Encoder encoder = Encoder(EA, EB, 600);
 
 void doA(){encoder.handleA();}
 void doB(){encoder.handleB();}
@@ -101,6 +102,9 @@ Encoder::Encoder(int _encA, int _encB , float _ppr){
   // counter setup
   pulse_counter = 0;
   pulse_timestamp = 0;
+
+  dir = true;
+  start = 1;
 
   cpr = _ppr;
   A_active = 0;

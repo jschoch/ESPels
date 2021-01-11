@@ -4,25 +4,38 @@ A simple electronic lead screw for the esp32
 
 this is currently in test mode and pre-alpha
 
-Plan:
+[b] DANGER 
+There is no estop right now, not safe.  Use at your own risk and hover over the lathe e-stop.  The thing could go crazy and crash the carriage into the spindle at any moment.  It shouldn't but bugs....
 
-1. [x] update DRO with toolRelMM 
-1. Slave Jog MM stepper mode
-2. get stops working, slave jog to stop mode
-3. figure out how to sync thread start
-4. implement full threading cycle
 
-Cleanup:
-
-1. rethink "modes", right now there are display_modes and state transitions.  The GUI's mode selection should select the state machine mode needed.  
-  a. get rid of the menu thing.
-2. why is slave mode confused on position?
+Disclaimer out of the way: i've been using it for a week and it has not freaked out yet.
 
 ## Frontend
 
 the webfrontend can be found here [https://github.com/jschoch/espELSfrontend]
 
-## how
+
+
+## Configuration
+
+
+Wifi:  ssid and password need to be defined, I did this via a .h file outside of the project
+
+in config.h update Z_STEP_PIN, Z_DIR_PIN for your stepper.
+Update  EA, and EB for your encoder signals.  Let me know if you want to have an index pulse defined as my encoder does not have one.
+
+
+## HOW
+
+Initially I was planning on making a pcb with buttons to control everything.  This is messy and hard to update.  Now I'm using websockets and a react SPA to control everything.  The websockets transmit json and msgPack for configuration and status updates.  This is working very nicely but there is some lag.
+
+Because there is no feedback from a touch screen I plan on integrating an optional haptic input controller which will have bidirectional communication with the ELS controller.  
+
+
+This is currently using a version of the "didge" algorythm here (https://github.com/prototypicall/Didge/blob/master/doc/How.md_).  The slope can't be > 1 so you may need to reduce your micro stepping.
+
+
+## old depricated how
 
 The control state machine waits for button state changes and changes modes based on input.  There will be several modes.  The general operating mode model is that we track the spindle position via the quadrature encoder.  This position is mapped to a int64_t of stepper steps.  The tool position is also tracked in steps.  When the motor is slaved to the spindle the motor control interrupt timer will calculate how many steps away from it's ideal position it is based on the current pitch setting.  This is calculated as 
 
@@ -84,6 +97,19 @@ Btn_yasm is a state machine to deal with transitions and track machine state.
 
 If `jogging` and `!jog_done` are both true the controller will continue trying to step `jog_steps` decrementing the value.  When `jog_steps` is zero jog_done is set to true.  
 
+Plan:
+
+1. [x] update DRO with toolRelMM 
+1. [x] Slave Jog MM stepper mode
+2. [x] get stops working, slave jog to stop mode
+3. figure out how to sync thread start
+4. implement full threading cycle
+
+Cleanup:
+
+1. rethink "modes", right now there are display_modes and state transitions.  The GUI's mode selection should select the state machine mode needed.  
+  a. get rid of the menu thing.
+
 
 
 ** TODO
@@ -109,6 +135,3 @@ If `jogging` and `!jog_done` are both true the controller will continue trying t
 
 Misc:
 
-add diag screen for old display mode of steps vs mm
-add encoder control
-figure out why fault pin use makes screen stop working

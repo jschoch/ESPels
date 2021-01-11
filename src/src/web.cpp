@@ -3,6 +3,10 @@
 #include <ArduinoOTA.h>
 #include "config.h"
 
+
+// This defines ssid and password for the wifi configuration
+#include "c:\Users\jesse\Documents\Arduino\config.h"
+
 // json buffer
 
 // config doc
@@ -12,6 +16,8 @@ StaticJsonDocument<600> doc;
 StaticJsonDocument<600> inDoc;
 StaticJsonDocument<600> statusDoc;
 StaticJsonDocument<600> logDoc;
+
+size_t len = 0;
 
 /* Put IP Address details */
 IPAddress local_ip(192,168,1,1);
@@ -104,25 +110,24 @@ void setRunMode(int mode){
 }
 
 void sendConfig(){
-  size_t len2 = serializeJson(doc, outBuffer);  
+  len = serializeJson(doc, outBuffer);  
   //Serial.print("sending config: ");
   //Serial.println(outBuffer);
   // send it! 
-  ws.textAll(outBuffer,len2);
+  ws.textAll(outBuffer,len);
 }
 
 void sendLogP(Log::Msg *msg){
   logDoc["msg"] = msg->buf;
   logDoc["level"] = (int)msg->level;
   logDoc["cmd"] = "log";
-  size_t len = serializeMsgPack(logDoc,outBuffer);
+  len = serializeMsgPack(logDoc,outBuffer);
   ws.binaryAll(outBuffer,len);
 }
 
 void sendStatus(){
-  size_t len2 = serializeJson(statusDoc, outBuffer);  
-  len2 = serializeMsgPack(statusDoc, outBuffer);
-  ws.binaryAll(outBuffer,len2);
+  len = serializeMsgPack(statusDoc, outBuffer);
+  ws.binaryAll(outBuffer,len);
 
 }
 
