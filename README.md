@@ -7,6 +7,7 @@ this is currently in test mode and pre-alpha
 [b] DANGER 
 There is no estop right now, not safe.  Use at your own risk and hover over the lathe e-stop.  The thing could go crazy and crash the carriage into the spindle at any moment.  It shouldn't but bugs....
 
+<iframe width="560" height="315" src="https://www.youtube.com/embed/uXhqEe8Kw6M" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 Disclaimer out of the way: i've been using it for a week and it has not freaked out yet.
 
