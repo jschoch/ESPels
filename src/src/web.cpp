@@ -9,8 +9,8 @@
 
 // json buffer
 
-// config doc
-StaticJsonDocument<600> doc;
+// config stateDoc
+StaticJsonDocument<600> stateDoc;
 
 // used for inbound msgs
 StaticJsonDocument<600> inDoc;
@@ -68,27 +68,27 @@ void updateStatusDoc(){
 }
 
 void updateConfigDoc(){
-  doc["absP"] = absolutePosition;
-  doc["P"] = relativePosition;
-  doc["pitch"] = pitch;
-  doc["rapid"] = rapids;
-  doc["stopA"] = 1.0;
-  doc["stopB"] = 2.0;
-  doc["zero"] = 3.0;
-  doc["jogD"] = 0.1;
-  doc["lead"] = lead_screw_pitch;
-  doc["enc"] = spindle_encoder_resolution;
-  doc["micro"] = microsteps;
-  doc["e"] = 0;
-  doc["u"] = 0;
-  doc["m"] = (int)run_mode; 
-  doc["d"] = (int)display_mode;
-  doc["js"] = jog_steps;
-  doc["jm"] = jog_mm;
-  doc["sc"] = jog_scaler;
-  doc["f"] = feeding_ccw;
-  doc["ja"] = jogAbs;
-  doc["s"] = syncStart;
+  stateDoc["absP"] = absolutePosition;
+  stateDoc["P"] = relativePosition;
+  stateDoc["pitch"] = pitch;
+  stateDoc["rapid"] = rapids;
+  stateDoc["stopA"] = 1.0;
+  stateDoc["stopB"] = 2.0;
+  stateDoc["zero"] = 3.0;
+  stateDoc["jogD"] = 0.1;
+  stateDoc["lead"] = lead_screw_pitch;
+  stateDoc["enc"] = spindle_encoder_resolution;
+  stateDoc["micro"] = microsteps;
+  stateDoc["e"] = 0;
+  stateDoc["u"] = 0;
+  stateDoc["m"] = (int)run_mode; 
+  stateDoc["d"] = (int)display_mode;
+  stateDoc["js"] = jog_steps;
+  stateDoc["jm"] = jog_mm;
+  stateDoc["sc"] = jog_scaler;
+  stateDoc["f"] = feeding_ccw;
+  stateDoc["ja"] = jogAbs;
+  stateDoc["s"] = syncStart;
 
   sendConfig();
   // this needs a timer to send on interval
@@ -114,7 +114,7 @@ void setRunMode(int mode){
 }
 
 void sendConfig(){
-  len = serializeJson(doc, outBuffer);  
+  len = serializeJson(stateDoc, outBuffer);  
   //Serial.print("sending config: ");
   //Serial.println(outBuffer);
   // send it! 
@@ -297,7 +297,7 @@ void parseObj(String msg){
     if(config["rapid"] != rapids){
       Serial.println("updating rapids");
       rapids = config["rapid"];
-      //doc["rapid"] = rapids;
+      //stateDoc["rapid"] = rapids;
     }
     if(config["m"] != (int)run_mode){
       Serial.print("setting new mode from webUI: ");
