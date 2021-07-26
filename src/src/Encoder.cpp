@@ -1,4 +1,3 @@
-#include <ESP32Encoder.h>
 #include "Encoder.h"
 #include "Stepper.h"
 #include "motion.h"
@@ -8,8 +7,6 @@ volatile int64_t spindlePos = 0;
 int spindle_encoder_resolution=2400 ;
 int64_t last_count = 0;
 int rpm = 0;
-
-//ESP32Encoder encoder;
 
 Neotimer rpm_timer = Neotimer(100);
 
@@ -117,7 +114,8 @@ Encoder::Encoder(int _encA, int _encB , float _ppr){
   prev_timestamp_us = esp_timer_get_time();//_micros();
 
   // extern pullup as default
-  pullup = Pullup::EXTERN;
+  //pullup = Pullup::EXTERN;
+  pullup = Pullup::INTERN_PULLDOWN;
   // enable quadrature encoder by default
   quadrature = Quadrature::ON;
 }
@@ -135,11 +133,15 @@ float Encoder::initRelativeZero(){
 void Encoder::init(){
 
   // Encoder - check if pullup needed for your encoder
-  if(pullup == Pullup::INTERN){
+  if(pullup == Pullup::INTERN_PULLUP){
     pinMode(pinA, INPUT_PULLUP);
     pinMode(pinB, INPUT_PULLUP);
     //if(hasIndex()) pinMode(index_pin,INPUT_PULLUP);
-  }else{
+  }else if(pullup == Pullup::INTERN_PULLDOWN){
+    pinMode(pinA, INPUT_PULLDOWN);
+    pinMode(pinB, INPUT_PULLDOWN);
+  }
+  {
     pinMode(pinA, INPUT);
     pinMode(pinB, INPUT);
     //if(hasIndex()) pinMode(index_pin,INPUT);

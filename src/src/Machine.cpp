@@ -3,7 +3,7 @@
 #include "Machine.h"
 
 float lead_screw_pitch = 2.0;
-int microsteps = 16;
+int microsteps = 8;
 int native_steps = 200;
 int motor_steps = 0;
 volatile double factor = 0.0;
@@ -17,6 +17,7 @@ float backlash = 0.0;
 uint8_t motor_type = MOTOR_TYPE;
 long mm_per_tick = 0;
 float encoder_factor = 0;
+
 
 void init_machine(){
 

@@ -19,10 +19,13 @@ StaticJsonDocument<600> logDoc;
 
 size_t len = 0;
 
-/* Put IP Address details */
+
+/*  not used for dhcp
+// Put IP Address details 
 IPAddress local_ip(192,168,1,1);
 IPAddress gateway(192,168,1,1);
 IPAddress subnet(255,255,255,0);
+*/
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/test");
@@ -60,6 +63,7 @@ void updateStatusDoc(){
   statusDoc["cmd"] = "status";
   statusDoc["fd"] = z_feeding_dir;
   statusDoc["sw"] = syncWaiting;
+  statusDoc["rpm"] = rpm;
   sendStatus();
 }
 
