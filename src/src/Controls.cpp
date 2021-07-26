@@ -8,9 +8,9 @@
 #include <yasm.h>
 #include "rmtStepper.h"
 
-Neotimer button_read_timer = Neotimer(10);
+//Neotimer button_read_timer = Neotimer(10);
 Neotimer button_print_timer = Neotimer(2000);
-Neotimer dro_timer = Neotimer(400);
+Neotimer dro_timer = Neotimer(600);
 Log::Msg el;
 
 

@@ -44,9 +44,6 @@ namespace Log{
 
 // Machine Settings
 
-// lead screw pitch in mm
-#define LEAD_SCREW_PITCH 5
-#define MICROSTEPS 32
 #define MOTOR_TYPE 1 // 1 is 1.8 degree, 2 is .9 degree
 
 // read the cpu usage via the web server, only use for testing as it comes with bloat
@@ -112,7 +109,6 @@ extern const char* DISPLAY_MODE [];
 extern volatile bool z_moving;
 extern volatile bool z_pause;
 extern volatile int delay_ticks;
-//extern ESP32Encoder encoder;
 extern class Encoder encoder;
 extern volatile bool feeding;
 extern volatile bool z_feeding_dir;
