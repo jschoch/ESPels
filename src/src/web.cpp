@@ -16,7 +16,7 @@ StaticJsonDocument<600> stateDoc;
 StaticJsonDocument<500> nvConfigDoc;
 
 // Used for msgs from UI
-StaticJsonDocument<600> inDoc;
+StaticJsonDocument<500> inDoc;
 
 // used to send status to UI
 StaticJsonDocument<600> statusDoc;
@@ -54,6 +54,18 @@ void saveNvConfigDoc(){
 void initNvConfigDoc(){
   nvConfigDoc["i"] = 1;
   nvConfigDoc["foo"] = 1;
+  nvConfigDoc["lead_screw_pitch"] = lead_screw_pitch;
+  nvConfigDoc["spindle_encoder_resolution"] = spindle_encoder_resolution;
+  nvConfigDoc["motor_steps"] = motor_steps;
+
+  // TODO list of things to add
+  /*
+
+  UI_update_rate
+  last_pitch ?  do I want to do that?
+
+  */
+  //nvConfigDoc[""] = ;
   saveNvConfigDoc();
 }
 
@@ -63,10 +75,13 @@ void loadNvConfigDoc(){
   if(!nvConfigDoc["i"]){
     Serial.print("Doc!?  ");
     Serial.println((int)nvConfigDoc["i"]);
-    el.error("no config found, creating one");
-    initNvConfigDoc();
+    el.error("no config found this is bad");
   }else{
     Serial.println("Loaded Configuration");
+    lead_screw_pitch = nvConfigDoc["lead_screw_pitch"];
+    motor_steps = nvConfigDoc["motor_steps"];
+    spindle_encoder_resolution = nvConfigDoc["spindle_encoder_resolution"]; 
+    setFactor();
   }
 }
 
@@ -351,8 +366,23 @@ void parseObj(String msg){
       Serial.println("updating jog scaler");
       jog_scaler = sc;
     }
-    //loadNvConfigDoc();
     updateStateDoc();
+  }else if(strcmp(cmd,"setNvConfig") == 0){
+    Serial.println("saving configuration");
+    inDoc.remove("cmd");
+    // TODO better checks than this~
+    if(inDoc["lead_screw_pitch"]){
+      // Save 
+      inDoc["i"] = 1;
+      EepromStream eepromStream(0, 512);
+      serializeJson(inDoc, eepromStream);
+      eepromStream.flush();
+      loadNvConfigDoc();
+      setFactor();
+      sendNvConfigDoc();
+    }else{
+      el.error("error format of NV config bad");
+    }
 
   }else if(strcmp(cmd,"getNvConfig") == 0){
     loadNvConfigDoc();
@@ -430,6 +460,12 @@ void init_web(){
   deserializeJson(nvConfigDoc, eepromStream);
   Serial.println("NV Config? ");
   Serial.println((int)nvConfigDoc["i"]);
+  if(!nvConfigDoc["i"]){
+    Serial.println("creating default nvConfig");
+    initNvConfigDoc();
+  }else{
+    loadNvConfigDoc();
+  }
 
 }
 
