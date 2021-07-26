@@ -49,14 +49,18 @@ void saveNvConfigDoc(){
   serializeJson(nvConfigDoc, eepromStream);
   //EEPROM.commit();
   eepromStream.flush();
+  loadNvConfigDoc();
 }
 
 void initNvConfigDoc(){
+  nvConfigDoc.clear();
+  // this flag says we've updated from the default
   nvConfigDoc["i"] = 1;
-  nvConfigDoc["foo"] = 1;
+
+  // the config
   nvConfigDoc["lead_screw_pitch"] = lead_screw_pitch;
   nvConfigDoc["spindle_encoder_resolution"] = spindle_encoder_resolution;
-  nvConfigDoc["motor_steps"] = motor_steps;
+  nvConfigDoc["microsteps"] = microsteps;
 
   // TODO list of things to add
   /*
@@ -81,6 +85,7 @@ void loadNvConfigDoc(){
     lead_screw_pitch = nvConfigDoc["lead_screw_pitch"];
     motor_steps = nvConfigDoc["motor_steps"];
     spindle_encoder_resolution = nvConfigDoc["spindle_encoder_resolution"]; 
+    init_machine();
     setFactor();
   }
 }
@@ -378,16 +383,18 @@ void parseObj(String msg){
       serializeJson(inDoc, eepromStream);
       eepromStream.flush();
       loadNvConfigDoc();
-      setFactor();
       sendNvConfigDoc();
     }else{
       el.error("error format of NV config bad");
     }
 
   }else if(strcmp(cmd,"getNvConfig") == 0){
-    loadNvConfigDoc();
     sendNvConfigDoc();
 
+  }else if(strcmp(cmd,"resetNvConfig") == 0){
+      Serial.println("resetting nv config to defaults");
+      initNvConfigDoc(); 
+      sendNvConfigDoc();
   }else{
     Serial.println("unknown command");
     Serial.println(cmd);
