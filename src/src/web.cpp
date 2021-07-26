@@ -12,9 +12,16 @@
 // config stateDoc
 StaticJsonDocument<600> stateDoc;
 
-// used for inbound msgs
+//  items to store in NV ram/EEPROM
+StaticJsonDocument<500> nvConfigDoc;
+
+// Used for msgs from UI
 StaticJsonDocument<600> inDoc;
+
+// used to send status to UI
 StaticJsonDocument<600> statusDoc;
+
+// Used to log to UI
 StaticJsonDocument<600> logDoc;
 
 size_t len = 0;
@@ -36,6 +43,34 @@ RunMode run_mode = RunMode::STARTUP;
 uint8_t statusCounter = 0;
 
 double jogAbs = 0;
+
+void saveNvConfigDoc(){
+  EepromStream eepromStream(0, 512);
+  serializeJson(nvConfigDoc, eepromStream);
+  //EEPROM.commit();
+  eepromStream.flush();
+}
+
+void initNvConfigDoc(){
+  nvConfigDoc["i"] = 1;
+  nvConfigDoc["foo"] = 1;
+  saveNvConfigDoc();
+}
+
+void loadNvConfigDoc(){
+  EepromStream eepromStream(0, 512);
+  deserializeJson(nvConfigDoc, eepromStream);
+  if(!nvConfigDoc["i"]){
+    Serial.print("Doc!?  ");
+    Serial.println((int)nvConfigDoc["i"]);
+    el.error("no config found, creating one");
+    initNvConfigDoc();
+  }else{
+    Serial.println("Loaded Configuration");
+  }
+}
+
+
 
 void updateStatusDoc(){
   statusDoc["p"] = toolRelPos;
@@ -67,7 +102,7 @@ void updateStatusDoc(){
   sendStatus();
 }
 
-void updateConfigDoc(){
+void updateStateDoc(){
   stateDoc["absP"] = absolutePosition;
   stateDoc["P"] = relativePosition;
   stateDoc["pitch"] = pitch;
@@ -90,7 +125,7 @@ void updateConfigDoc(){
   stateDoc["ja"] = jogAbs;
   stateDoc["s"] = syncStart;
 
-  sendConfig();
+  sendState();
   // this needs a timer to send on interval
   
 }
@@ -113,7 +148,7 @@ void setRunMode(int mode){
     }
 }
 
-void sendConfig(){
+void sendState(){
   len = serializeJson(stateDoc, outBuffer);  
   //Serial.print("sending config: ");
   //Serial.println(outBuffer);
@@ -133,6 +168,12 @@ void sendStatus(){
   len = serializeMsgPack(statusDoc, outBuffer);
   ws.binaryAll(outBuffer,len);
 
+}
+
+void sendNvConfigDoc(){
+  nvConfigDoc["cmd"] = "nvConfig";
+  len = serializeMsgPack(nvConfigDoc, outBuffer);
+  ws.binaryAll(outBuffer,len);
 }
 
 void handleJogAbs(){
@@ -254,8 +295,7 @@ void parseObj(String msg){
     // regenerate config and send it along
 
     Serial.println("fetch received: sending config");
-    //sendConfig();    
-    updateConfigDoc();
+    updateStateDoc();
     
   // Fake encoder commands
   }else if(strcmp(cmd,"debug") ==0){
@@ -311,7 +351,12 @@ void parseObj(String msg){
       Serial.println("updating jog scaler");
       jog_scaler = sc;
     }
-    updateConfigDoc();
+    //loadNvConfigDoc();
+    updateStateDoc();
+
+  }else if(strcmp(cmd,"getNvConfig") == 0){
+    loadNvConfigDoc();
+    sendNvConfigDoc();
 
   }else{
     Serial.println("unknown command");
@@ -377,8 +422,15 @@ void init_web(){
   server.addHandler(&ws);
   server.begin();
   Serial.println("HTTP websocket server started");
-  updateConfigDoc();
+
+  updateStateDoc();
   init_ota();
+  EEPROM.begin(512);
+  EepromStream eepromStream(0, 512);
+  deserializeJson(nvConfigDoc, eepromStream);
+  Serial.println("NV Config? ");
+  Serial.println((int)nvConfigDoc["i"]);
+
 }
 
 void init_ota(){

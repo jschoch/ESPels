@@ -139,7 +139,7 @@ void updateMode(display_mode_t newDisplayMode,RunMode run){
   Serial.println((int)run);
   display_mode = newDisplayMode;
   run_mode = run;
-  updateConfigDoc();
+  updateStateDoc();
 }
 
 void startupState(){
@@ -270,5 +270,5 @@ void feed_parameters(){
 
   setFactor();
   // TODO:  this needs some thought
-  updateConfigDoc();
+  updateStateDoc();
 }
