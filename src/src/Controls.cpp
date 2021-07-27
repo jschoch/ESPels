@@ -7,6 +7,7 @@
 #include "neotimer.h"
 #include <yasm.h>
 #include "rmtStepper.h"
+#include "gear.h"
 
 //Neotimer button_read_timer = Neotimer(10);
 Neotimer button_print_timer = Neotimer(2000);
@@ -183,7 +184,7 @@ void slaveJogStatusState(){
 }
 
 
-
+extern struct Gear::State gear;
 void setFactor(){
 
   // TODO: timer refactor  get rid of factor and all related code
@@ -193,8 +194,9 @@ void setFactor(){
   int den = lead_screw_pitch * spindle_encoder_resolution ;
   int nom = motor_steps * pitch;
 
+  //
   Serial.printf("nom: %d den: %d",nom,den);
-    if (!zstepper.gear.setRatio(nom,den)){
+    if (!gear.setRatio(nom,den)){
       sprintf(el.buf,"Bad Ratio: Den: %d Nom: %d\n",nom,den);
       el.error();
       pitch = oldPitch;

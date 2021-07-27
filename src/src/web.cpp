@@ -203,6 +203,9 @@ void handleJogAbs(){
   targetToolRelPosMM = jogAbs;
   if(!jogging){
     Serial.println(jogAbs);
+
+    // config["f"] is the feeding_ccw flag from the UI
+    // TODO: why not set feeding_ccw like we do for handleJog()?
     if(config["f"]){
       if((toolRelPosMM - jogAbs) < 0 ){
         z_feeding_dir = true;
@@ -236,28 +239,6 @@ void handleJogAbs(){
 
 void handleJog(){
   Serial.println("got jog command");
-    /*  TODO  needs refactor
-    if(run_mode == RunMode::DEBUG_READY){
-      JsonObject config = inDoc["config"];
-      jog_mm = config["jm"].as<float>();
-      Serial.println("debug mode ok");
-      Serial.print("Jog steps: ");
-      Serial.println(stepsPerMM * jog_mm);
-      if(!jogging){
-        feeding_ccw = config["f"];
-        if(jog_mm < 0){
-          z_feeding_dir = false;
-          jog_steps = (float)stepsPerMM * jog_mm * -1;
-        }else{
-          z_feeding_dir = true;
-          jog_steps = (float)stepsPerMM * jog_mm;
-        }
-        
-        jogging = true;
-      }
-    }else if(run_mode == RunMode::SLAVE_JOG_READY){
-    */
-
     if(run_mode == RunMode::SLAVE_JOG_READY){
       JsonObject config = inDoc["config"];
       jog_mm = config["jm"].as<float>();
