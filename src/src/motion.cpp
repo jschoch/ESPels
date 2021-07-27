@@ -2,6 +2,8 @@
 #include "motion.h"
 #include "config.h"
 #include "gear.h"
+// should just be using accel/decel calcs
+#include "AccelStepper.h"
 
 double mmPerStep = 0;
 volatile double targetToolRelPosMM = 0.0;
@@ -11,6 +13,7 @@ volatile int badTicks = 0;
 char err[200] = "";
 bool syncStart = true;
 bool syncWaiting = false;
+volatile bool rapiding = false;
 
 volatile bool feeding_ccw = true;
 
@@ -228,6 +231,53 @@ void IRAM_ATTR processMotion(){
 
 }
 
+
+void step_pos(){
+  if(zstepper.dir){
+    
+  }
+  zstepper.step();
+}
+
+void step_neg(){
+  if(!zstepper.dir){
+
+  }
+  zstepper.step();
+}
+
+AccelStepper stepper(step_pos,step_neg);
+
+void do_rapid(void * param){
+  while(stepper.distanceToGo() > 0){
+    stepper.run();
+    // seems this is in the run function itself
+    //stepper.yield();
+    //vTaskYIELD();
+    //taskYIELD();
+    //vTaskDelay(1);
+    YIELD;
+  }
+  rapiding = false;
+  vTaskDelete(NULL);
+}
+
+void start_rapid(double distance){
+  rapiding = true; 
+  stepper.setMaxSpeed(5500.0);
+  stepper.setAcceleration(375.0);
+  stepper.runToNewPosition(stepper.currentPosition()+(stepsPerMM * distance));
+  xTaskCreatePinnedToCore(
+    do_rapid,    // Function that should be called
+    "rapid step",  // Name of the task (for debugging)
+    1000,            // Stack size (bytes)
+    NULL,            // Parameter to pass
+    1,               // Task priority
+    NULL,             // Task handle
+    0 // pin to core 0, arduino loop runs core 1
+);
+
+}
 
 void init_motion(){
   esp_timer_init();

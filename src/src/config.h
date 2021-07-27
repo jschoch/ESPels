@@ -161,6 +161,7 @@ extern float oldPitch;
 extern class Log::Msg el;
 extern bool syncStart;
 extern bool syncWaiting;
+extern volatile bool rapiding;
 //extern struct Gear::State gear;
 
 #endif

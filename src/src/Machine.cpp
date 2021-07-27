@@ -31,6 +31,7 @@ void init_machine(){
   motor_steps = (microsteps * native_steps) ;
   mm_per_tick = 1 / spindle_encoder_resolution /lead_screw_pitch;
   encoder_factor = (float)spindle_encoder_resolution / (motor_steps/lead_screw_pitch);
+  init_stepper();
 }
 
 

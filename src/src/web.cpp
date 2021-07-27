@@ -26,6 +26,8 @@ StaticJsonDocument<600> logDoc;
 
 size_t len = 0;
 
+String wsData;
+
 
 /*  not used for dhcp
 // Put IP Address details 
@@ -67,6 +69,8 @@ void initNvConfigDoc(){
 
   UI_update_rate
   last_pitch ?  do I want to do that?
+  motor acceleration
+  motor max_speed
 
   */
   //nvConfigDoc[""] = ;
@@ -104,6 +108,7 @@ void updateStatusDoc(){
   statusDoc["targetPosMM"] = targetToolRelPosMM;
   statusDoc["feeding"] = feeding;
   statusDoc["jogging"] = jogging;
+  statusDoc["rap"] = rapiding;
   statusDoc["pos_feed"] = pos_feeding;
   statusDoc["jog_dong"] = jog_done;
   statusDoc["sne"] = stopNegEx;
@@ -139,6 +144,7 @@ void updateStateDoc(){
   stateDoc["m"] = (int)run_mode; 
   stateDoc["d"] = (int)display_mode;
   stateDoc["js"] = jog_steps;
+  // this is the distance to jog in mm
   stateDoc["jm"] = jog_mm;
   stateDoc["sc"] = jog_scaler;
   stateDoc["f"] = feeding_ccw;
@@ -201,6 +207,7 @@ void handleJogAbs(){
   jogAbs = config["ja"];
   syncStart = config["s"];
   targetToolRelPosMM = jogAbs;
+  // TODO: need to check if we are rapiding also somewhere!
   if(!jogging){
     Serial.println(jogAbs);
 
@@ -235,6 +242,13 @@ void handleJogAbs(){
     updateStatusDoc();
     btn_yasm.next(slaveJogPosState);
   }
+}
+
+void handleRapid(){
+  Serial.println("Rapid! ");
+  JsonObject config = inDoc["config"];
+  jog_mm = config["jm"].as<float>();
+  start_rapid(jog_mm);
 }
 
 void handleJog(){
@@ -282,8 +296,9 @@ void handleJog(){
     }
 }
 
-void parseObj(String msg){
-  DeserializationError error = deserializeJson(inDoc, msg);
+//void parseObj(String msg){
+void parseObj(void * param){
+  DeserializationError error = deserializeJson(inDoc,wsData);
   if (error) {
     Serial.print(F("deserializeJson() failed: "));
     Serial.println(error.f_str());
@@ -319,6 +334,7 @@ void parseObj(String msg){
   }else if(strcmp(cmd,"jogcancel") == 0){
     // TODO wheat cleanup needs to be done?
     pos_feeding = false;  
+    // TODO: need rapid cancel
   }else if(strcmp(cmd,"jogAbs") == 0){
     handleJogAbs();  
   }else if(strcmp(cmd,"jog") == 0){
@@ -365,6 +381,7 @@ void parseObj(String msg){
       eepromStream.flush();
       loadNvConfigDoc();
       sendNvConfigDoc();
+    
     }else{
       el.error("error format of NV config bad");
     }
@@ -376,43 +393,53 @@ void parseObj(String msg){
       Serial.println("resetting nv config to defaults");
       initNvConfigDoc(); 
       sendNvConfigDoc();
+  }else if(strcmp(cmd,"rapid") == 0){
+    handleRapid();
+      
   }else{
     Serial.println("unknown command");
     Serial.println(cmd);
   }
+  vTaskDelete(NULL);
+}
+
+void pinned_parseObj(){
+
+  xTaskCreatePinnedToCore(
+    parseObj,    // Function that should be called
+    "ws server",  // Name of the task (for debugging)
+    3000,            // Stack size (bytes)
+    NULL,            // Parameter to pass
+    3,               // Task priority
+    NULL,             // Task handle
+    0 // pin to core 0, arduino loop runs core 1
+);
 }
 
 void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len){
   //Serial.println("ws event");
   if(type == WS_EVT_CONNECT){
- 
     Serial.println("Websocket client connection received");
     globalClient = client;
-    
- 
   } else if(type == WS_EVT_DISCONNECT){
     Serial.println("Client disconnected");
     Serial.println("-----------------------");
- 
   } else if(type == WS_EVT_DATA){
     AwsFrameInfo * info = (AwsFrameInfo*)arg;
-    /*
-    Serial.print("Data received: ");
-    for(int i=0; i < len; i++) {
-          Serial.print((char) data[i]);
-    }
-    */
-
     if(info->final && info->index == 0 && info->len == len){
-
       if(info->opcode == WS_TEXT){
         data[len] = 0;
-        parseObj(String((char*) data));
+        //parseObj(String((char*) data));
+        wsData = String((char*) data);
+        pinned_parseObj();
       }
     }
  
   }
 }
+
+
+
 void init_web(){
   // Connect to WiFi
   Serial.println("Setting up WiFi");
@@ -436,6 +463,7 @@ void init_web(){
     }
   MDNS.setInstanceName("mydeskels");
   MDNS.addService("http", "tcp", 80);
+  
   ws.onEvent(onWsEvent);
   server.addHandler(&ws);
   server.begin();

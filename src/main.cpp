@@ -22,7 +22,8 @@ void setup() {
 
   init_encoder();  
 
-  init_stepper();
+  //moved to init_machine
+  //init_stepper();
 
   init_motion();
 
