@@ -266,7 +266,7 @@ void handleRapid(){
   // really need the acceleration curve 
   Serial.println("Rapid! ");
   JsonObject config = inDoc["config"];
-  jog_mm = config["jm"].as<float>();
+  jog_mm = config["jm"].as<double>();
   //start_rapid(jog_mm);
   oldPitch = pitch;
   pitch = rapids;
@@ -278,7 +278,7 @@ void handleJog(){
   Serial.println("got jog command");
     if(run_mode == RunMode::SLAVE_JOG_READY){
       JsonObject config = inDoc["config"];
-      jog_mm = config["jm"].as<float>();
+      jog_mm = config["jm"].as<double>();
       /*
       Serial.println("slaveJog mode ok");
       Serial.print("Jog steps: ");
@@ -320,7 +320,8 @@ void handleJog(){
 }
 
 //void parseObj(String msg){
-void parseObj(void * param){
+//void parseObj(void * param){
+void parseObj(){
   DeserializationError error = deserializeJson(inDoc,wsData);
   if (error) {
     Serial.print(F("deserializeJson() failed: "));
@@ -367,7 +368,7 @@ void parseObj(void * param){
     JsonObject config = inDoc["config"];
     Serial.println("getting config");
     Serial.print("got pitch: ");
-    float p = config["pitch"];
+    double p = config["pitch"];
     Serial.println(p);
     if(p != pitch){
       Serial.println("new pitch");
@@ -387,7 +388,7 @@ void parseObj(void * param){
       Serial.println((int)run_mode);
       setRunMode(got_run_mode);
     }
-    float sc = config["sc"];
+    double sc = config["sc"];
     if(sc != jog_scaler){
       Serial.println("updating jog scaler");
       jog_scaler = sc;
@@ -426,9 +427,10 @@ void parseObj(void * param){
     Serial.println("unknown command");
     Serial.println(cmd);
   }
-  vTaskDelete(NULL);
+  //vTaskDelete(NULL);
 }
 
+/*
 void pinned_parseObj(){
 
   xTaskCreatePinnedToCore(
@@ -441,6 +443,7 @@ void pinned_parseObj(){
     0 // pin to core 0, arduino loop runs core 1
 );
 }
+*/
 
 void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len){
   //Serial.println("ws event");
@@ -457,7 +460,8 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
         data[len] = 0;
         //parseObj(String((char*) data));
         wsData = String((char*) data);
-        pinned_parseObj();
+        parseObj();
+        //pinned_parseObj();
       }
     }
  

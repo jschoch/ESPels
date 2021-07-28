@@ -2,17 +2,17 @@
 #include "config.h"
 #include "Machine.h"
 
-float lead_screw_pitch = 2.0;
+double lead_screw_pitch = 2.0;
 int microsteps = 8;
 int native_steps = 200;
 int motor_steps = 0;
-float pitch = 0.06;
-float oldPitch = pitch;
+double pitch = 0.06;
+double oldPitch = pitch;
 int tpi = 0;
-float depth = 0.0;
+double depth = 0.0;
 
-float rapids = 1.0;
-float backlash = 0.0;
+double rapids = 1.0;
+double backlash = 0.0;
 uint8_t motor_type = MOTOR_TYPE;
 
 

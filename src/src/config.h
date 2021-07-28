@@ -50,14 +50,14 @@ namespace Log{
 //#define DEBUG_CPU_STATS
 
  
-extern float lead_screw_pitch;
+extern double lead_screw_pitch;
 extern int microsteps;
 extern int native_steps;
 extern int motor_steps;
 extern int tpi;
 extern int motor_steps;
-extern float pitch; //  the thread pitch
-extern float depth;                                       // a parameter to define the thread depth in mm on the compound slide. This is set at 75% of the pitch which seems to work
+extern double pitch; //  the thread pitch
+extern double depth;                                       // a parameter to define the thread depth in mm on the compound slide. This is set at 75% of the pitch which seems to work
 extern int display_mode;
 extern volatile int16_t encoder0Pos;
 extern volatile int64_t spindlePos;
@@ -91,9 +91,9 @@ extern volatile bool z_feeding_dir;
 extern volatile bool feeding_ccw;
 //extern class BtnState btnState;
 extern int rpm;
-extern float rapids;
+extern double rapids;
 extern uint8_t motor_type;
-extern float backlash;
+extern double backlash;
 extern bool web;
 extern class YASM btn_yasm;
 extern struct Bd lbd;
@@ -111,8 +111,8 @@ extern int stepsPerMM;
 extern int32_t relativePosition;
 extern int32_t absolutePosition;
 extern RunMode run_mode;
-extern float jog_mm;
-extern volatile float jog_scaler;
+extern double jog_mm;
+extern volatile double jog_scaler;
 extern volatile double toolRelPos;
 extern volatile double toolRelPosMM;
 extern volatile double targetToolRelPos;
@@ -130,7 +130,7 @@ extern uint8_t statusCounter;
 extern volatile bool pos_feeding;
 extern struct rmtStepper::State zstepper;
 extern double mmPerStep;
-extern float oldPitch;
+extern double oldPitch;
 extern class Log::Msg el;
 extern bool syncStart;
 extern bool syncWaiting;
