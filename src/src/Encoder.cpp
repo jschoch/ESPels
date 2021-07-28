@@ -35,6 +35,42 @@ void do_rpm(){
   }
 }
 
+TaskHandle_t vEncHandle = NULL;
+volatile bool vEncStopped = true;
+
+void vEncTask(void *param){
+  for(;;){
+    if(vEncSpeed > 0){
+      encoder.setCount((encoder.pulse_counter+ 1));
+    }else{
+      encoder.setCount((encoder.pulse_counter- 1));
+    }
+    vTaskDelay(vEncSpeed/portTICK_PERIOD_MS);
+  }
+}
+
+void stopVenc(){
+  if(vEncHandle != NULL) {
+    Serial.println("stopping venc");
+    vTaskDelete(vEncHandle);
+    vEncStopped = true;
+  }
+}
+
+void startVenc(){
+  Serial.println("Starting venc");
+  xTaskCreate(
+    vEncTask,
+    "vEnc",
+    4000,
+    NULL,
+    1,
+    &vEncHandle 
+  );
+  vEncStopped = false;
+
+}
+
 
 
 // B channel

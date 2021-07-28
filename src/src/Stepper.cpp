@@ -29,7 +29,6 @@ volatile bool z_prev_dir = true;
 volatile bool z_moving = false;
 volatile bool jogging = false;
 volatile int32_t jogs = 0;
-volatile int step_delta = 0;
 volatile double toolRelPos = 0;
 double oldToolRelPosMM = 0;
 volatile double targetToolRelPos = 0;

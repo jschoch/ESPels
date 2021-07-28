@@ -24,6 +24,8 @@ enum Pullup{
 
 void init_encoder(void);
 void do_rpm(void);
+void stopVenc();
+void startVenc();
 
 // sign function
 #define _sign(a) ( ( (a) < 0 )  ?  -1   : ( (a) > 0 ) )

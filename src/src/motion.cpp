@@ -35,8 +35,10 @@ void init_pos_feed(){
       pos_feeding = true;
     }
     else{
+      // this resets the "start" but i'm not sure if it works correctly
+      // TODO:  should warn that turning off sync will  loose the "start"
       init_gear();
-       pos_feeding = true;
+      pos_feeding = true;
     }
   }else{
   el.error("already started pos_feeding, can't do it again");
@@ -96,6 +98,17 @@ to calculate the next set of jumps (positions to step based on ratio/factor)
       swap Neg/Pos.  Pos becomes the current position, Neg the target
   syncStart : if true this will ensure we start motion at spindle position 0 (the starting spindle angle)
 */
+
+void finish_jog(){
+  if(rapiding){
+    pitch = oldPitch;
+    pos_feeding = false;
+    rapiding = false;
+  }else{
+    jogging = false;
+    pos_feeding = false;
+  }
+}
 
 void do_pos_feeding(){
 
@@ -164,18 +177,19 @@ void do_pos_feeding(){
       // evaluate stops, no motion if motion would exceed stops
 
       if (z_feeding_dir == true && toolRelPosMM >= targetToolRelPosMM){
-        pos_feeding = false;
+        finish_jog();
         return;
       }
       if(z_feeding_dir == false && toolRelPosMM <= targetToolRelPosMM){
-        pos_feeding = false;
+        finish_jog();
         return;
       }
 
       if(toolRelPosMM < stopNeg){
         el.addMsg("Tool past stopNeg: HALT");
         el.hasError = true;
-        pos_feeding = false;
+        finish_jog();
+        return;
       }
 
       if(toolRelPosMM > stopPos){
@@ -183,11 +197,9 @@ void do_pos_feeding(){
         el.hasError = true;
 
         // TODO: should we halt or just stop feeding?
-        pos_feeding = false;
+        finish_jog();
+        return;
       }
-
-      
-
 }
 
 
@@ -231,46 +243,27 @@ void IRAM_ATTR processMotion(){
 
 }
 
+// TODO: implement a virtual spindle to tick the encoder and simulate stuff
 
-void step_pos(){
-  if(zstepper.dir){
-    
-  }
-  zstepper.step();
-}
-
-void step_neg(){
-  if(!zstepper.dir){
-
-  }
-  zstepper.step();
-}
-
-AccelStepper stepper(step_pos,step_neg);
+/*  
+This didn't workout for rapids
 
 void do_rapid(void * param){
-  while(stepper.distanceToGo() > 0){
-    stepper.run();
-    // seems this is in the run function itself
-    //stepper.yield();
-    //vTaskYIELD();
-    //taskYIELD();
-    //vTaskDelay(1);
-    YIELD;
-  }
+  //while(stepper.currentPosition() != rapid_target){
+  //}
   rapiding = false;
   vTaskDelete(NULL);
 }
 
 void start_rapid(double distance){
   rapiding = true; 
-  stepper.setMaxSpeed(5500.0);
-  stepper.setAcceleration(375.0);
-  stepper.runToNewPosition(stepper.currentPosition()+(stepsPerMM * distance));
+  //rapid_target = stepper.currentPosition() + (stepsPerMM * distance);
+  //stepper.runToNewPosition(stepper.currentPosition()+(stepsPerMM * distance));
+  //stepper
   xTaskCreatePinnedToCore(
     do_rapid,    // Function that should be called
     "rapid step",  // Name of the task (for debugging)
-    1000,            // Stack size (bytes)
+    2000,            // Stack size (bytes)
     NULL,            // Parameter to pass
     1,               // Task priority
     NULL,             // Task handle
@@ -278,11 +271,9 @@ void start_rapid(double distance){
 );
 
 }
+*/
 
 void init_motion(){
   esp_timer_init();
   setFactor();
-
-
-
 }
