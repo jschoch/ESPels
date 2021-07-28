@@ -132,6 +132,7 @@ Cleanup:
 - [ ] smooth filter EMA RPM for display
 - [ ] store position after disengaging slave so you can re-index if you re-engage
 - [ ] Add angle measure mode like a manual turned indexing plate.
+- [] bug with startup when spindle spinning it may have a hard time booting
 - [x] Add mm position to display
 - [x ] Add some js for frontend
 - [x ] Add HTML parameter updates

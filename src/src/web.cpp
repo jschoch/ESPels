@@ -46,6 +46,8 @@ uint8_t statusCounter = 0;
 
 double jogAbs = 0;
 
+volatile int vEncSpeed = 0;
+
 void saveNvConfigDoc(){
   EepromStream eepromStream(0, 512);
   serializeJson(nvConfigDoc, eepromStream);
@@ -119,7 +121,6 @@ void updateStatusDoc(){
   statusDoc["c1"] = cpu1;
   statusDoc["xd"] = exDelta;
   statusDoc["c"] = statusCounter++;
-  statusDoc["f"] = factor;
   statusDoc["cmd"] = "status";
   statusDoc["fd"] = z_feeding_dir;
   statusDoc["sw"] = syncWaiting;
@@ -244,18 +245,40 @@ void handleJogAbs(){
   }
 }
 
+void handleVencSpeed(){
+  
+  JsonObject config = inDoc["config"];
+  vEncSpeed = config["encSpeed"];
+  Serial.print(vEncSpeed);
+  Serial.println("Changing Virtual Encoder! ");
+  if(vEncSpeed == 0){
+    stopVenc();
+  }
+  if(vEncSpeed > 0 && vEncStopped){
+    startVenc();
+  }
+}
+
 void handleRapid(){
+  //  This just sets the pitch to "rapids" and runs as a normal jog with a faster pitch
+
+  // TODO: calculate speed from current RPM and perhaps warn if accel is a problem?
+  // really need the acceleration curve 
   Serial.println("Rapid! ");
   JsonObject config = inDoc["config"];
-  jog_mm = config["jm"].as<float>();
-  start_rapid(jog_mm);
+  jog_mm = config["jm"].as<double>();
+  //start_rapid(jog_mm);
+  oldPitch = pitch;
+  pitch = rapids;
+  rapiding = true;
+  handleJog();
 }
 
 void handleJog(){
   Serial.println("got jog command");
     if(run_mode == RunMode::SLAVE_JOG_READY){
       JsonObject config = inDoc["config"];
-      jog_mm = config["jm"].as<float>();
+      jog_mm = config["jm"].as<double>();
       /*
       Serial.println("slaveJog mode ok");
       Serial.print("Jog steps: ");
@@ -297,7 +320,8 @@ void handleJog(){
 }
 
 //void parseObj(String msg){
-void parseObj(void * param){
+//void parseObj(void * param){
+void parseObj(){
   DeserializationError error = deserializeJson(inDoc,wsData);
   if (error) {
     Serial.print(F("deserializeJson() failed: "));
@@ -338,12 +362,13 @@ void parseObj(void * param){
   }else if(strcmp(cmd,"jogAbs") == 0){
     handleJogAbs();  
   }else if(strcmp(cmd,"jog") == 0){
+    jogging = true;
     handleJog();
   }else if(strcmp(cmd,"send") == 0){
     JsonObject config = inDoc["config"];
     Serial.println("getting config");
     Serial.print("got pitch: ");
-    float p = config["pitch"];
+    double p = config["pitch"];
     Serial.println(p);
     if(p != pitch){
       Serial.println("new pitch");
@@ -363,7 +388,7 @@ void parseObj(void * param){
       Serial.println((int)run_mode);
       setRunMode(got_run_mode);
     }
-    float sc = config["sc"];
+    double sc = config["sc"];
     if(sc != jog_scaler){
       Serial.println("updating jog scaler");
       jog_scaler = sc;
@@ -396,25 +421,29 @@ void parseObj(void * param){
   }else if(strcmp(cmd,"rapid") == 0){
     handleRapid();
       
+  }else if(strcmp(cmd,"updateEncSpeed") == 0){
+    handleVencSpeed();
   }else{
     Serial.println("unknown command");
     Serial.println(cmd);
   }
-  vTaskDelete(NULL);
+  //vTaskDelete(NULL);
 }
 
+/*
 void pinned_parseObj(){
 
   xTaskCreatePinnedToCore(
     parseObj,    // Function that should be called
     "ws server",  // Name of the task (for debugging)
-    3000,            // Stack size (bytes)
+    32000,            // Stack size (bytes)
     NULL,            // Parameter to pass
     3,               // Task priority
     NULL,             // Task handle
     0 // pin to core 0, arduino loop runs core 1
 );
 }
+*/
 
 void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len){
   //Serial.println("ws event");
@@ -431,7 +460,8 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
         data[len] = 0;
         //parseObj(String((char*) data));
         wsData = String((char*) data);
-        pinned_parseObj();
+        parseObj();
+        //pinned_parseObj();
       }
     }
  
