@@ -17,8 +17,8 @@ bool virtEncoderDir = true;
 // Pins defines in config.h
 Encoder encoder = Encoder(EA, EB, 600);
 
-void doA(){encoder.handleA();}
-void doB(){encoder.handleB();}
+void IRAM_ATTR doA(){encoder.handleA();}
+void IRAM_ATTR doB(){encoder.handleB();}
 
 void init_encoder(){
   encoder.init();
@@ -29,7 +29,7 @@ void do_rpm(){
   if(rpm_timer.repeat()){
     // TODO: put this in the webUI
     long count_diff = abs(last_count - encoder.pulse_counter);
-    float revolutions = (float) count_diff / spindle_encoder_resolution;
+    double revolutions = (double) count_diff / spindle_encoder_resolution;
     rpm = revolutions * 10 * 60;
     last_count = encoder.pulse_counter;    
   }
@@ -82,7 +82,7 @@ void startVenc(){
 
 
 // B channel
-void Encoder::handleB() {
+void IRAM_ATTR Encoder::handleB() {
   int B = digitalRead(pinB);
   switch (quadrature){
     case Quadrature::ON:
@@ -109,7 +109,7 @@ void Encoder::handleB() {
 
 //  Encoder interrupt callback functions
 // A channel
-void Encoder::handleA() {
+void IRAM_ATTR Encoder::handleA() {
   int A = digitalRead(pinA);
   switch (quadrature){
     case Quadrature::ON:
@@ -134,7 +134,7 @@ void Encoder::handleA() {
   }
 }
 
-Encoder::Encoder(int _encA, int _encB , float _ppr){
+Encoder::Encoder(int _encA, int _encB , double _ppr){
 
   // Encoder measurement structure init
   // hardware pins
@@ -163,15 +163,15 @@ Encoder::Encoder(int _encA, int _encB , float _ppr){
   // enable quadrature encoder by default
   quadrature = Quadrature::ON;
 }
-float Encoder::getAngle(){
-  return  natural_direction * _2PI * (pulse_counter) / ((float)cpr);
+double Encoder::getAngle(){
+  return  natural_direction * _2PI * (pulse_counter) / ((double)cpr);
 }
 // initialize counter to zero
-float Encoder::initRelativeZero(){
+double Encoder::initRelativeZero(){
   long angle_offset = -pulse_counter;
   pulse_counter = 0;
   pulse_timestamp = esp_timer_get_time();//_micros();
-  return _2PI * (angle_offset) / ((float)cpr);
+  return _2PI * (angle_offset) / ((double )cpr);
 }
 
 void Encoder::init(){
@@ -208,28 +208,45 @@ void Encoder::init(){
 
 }
 
+void startEncInt(void * p){
+  switch(encoder.quadrature){
+    case Quadrature::ON:
+      // A callback and B callback
+      attachInterrupt(digitalPinToInterrupt(encoder.pinA), doA, CHANGE);
+      attachInterrupt(digitalPinToInterrupt(encoder.pinB), doB, CHANGE);
+      break;
+    case Quadrature::OFF:
+      // A callback and B callback
+      attachInterrupt(digitalPinToInterrupt(encoder.pinA), doA, RISING);
+      attachInterrupt(digitalPinToInterrupt(encoder.pinB), doB, RISING);
+      break;
+  }
+  vTaskDelete(NULL);
+}
+
 // function enabling hardware interrupts of the for the callback provided
 // if callback is not provided then the interrupt is not enabled
 void Encoder::enableInterrupts(void (*doA)(), void(*doB)()){
   // attach interrupt if functions provided
-  switch(quadrature){
-    case Quadrature::ON:
-      // A callback and B callback
-      if(doA != nullptr) attachInterrupt(digitalPinToInterrupt(pinA), doA, CHANGE);
-      if(doB != nullptr) attachInterrupt(digitalPinToInterrupt(pinB), doB, CHANGE);
-      break;
-    case Quadrature::OFF:
-      // A callback and B callback
-      if(doA != nullptr) attachInterrupt(digitalPinToInterrupt(pinA), doA, RISING);
-      if(doB != nullptr) attachInterrupt(digitalPinToInterrupt(pinB), doB, RISING);
-      break;
-  }
+
+  // do this in a task so the interrupts get pinned to core 0
+  xTaskCreatePinnedToCore(
+    startEncInt,
+    "startEncInt",
+    4000,
+    NULL,
+    1,
+    NULL,
+    0 
+  );
 }
 
-void Encoder::setCount(int64_t count){
+void IRAM_ATTR Encoder::setCount(int64_t count){
+  // TODO: why do you need these?
   pulse_counter = count;
   processMotion();
 }
-int64_t Encoder::getCount(){
+int64_t  IRAM_ATTR Encoder::getCount(){
+  // TODO: why not just read the value?
   return pulse_counter;
 }
