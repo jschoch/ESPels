@@ -41,9 +41,17 @@ volatile bool vEncStopped = true;
 void vEncTask(void *param){
   for(;;){
     if(vEncSpeed > 0){
-      encoder.setCount((encoder.pulse_counter+ 1));
+      for(int i =0;i<11;i++){
+        encoder.setCount((encoder.pulse_counter+ 1));
+        taskYIELD();
+      }
+      
     }else{
-      encoder.setCount((encoder.pulse_counter- 1));
+      for(int i =0;i<11;i++){
+        encoder.setCount((encoder.pulse_counter- 1)); 
+        taskYIELD();
+      }
+      
     }
     vTaskDelay(vEncSpeed/portTICK_PERIOD_MS);
   }

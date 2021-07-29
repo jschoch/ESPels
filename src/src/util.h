@@ -16,7 +16,11 @@ enum class RunMode{
   SLAVE_READY,
   SLAVE_JOG_READY,
   DEBUG_READY,
-  RUNNING //  Any mode where we are actually moving.  
+  RUNNING, //  Any mode where we are actually moving.  
+  BounceIdle,
+  BounceJog,
+  BounceRapid,
+  BounceFinish
 };
 
 enum feed_mode_t {

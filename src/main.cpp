@@ -46,10 +46,10 @@ void setup() {
     Serial.println("perfmon failed to start ");
     Serial.println(e);
   }
+  bounce_yasm.next(BounceIdleState);
+
 
   Serial.println("setup done");
-
-
 }
 
 void loop() {
@@ -61,5 +61,6 @@ void loop() {
   read_buttons();
 
   do_rpm();
+  do_state();
 
 }

@@ -132,6 +132,7 @@ void read_buttons(){
      
 }
 
+// TODO this is a bit silly since no display
 void updateMode(display_mode_t newDisplayMode,RunMode run){
   Serial.print("updating modes: ");
   Serial.print(display_mode);

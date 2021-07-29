@@ -31,12 +31,14 @@ void init_pos_feed(){
     
     //wait for the start to come around
     if(syncStart){
+      Serial.println("waiting for spindle sync");
       syncWaiting = true;
       pos_feeding = true;
     }
     else{
       // this resets the "start" but i'm not sure if it works correctly
       // TODO:  should warn that turning off sync will  loose the "start"
+      Serial.println("jog without spindle sync");
       init_gear();
       pos_feeding = true;
     }

@@ -28,6 +28,7 @@ namespace Log{
 #include "myperfmon.h"
 #include "rmtStepper.h"
 #include "log.h"
+#include "BounceMode.h"
 
 
 
@@ -96,6 +97,7 @@ extern uint8_t motor_type;
 extern float backlash;
 extern bool web;
 extern class YASM btn_yasm;
+extern class YASM bounce_yasm;
 extern struct Bd lbd;
 extern int pitch_menu;
 extern Bd rbd;
@@ -135,6 +137,7 @@ extern class Log::Msg el;
 extern bool syncStart;
 extern bool syncWaiting;
 extern volatile bool rapiding;
+extern volatile bool bouncing;
 extern volatile int vEncSpeed;
 extern volatile bool vEncStopped;
 #endif

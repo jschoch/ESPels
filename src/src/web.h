@@ -18,3 +18,4 @@ void sendStatus();
 void sendLogP(Log::Msg *msg);
 void loadNvConfigDoc();
 void handleJog();
+void setStops();
