@@ -125,6 +125,7 @@ void updateStatusDoc(){
   statusDoc["fd"] = z_feeding_dir;
   statusDoc["sw"] = syncWaiting;
   statusDoc["rpm"] = rpm;
+  statusDoc["cpr"] = encoder.cpr;
   sendStatus();
 }
 
@@ -294,10 +295,9 @@ void setStops(){
 
 void handleJog(){
   Serial.println("got jog command");
-<<<<<<< HEAD
   if(run_mode == RunMode::SLAVE_JOG_READY){
     JsonObject config = inDoc["config"];
-    jog_mm = config["jm"].as<float>();
+    jog_mm = config["jm"].as<double>();
     feeding_ccw = (bool)config["f"];
     /*
     Serial.println("slaveJog mode ok");
@@ -314,48 +314,6 @@ void handleJog(){
       init_pos_feed();
       updateStatusDoc();
       btn_yasm.next(slaveJogPosState);
-=======
-    if(run_mode == RunMode::SLAVE_JOG_READY){
-      JsonObject config = inDoc["config"];
-      jog_mm = config["jm"].as<double>();
-      /*
-      Serial.println("slaveJog mode ok");
-      Serial.print("Jog steps: ");
-      Serial.println(stepsPerMM * jog_mm);
-      Serial.print("current tool position: ");
-      Serial.println(toolRelPos);
-      */
-      if(!pos_feeding){
-        // TODO:  what happens when the factor changes and the encoder positoin is wrong?
-        setFactor();
-        targetToolRelPosMM = toolRelPosMM + jog_mm;
-        feeding_ccw = (bool)config["f"];
-        if(jog_mm < 0){
-          z_feeding_dir = false;
-          stopNeg = toolRelPosMM + jog_mm;
-          stopPos = toolRelPosMM;
-          zstepper.setDir(false);
-       }else{
-          z_feeding_dir = true;
-          stopPos = targetToolRelPosMM;
-          stopNeg = toolRelPosMM;
-          zstepper.setDir(true);
-        }
-        //Serial.print("updated targetToolRelPos");
-        //Serial.println(targetToolRelPos);
-
-        init_pos_feed();
-        updateStatusDoc();
-        btn_yasm.next(slaveJogPosState);
-      }
-      else{
-        //Serial.print("already feeding, can't feed");
-        el.error("already set feeding, wait till done or cancel");
-      }
-    }else{
-      //Serial.println("can't jog, failed mode check");
-      el.error("can't jog, no jogging mode is set ");
->>>>>>> bb7aaebd4f44ee4c40ae3c82816ab0122c20800c
     }
     else{
       //Serial.print("already feeding, can't feed");
@@ -367,23 +325,9 @@ void handleJog(){
   }
 }
 
-<<<<<<< HEAD
 void handleBounce(){
   Serial.println("Bounce! ");
   JsonObject config = inDoc["config"];
-=======
-//void parseObj(String msg){
-//void parseObj(void * param){
-void parseObj(){
-  DeserializationError error = deserializeJson(inDoc,wsData);
-  if (error) {
-    Serial.print(F("deserializeJson() failed: "));
-    Serial.println(error.f_str());
-    return;
-  }
-  
-  const char * cmd = inDoc["cmd"];
->>>>>>> bb7aaebd4f44ee4c40ae3c82816ab0122c20800c
 
   // parse config
   pitch = config["pitch"].as<double>();
@@ -467,7 +411,8 @@ void handleNvConfig(){
 
 //void parseObj(String msg){
 // This handles deserializing UI msgs and handling commands
-void parseObj(void * param){
+//void parseObj(void * param){
+void parseObj(){
   DeserializationError error = deserializeJson(inDoc,wsData);
   if (error) {
     Serial.print(F("deserializeJson() failed: "));
