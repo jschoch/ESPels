@@ -1,83 +1,143 @@
 #include <Arduino.h>
 #include "motion.h"
 #include "config.h"
+#include "gear.h"
+// should just be using accel/decel calcs
+#include "AccelStepper.h"
 
 double mmPerStep = 0;
 volatile double targetToolRelPosMM = 0.0;
-volatile double toolRelPosMM = 0;
+volatile double toolRelPosMM = 0.0;
 volatile int64_t thetimes = 0;
 volatile int badTicks = 0;
 char err[200] = "";
 bool syncStart = true;
 bool syncWaiting = false;
+volatile bool rapiding = false;
 
-
-// TODO this should be set via gui or btns
 volatile bool feeding_ccw = true;
-volatile bool tick = false;
 
 int perfCount = 0;
+Gear::State gear;
 
 void init_gear(){
-    zstepper.gear.is_setting_dir = false;
-    zstepper.gear.calc_jumps(encoder.getCount(),true);
-    zstepper.gear.jumps.last = zstepper.gear.jumps.prev;
-
-
+    gear.is_setting_dir = false;
+    gear.calc_jumps(encoder.getCount(),true);
+    gear.jumps.last = gear.jumps.prev;
 }
-
-
 
 void init_pos_feed(){
   if(!pos_feeding){
     
     //wait for the start to come around
     if(syncStart){
+      Serial.println("waiting for spindle sync");
       syncWaiting = true;
-      //xTaskCreate(waitForSyncStart,"syncTask",2048,NULL, 2,NULL);
       pos_feeding = true;
     }
     else{
+      // this resets the "start" but i'm not sure if it works correctly
+      // TODO:  should warn that turning off sync will  loose the "start"
+      Serial.println("jog without spindle sync");
       init_gear();
-       pos_feeding = true;
+      pos_feeding = true;
     }
   }else{
   el.error("already started pos_feeding, can't do it again");
   }
 }
 
-void stepPos(){
-  zstepper.step();
-  toolPos++;
-  toolRelPos++;
-  toolRelPosMM += mmPerStep;
+int64_t last_step_time = 0;
+int aSteps = 0;
+volatile bool useAccel = false;
+float acceleration = 10;
+
+
+// TODO:
+/*
+  Need to know how far we need to go and decide if we should accel or decel
+*/
+bool calcAccelDelay(){
+  // TODO: need to simplify to get accel working
+  if(useAccel){
+    aSteps += 1;
+    float n = 1000000 / sqrt(2 * aSteps * acceleration);
+    if(esp_timer_get_time() - last_step_time >= n){
+      return true;
+    }else{
+      return false;
+    }
+  }else{
+    return true;
+  }
 }
+
+void stepPos(){
+  if(calcAccelDelay()){
+    zstepper.step();
+    toolPos++;
+    toolRelPos++;
+    toolRelPosMM += mmPerStep;
+    last_step_time = esp_timer_get_time();
+  }
+}
+
 void stepNeg(){
   zstepper.step();
   toolPos--;
   toolRelPos--;
   toolRelPosMM -= mmPerStep;
+  last_step_time = esp_timer_get_time();
 }
 
+// ensure we don't send steps after changing dir pin until the proper delay has expired
 void waitForDir(){
-  if(zstepper.gear.is_setting_dir){
-    while(zstepper.gear.is_setting_dir && ((zstepper.dir_change_timer + 5) - esp_timer_get_time() > 0)){
-        zstepper.gear.is_setting_dir = false;
+  if(zstepper.dir_has_changed){
+    while(zstepper.dir_has_changed && ((zstepper.dir_change_timer + 5) - esp_timer_get_time() > 0)){
+        zstepper.dir_has_changed = false;
         if(!zstepper.dir){
           // reset stuff for dir changes guard against swapping when we just moved
-          if(zstepper.gear.jumps.last < encoder.pulse_counter){
-            zstepper.gear.jumps.prev = zstepper.gear.jumps.last;
-            zstepper.gear.jumps.last = zstepper.gear.jumps.next;
+          if(gear.jumps.last < encoder.pulse_counter){
+            gear.jumps.prev = gear.jumps.last;
+            gear.jumps.last = gear.jumps.next;
           }
 
         }else{
           // reset stuff for dir changes
-          if(zstepper.gear.jumps.last  > encoder.pulse_counter){
-            zstepper.gear.jumps.next = zstepper.gear.jumps.last;
-            zstepper.gear.jumps.last = zstepper.gear.jumps.prev;
+          if(gear.jumps.last  > encoder.pulse_counter){
+            gear.jumps.next = gear.jumps.last;
+            gear.jumps.last = gear.jumps.prev;
           }
         }
     }
+  }
+}
+
+
+/*     
+  this decides which direction to move the stepper and if it has reached the 
+target position or if it has reached a virtual stop.  it also decides when
+to calculate the next set of jumps (positions to step based on ratio/factor)
+
+  this requires that everything is setup and ready to go: the vars that need to be set are:
+
+  z_feeding_dir : the intended direction to feed
+    if true: 
+      stopNeg : the current tool position, this ensures if the spindle is reversed we will not jog beyond this point
+      stopPos : the target postion set from the "config" doc 
+    if false:
+      swap Neg/Pos.  Pos becomes the current position, Neg the target
+  syncStart : if true this will ensure we start motion at spindle position 0 (the starting spindle angle)
+*/
+
+void finish_jog(){
+  if(rapiding){
+    pitch = oldPitch;
+    pos_feeding = false;
+    rapiding = false;
+  }else{
+    jogging = false;
+    pos_feeding = false;
   }
 }
 
@@ -86,12 +146,12 @@ void do_pos_feeding(){
     // Sanity check
     //  make sure we are not getting a huge jump in encoder values
 
-    if(encoder.pulse_counter > zstepper.gear.jumps.next+1 || encoder.pulse_counter < zstepper.gear.jumps.prev -1){
+    if(encoder.pulse_counter > gear.jumps.next+1 || encoder.pulse_counter < gear.jumps.prev -1){
       sprintf(err,"Tool outside expected range.  encPos: %lld next: %i  pos %i dirChang? %i",
         encoder.pulse_counter,
-        zstepper.gear.jumps.next,
-        zstepper.gear.jumps.prev,
-        zstepper.gear.is_setting_dir);
+        gear.jumps.next,
+        gear.jumps.prev,
+        gear.is_setting_dir);
       el.addMsg(err);
       el.hasError = true;
       pos_feeding = false;
@@ -117,7 +177,6 @@ void do_pos_feeding(){
     }else {
 
     // encoder incrementing
-    //if((encoder.dir) && !zstepper.gear.is_setting_dir){   //
       if(feeding_ccw && z_feeding_dir && !zstepper.dir){
         zstepper.setDir(true);
       }else if(feeding_ccw && !z_feeding_dir && zstepper.dir){
@@ -135,9 +194,9 @@ void do_pos_feeding(){
 
       // calculate jumps and delta
 
-      //if(encoder.pulse_counter== zstepper.gear.jumps.next ){
-      if((encoder.pulse_counter == zstepper.gear.jumps.next) || (encoder.pulse_counter== zstepper.gear.jumps.prev)){
-        zstepper.gear.calc_jumps(encoder.pulse_counter,true);
+      //
+      if((encoder.pulse_counter == gear.jumps.next) || (encoder.pulse_counter== gear.jumps.prev)){
+        gear.calc_jumps(encoder.pulse_counter,true);
 
         if(zstepper.dir){
           stepPos();
@@ -146,39 +205,22 @@ void do_pos_feeding(){
         }
       }
 
-
-      /*
-      // Encoder decreasing
-      if(encoder.pulse_counter == zstepper.gear.jumps.prev){
-        zstepper.gear.calc_jumps(encoder.pulse_counter,true);
-     }
-      */
-
       // evaluate stops, no motion if motion would exceed stops
 
       if (z_feeding_dir == true && toolRelPosMM >= targetToolRelPosMM){
-      
-        // TODO: need to tell everything we are done e.g move the lever to neutral!
-        // popup here is annoying maybe log a msg
-        //el.error("Tool reached target");
-        //el.addMsg("Tool reached Pos target");
-        //el.hasError = true;
-        pos_feeding = false;
+        finish_jog();
         return;
       }
       if(z_feeding_dir == false && toolRelPosMM <= targetToolRelPosMM){
-        // TODO: need to tell everything we are done e.g move the lever to neutral!
-        // popup annoying
-        //el.addMsg("Tool reached Neg target");
-        //el.hasError = true;
-        pos_feeding = false;
+        finish_jog();
         return;
       }
 
       if(toolRelPosMM < stopNeg){
         el.addMsg("Tool past stopNeg: HALT");
         el.hasError = true;
-        pos_feeding = false;
+        finish_jog();
+        return;
       }
 
       if(toolRelPosMM > stopPos){
@@ -186,15 +228,17 @@ void do_pos_feeding(){
         el.hasError = true;
 
         // TODO: should we halt or just stop feeding?
-        pos_feeding = false;
+        finish_jog();
+        return;
       }
-
-      
-
 }
+
+
+//  processMotion is called by the encoder class when it gets an update
+//  
 void IRAM_ATTR processMotion(){
 
-  //int64_t startTime = esp_timer_get_time();
+  // check if we want to sync our start position
   if(syncWaiting && pos_feeding){
     if(encoder.pulse_counter % encoder.start == 0){
       syncWaiting = false;
@@ -207,6 +251,7 @@ void IRAM_ATTR processMotion(){
     }
     
     /*
+    int64_t startTime = esp_timer_get_time();
     if(perfCount >= 100000){
       int avgTime = thetimes / 100000;
       sprintf(err,"Time took %i badTicks was %i\n",avgTime,badTicks);
@@ -217,11 +262,11 @@ void IRAM_ATTR processMotion(){
       thetimes = 0;
       startTime = esp_timer_get_time();
     }
+    perfCount++;
     */
-    tick = false;
 
   //thetimes += esp_timer_get_time() - startTime;
-  perfCount++;
+  
   if(el.hasError){
       el.errorTask();
       el.hasError = false;
@@ -230,10 +275,35 @@ void IRAM_ATTR processMotion(){
 }
 
 
+/*  
+This didn't workout for rapids
+
+void do_rapid(void * param){
+  //while(stepper.currentPosition() != rapid_target){
+  //}
+  rapiding = false;
+  vTaskDelete(NULL);
+}
+
+void start_rapid(double distance){
+  rapiding = true; 
+  //rapid_target = stepper.currentPosition() + (stepsPerMM * distance);
+  //stepper.runToNewPosition(stepper.currentPosition()+(stepsPerMM * distance));
+  //stepper
+  xTaskCreatePinnedToCore(
+    do_rapid,    // Function that should be called
+    "rapid step",  // Name of the task (for debugging)
+    2000,            // Stack size (bytes)
+    NULL,            // Parameter to pass
+    1,               // Task priority
+    NULL,             // Task handle
+    0 // pin to core 0, arduino loop runs core 1
+);
+
+}
+*/
+
 void init_motion(){
   esp_timer_init();
   setFactor();
-
-
-
 }

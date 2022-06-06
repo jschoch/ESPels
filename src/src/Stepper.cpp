@@ -29,22 +29,18 @@ volatile bool z_prev_dir = true;
 volatile bool z_moving = false;
 volatile bool jogging = false;
 volatile int32_t jogs = 0;
-volatile int step_delta = 0;
 volatile double toolRelPos = 0;
 double oldToolRelPosMM = 0;
 volatile double targetToolRelPos = 0;
 
-// pins defined in config.h
-int z_step_pin = Z_STEP_PIN;
-int z_dir_pin = Z_DIR_PIN;
 
 int use_limit = false;
 volatile int64_t calculated_stepper_pulses=0;
 
 volatile bool jog_done = true;
 volatile int32_t jog_steps = 0;
-float jog_mm = 0;
-volatile float jog_scaler = 0.2;
+double jog_mm = 0;
+volatile double jog_scaler = 0.2;
 volatile uint16_t vel = 1;
 volatile double stopPos = 0;
 volatile double stopNeg = 0;
@@ -115,17 +111,16 @@ int maxVel = defaultAccelTable[DEFAULT_ACCEL_TABLE_SIZE-1][0]; // last value in 
 
 void init_stepper(){
 
-  pinMode(z_dir_pin, OUTPUT);
-  pinMode(z_step_pin, OUTPUT);
+  pinMode(Z_DIR_PIN, OUTPUT);
+  pinMode(Z_STEP_PIN, OUTPUT);
 
   toolPos = 0;
   stepsPerMM = motor_steps / lead_screw_pitch;
 
-  // TODO: rename this to zstepper
 
   zstepper.config.channel = RMT_CHANNEL_0;
-  zstepper.config.stepPin = GPIO_NUM_13;
-  zstepper.config.dirPin = GPIO_NUM_12;
+  zstepper.config.stepPin = (gpio_num_t) Z_STEP_PIN;
+  zstepper.config.dirPin = (gpio_num_t) Z_DIR_PIN;
 
   zstepper.init();
 

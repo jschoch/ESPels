@@ -61,7 +61,7 @@ void do_configure_display(){
 void do_debug_ready_display(){
   display.drawString(0,0,"Debug Jog" + String(vel));
   display.drawString(0,11," Left to jog 10mm");
-  display.drawString(0,21," back: middle " + String(step_delta) );
+  //display.drawString(0,21," back: middle " + String(step_delta) );
   display.drawString(0,31,"J:"+ String(jogging) + " JS: " + String(jog_done));
   display.drawString(0,41,"s: " +String(jog_steps));
   display.display();
@@ -74,8 +74,6 @@ void do_status_display(){
   display.drawString(0,11,  "Feed Pitch: " + String(pitch,2));
   display.drawString(0,21,"Pos: " + String(relativePosition))  ;
   display.drawString(0,31," Delta: " + String( (int32_t)delta ));
-  display.drawString(0,41, "factor: " + String(factor,6) );
-  
   display.display();
 }
 

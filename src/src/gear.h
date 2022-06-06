@@ -2,7 +2,7 @@
 
 
 
-namespace gear {
+namespace Gear {
   struct Jump {
     //uint16_t count;
     int64_t count;

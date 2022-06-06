@@ -9,15 +9,24 @@
 
 // json buffer
 
-// config doc
-StaticJsonDocument<600> doc;
+// config stateDoc
+StaticJsonDocument<600> stateDoc;
 
-// used for inbound msgs
-StaticJsonDocument<600> inDoc;
+//  items to store in NV ram/EEPROM
+StaticJsonDocument<500> nvConfigDoc;
+
+// Used for msgs from UI
+StaticJsonDocument<500> inDoc;
+
+// used to send status to UI
 StaticJsonDocument<600> statusDoc;
+
+// Used to log to UI
 StaticJsonDocument<600> logDoc;
 
 size_t len = 0;
+
+String wsData;
 
 
 /*  not used for dhcp
@@ -37,6 +46,58 @@ uint8_t statusCounter = 0;
 
 double jogAbs = 0;
 
+volatile int vEncSpeed = 0;
+
+void saveNvConfigDoc(){
+  EepromStream eepromStream(0, 512);
+  serializeJson(nvConfigDoc, eepromStream);
+  //EEPROM.commit();
+  eepromStream.flush();
+  loadNvConfigDoc();
+}
+
+void initNvConfigDoc(){
+  nvConfigDoc.clear();
+  // this flag says we've updated from the default
+  nvConfigDoc["i"] = 1;
+
+  // the config
+  nvConfigDoc["lead_screw_pitch"] = lead_screw_pitch;
+  nvConfigDoc["spindle_encoder_resolution"] = spindle_encoder_resolution;
+  nvConfigDoc["microsteps"] = microsteps;
+
+  // TODO list of things to add
+  /*
+
+  UI_update_rate
+  last_pitch ?  do I want to do that?
+  motor acceleration
+  motor max_speed
+
+  */
+  //nvConfigDoc[""] = ;
+  saveNvConfigDoc();
+}
+
+void loadNvConfigDoc(){
+  EepromStream eepromStream(0, 512);
+  deserializeJson(nvConfigDoc, eepromStream);
+  if(!nvConfigDoc["i"]){
+    Serial.print("Doc!?  ");
+    Serial.println((int)nvConfigDoc["i"]);
+    el.error("no config found this is bad");
+  }else{
+    Serial.println("Loaded Configuration");
+    lead_screw_pitch = nvConfigDoc["lead_screw_pitch"];
+    motor_steps = nvConfigDoc["motor_steps"];
+    spindle_encoder_resolution = nvConfigDoc["spindle_encoder_resolution"]; 
+    init_machine();
+    setFactor();
+  }
+}
+
+
+
 void updateStatusDoc(){
   statusDoc["p"] = toolRelPos;
   statusDoc["pmm"] = toolRelPosMM;
@@ -49,6 +110,7 @@ void updateStatusDoc(){
   statusDoc["targetPosMM"] = targetToolRelPosMM;
   statusDoc["feeding"] = feeding;
   statusDoc["jogging"] = jogging;
+  statusDoc["rap"] = rapiding;
   statusDoc["pos_feed"] = pos_feeding;
   statusDoc["jog_dong"] = jog_done;
   statusDoc["sne"] = stopNegEx;
@@ -59,38 +121,39 @@ void updateStatusDoc(){
   statusDoc["c1"] = cpu1;
   statusDoc["xd"] = exDelta;
   statusDoc["c"] = statusCounter++;
-  statusDoc["f"] = factor;
   statusDoc["cmd"] = "status";
   statusDoc["fd"] = z_feeding_dir;
   statusDoc["sw"] = syncWaiting;
   statusDoc["rpm"] = rpm;
+  statusDoc["cpr"] = encoder.cpr;
   sendStatus();
 }
 
-void updateConfigDoc(){
-  doc["absP"] = absolutePosition;
-  doc["P"] = relativePosition;
-  doc["pitch"] = pitch;
-  doc["rapid"] = rapids;
-  doc["stopA"] = 1.0;
-  doc["stopB"] = 2.0;
-  doc["zero"] = 3.0;
-  doc["jogD"] = 0.1;
-  doc["lead"] = lead_screw_pitch;
-  doc["enc"] = spindle_encoder_resolution;
-  doc["micro"] = microsteps;
-  doc["e"] = 0;
-  doc["u"] = 0;
-  doc["m"] = (int)run_mode; 
-  doc["d"] = (int)display_mode;
-  doc["js"] = jog_steps;
-  doc["jm"] = jog_mm;
-  doc["sc"] = jog_scaler;
-  doc["f"] = feeding_ccw;
-  doc["ja"] = jogAbs;
-  doc["s"] = syncStart;
+void updateStateDoc(){
+  stateDoc["absP"] = absolutePosition;
+  stateDoc["P"] = relativePosition;
+  stateDoc["pitch"] = pitch;
+  stateDoc["rapid"] = rapids;
+  stateDoc["stopA"] = 1.0;
+  stateDoc["stopB"] = 2.0;
+  stateDoc["zero"] = 3.0;
+  stateDoc["jogD"] = 0.1;
+  stateDoc["lead"] = lead_screw_pitch;
+  stateDoc["enc"] = spindle_encoder_resolution;
+  stateDoc["micro"] = microsteps;
+  stateDoc["e"] = 0;
+  stateDoc["u"] = 0;
+  stateDoc["m"] = (int)run_mode; 
+  stateDoc["d"] = (int)display_mode;
+  stateDoc["js"] = jog_steps;
+  // this is the distance to jog in mm
+  stateDoc["jm"] = jog_mm;
+  stateDoc["sc"] = jog_scaler;
+  stateDoc["f"] = feeding_ccw;
+  stateDoc["ja"] = jogAbs;
+  stateDoc["s"] = syncStart;
 
-  sendConfig();
+  sendState();
   // this needs a timer to send on interval
   
 }
@@ -113,8 +176,8 @@ void setRunMode(int mode){
     }
 }
 
-void sendConfig(){
-  len = serializeJson(doc, outBuffer);  
+void sendState(){
+  len = serializeJson(stateDoc, outBuffer);  
   //Serial.print("sending config: ");
   //Serial.println(outBuffer);
   // send it! 
@@ -135,13 +198,25 @@ void sendStatus(){
 
 }
 
+void sendNvConfigDoc(){
+  nvConfigDoc["cmd"] = "nvConfig";
+  len = serializeMsgPack(nvConfigDoc, outBuffer);
+  ws.binaryAll(outBuffer,len);
+}
+
+
 void handleJogAbs(){
+
   JsonObject config = inDoc["config"];
   jogAbs = config["ja"];
   syncStart = config["s"];
   targetToolRelPosMM = jogAbs;
+  // TODO: need to check if we are rapiding also somewhere!
   if(!jogging){
     Serial.println(jogAbs);
+
+    // config["f"] is the feeding_ccw flag from the UI
+    // TODO: why not set feeding_ccw like we do for handleJog()?
     if(config["f"]){
       if((toolRelPosMM - jogAbs) < 0 ){
         z_feeding_dir = true;
@@ -173,93 +248,98 @@ void handleJogAbs(){
   }
 }
 
-void handleJog(){
-  Serial.println("got jog command");
-    /*  TODO  needs refactor
-    if(run_mode == RunMode::DEBUG_READY){
-      JsonObject config = inDoc["config"];
-      jog_mm = config["jm"].as<float>();
-      Serial.println("debug mode ok");
-      Serial.print("Jog steps: ");
-      Serial.println(stepsPerMM * jog_mm);
-      if(!jogging){
-        feeding_ccw = config["f"];
-        if(jog_mm < 0){
-          z_feeding_dir = false;
-          jog_steps = (float)stepsPerMM * jog_mm * -1;
-        }else{
-          z_feeding_dir = true;
-          jog_steps = (float)stepsPerMM * jog_mm;
-        }
-        
-        jogging = true;
-      }
-    }else if(run_mode == RunMode::SLAVE_JOG_READY){
-    */
-
-    if(run_mode == RunMode::SLAVE_JOG_READY){
-      JsonObject config = inDoc["config"];
-      jog_mm = config["jm"].as<float>();
-      /*
-      Serial.println("slaveJog mode ok");
-      Serial.print("Jog steps: ");
-      Serial.println(stepsPerMM * jog_mm);
-      Serial.print("current tool position: ");
-      Serial.println(toolRelPos);
-      */
-      if(!pos_feeding){
-        // TODO:  what happens when the factor changes and the encoder positoin is wrong?
-        setFactor();
-        targetToolRelPosMM = toolRelPosMM + jog_mm;
-        feeding_ccw = (bool)config["f"];
-        if(jog_mm < 0){
-          z_feeding_dir = false;
-          stopNeg = toolRelPosMM + jog_mm;
-          stopPos = toolRelPosMM;
-          zstepper.setDir(false);
-       }else{
-          z_feeding_dir = true;
-          stopPos = targetToolRelPosMM;
-          stopNeg = toolRelPosMM;
-          zstepper.setDir(true);
-        }
-        //Serial.print("updated targetToolRelPos");
-        //Serial.println(targetToolRelPos);
-
-        init_pos_feed();
-        updateStatusDoc();
-        btn_yasm.next(slaveJogPosState);
-      }
-      else{
-        //Serial.print("already feeding, can't feed");
-        el.error("already set feeding, wait till done or cancel");
-      }
-    }else{
-      //Serial.println("can't jog, failed mode check");
-      el.error("can't jog, no jogging mode is set ");
-    }
+void handleVencSpeed(){
+  
+  JsonObject config = inDoc["config"];
+  vEncSpeed = config["encSpeed"];
+  Serial.print(vEncSpeed);
+  Serial.println("Changing Virtual Encoder! ");
+  if(vEncSpeed == 0){
+    stopVenc();
+  }
+  if(vEncSpeed > 0 && vEncStopped){
+    startVenc();
+  }
 }
 
-void parseObj(String msg){
-  DeserializationError error = deserializeJson(inDoc, msg);
-  if (error) {
-    Serial.print(F("deserializeJson() failed: "));
-    Serial.println(error.f_str());
-    return;
+void handleRapid(){
+  //  This just sets the pitch to "rapids" and runs as a normal jog with a faster pitch
+
+  // TODO: calculate speed from current RPM and perhaps warn if accel is a problem?
+  // really need the acceleration curve 
+  Serial.println("Rapid! ");
+  JsonObject config = inDoc["config"];
+  jog_mm = config["jm"].as<double>();
+  //start_rapid(jog_mm);
+  oldPitch = pitch;
+  pitch = rapids;
+  rapiding = true;
+  handleJog();
+}
+void setStops(){
+  // TODO:  what happens when the factor changes and the encoder positoin is wrong?
+      setFactor();
+      targetToolRelPosMM = toolRelPosMM + jog_mm;
+      if(jog_mm < 0){
+        z_feeding_dir = false;
+        stopNeg = toolRelPosMM + jog_mm;
+        stopPos = toolRelPosMM;
+        zstepper.setDir(false);
+      }else{
+        z_feeding_dir = true;
+        stopPos = targetToolRelPosMM;
+        stopNeg = toolRelPosMM;
+        zstepper.setDir(true);
+      }
+}
+
+void handleJog(){
+  Serial.println("got jog command");
+  if(run_mode == RunMode::SLAVE_JOG_READY){
+    JsonObject config = inDoc["config"];
+    jog_mm = config["jm"].as<double>();
+    feeding_ccw = (bool)config["f"];
+    /*
+    Serial.println("slaveJog mode ok");
+    Serial.print("Jog steps: ");
+    Serial.println(stepsPerMM * jog_mm);
+    Serial.print("current tool position: ");
+    Serial.println(toolRelPos);
+    */
+    if(!pos_feeding){
+      setStops();   
+      //Serial.print("updated targetToolRelPos");
+      //Serial.println(targetToolRelPos);
+      jogging = true;
+      init_pos_feed();
+      updateStatusDoc();
+      btn_yasm.next(slaveJogPosState);
+    }
+    else{
+      //Serial.print("already feeding, can't feed");
+      el.error("already set feeding, wait till done or cancel");
+    }
+  }else{
+    //Serial.println("can't jog, failed mode check");
+    el.error("can't jog, no jogging mode is set ");
   }
-  
-  const char * cmd = inDoc["cmd"];
+}
 
-  if(strcmp(cmd,"fetch") == 0){
-    // regenerate config and send it along
+void handleBounce(){
+  Serial.println("Bounce! ");
+  JsonObject config = inDoc["config"];
 
-    Serial.println("fetch received: sending config");
-    //sendConfig();    
-    updateConfigDoc();
-    
-  // Fake encoder commands
-  }else if(strcmp(cmd,"debug") ==0){
-    int t = inDoc["dir"];
+  // parse config
+  pitch = config["pitch"].as<double>();
+  rapids = config["rapid"].as<double>();
+  jog_mm = config["jog_mm"].as<double>();
+  feeding_ccw = (bool)config["f"];
+  setStops();
+  bouncing = true;
+}
+
+void handleDebug(){
+  int t = inDoc["dir"];
     if(t ==1){
       encoder.setCount(encoder.pulse_counter+ 2400);
     }else if (t == 0){
@@ -274,19 +354,16 @@ void parseObj(String msg){
 
     //Serial.printf("fccw: %d  fz: %d sd: %d encDir: %i \n",feeding_ccw,z_feeding_dir,zstepper.dir, encoder.dir);
 
-  //  JOG COMMANDS
-  }else if(strcmp(cmd,"jogcancel") == 0){
-    // TODO wheat cleanup needs to be done?
-    pos_feeding = false;  
-  }else if(strcmp(cmd,"jogAbs") == 0){
-    handleJogAbs();  
-  }else if(strcmp(cmd,"jog") == 0){
-    handleJog();
-  }else if(strcmp(cmd,"send") == 0){
-    JsonObject config = inDoc["config"];
+}
+
+void handleSend(){
+  // TODO: i dont' think I use this really
+
+  // This seems redundant, why not just access inDoc?
+  JsonObject config = inDoc["config"];
     Serial.println("getting config");
     Serial.print("got pitch: ");
-    float p = config["pitch"];
+    double p = config["pitch"];
     Serial.println(p);
     if(p != pitch){
       Serial.println("new pitch");
@@ -297,7 +374,7 @@ void parseObj(String msg){
     if(config["rapid"] != rapids){
       Serial.println("updating rapids");
       rapids = config["rapid"];
-      //doc["rapid"] = rapids;
+      //stateDoc["rapid"] = rapids;
     }
     if(config["m"] != (int)run_mode){
       Serial.print("setting new mode from webUI: ");
@@ -306,50 +383,127 @@ void parseObj(String msg){
       Serial.println((int)run_mode);
       setRunMode(got_run_mode);
     }
-    float sc = config["sc"];
+    double sc = config["sc"];
     if(sc != jog_scaler){
       Serial.println("updating jog scaler");
       jog_scaler = sc;
     }
-    updateConfigDoc();
+    updateStateDoc();
+}
+void handleNvConfig(){
+  Serial.println("saving configuration");
+    inDoc.remove("cmd");
+    // TODO better checks than this~
+    if(inDoc["lead_screw_pitch"]){
+      // Save 
+      inDoc["i"] = 1;
+      EepromStream eepromStream(0, 512);
+      serializeJson(inDoc, eepromStream);
+      eepromStream.flush();
+      loadNvConfigDoc();
+      sendNvConfigDoc();
+    
+    }else{
+      el.error("error format of NV config bad");
+    }
+}
 
+
+//void parseObj(String msg){
+// This handles deserializing UI msgs and handling commands
+//void parseObj(void * param){
+void parseObj(){
+  DeserializationError error = deserializeJson(inDoc,wsData);
+  if (error) {
+    Serial.print(F("deserializeJson() failed: "));
+    Serial.println(error.f_str());
+    return;
+  }
+  
+  const char * cmd = inDoc["cmd"];
+
+  if(strcmp(cmd,"fetch") == 0){
+    // regenerate config and send it along
+    Serial.println("fetch received: sending config");
+    updateStateDoc();
+  }else if(strcmp(cmd,"debug") ==0){
+    // Debugging tools
+    handleDebug(); 
+  //  JOG COMMANDS
+  }else if(strcmp(cmd,"jogcancel") == 0){
+    // TODO wheat cleanup needs to be done?
+    pos_feeding = false;  
+    // TODO: need rapid cancel
+  }else if(strcmp(cmd,"jogAbs") == 0){
+    handleJogAbs();  
+  }else if(strcmp(cmd,"jog") == 0){
+    
+    handleJog();
+  }else if(strcmp(cmd,"send") == 0){
+    handleSend(); 
+  }else if(strcmp(cmd,"setNvConfig") == 0){
+    handleNvConfig();
+  }else if(strcmp(cmd,"getNvConfig") == 0){
+    sendNvConfigDoc();
+
+  }else if(strcmp(cmd,"resetNvConfig") == 0){
+      Serial.println("resetting nv config to defaults");
+      initNvConfigDoc(); 
+      sendNvConfigDoc();
+  }else if(strcmp(cmd,"rapid") == 0){
+    handleRapid();
+      
+  }else if(strcmp(cmd,"updateEncSpeed") == 0){
+    handleVencSpeed();
+  }else if(strcmp(cmd,"bounce")== 0){
+    handleBounce();
   }else{
     Serial.println("unknown command");
     Serial.println(cmd);
   }
+  //vTaskDelete(NULL);
 }
+
+/*
+void pinned_parseObj(){
+
+  xTaskCreatePinnedToCore(
+    parseObj,    // Function that should be called
+    "ws server",  // Name of the task (for debugging)
+    32000,            // Stack size (bytes)
+    NULL,            // Parameter to pass
+    3,               // Task priority
+    NULL,             // Task handle
+    0 // pin to core 0, arduino loop runs core 1
+);
+}
+*/
 
 void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len){
   //Serial.println("ws event");
   if(type == WS_EVT_CONNECT){
- 
     Serial.println("Websocket client connection received");
     globalClient = client;
-    
- 
   } else if(type == WS_EVT_DISCONNECT){
     Serial.println("Client disconnected");
     Serial.println("-----------------------");
- 
   } else if(type == WS_EVT_DATA){
     AwsFrameInfo * info = (AwsFrameInfo*)arg;
-    /*
-    Serial.print("Data received: ");
-    for(int i=0; i < len; i++) {
-          Serial.print((char) data[i]);
-    }
-    */
-
     if(info->final && info->index == 0 && info->len == len){
-
       if(info->opcode == WS_TEXT){
         data[len] = 0;
-        parseObj(String((char*) data));
+        //parseObj(String((char*) data));
+        wsData = String((char*) data);
+        parseObj();
+        //pinned_parseObj();
       }
     }
  
   }
 }
+
+
+
 void init_web(){
   // Connect to WiFi
   Serial.println("Setting up WiFi");
@@ -373,12 +527,26 @@ void init_web(){
     }
   MDNS.setInstanceName("mydeskels");
   MDNS.addService("http", "tcp", 80);
+  
   ws.onEvent(onWsEvent);
   server.addHandler(&ws);
   server.begin();
   Serial.println("HTTP websocket server started");
-  updateConfigDoc();
+
+  updateStateDoc();
   init_ota();
+  EEPROM.begin(512);
+  EepromStream eepromStream(0, 512);
+  deserializeJson(nvConfigDoc, eepromStream);
+  Serial.println("NV Config? ");
+  Serial.println((int)nvConfigDoc["i"]);
+  if(!nvConfigDoc["i"]){
+    Serial.println("creating default nvConfig");
+    initNvConfigDoc();
+  }else{
+    loadNvConfigDoc();
+  }
+
 }
 
 void init_ota(){

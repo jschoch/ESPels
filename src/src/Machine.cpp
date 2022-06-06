@@ -2,21 +2,18 @@
 #include "config.h"
 #include "Machine.h"
 
-float lead_screw_pitch = 2.0;
+double lead_screw_pitch = 2.0;
 int microsteps = 8;
 int native_steps = 200;
 int motor_steps = 0;
-volatile double factor = 0.0;
-float pitch = 0.06;
-float oldPitch = pitch;
+double pitch = 0.06;
+double oldPitch = pitch;
 int tpi = 0;
-float depth = 0.0;
+double depth = 0.0;
 
-float rapids = 1.0;
-float backlash = 0.0;
+double rapids = 1.0;
+double backlash = 0.0;
 uint8_t motor_type = MOTOR_TYPE;
-long mm_per_tick = 0;
-float encoder_factor = 0;
 
 
 void init_machine(){
@@ -29,8 +26,9 @@ void init_machine(){
     
   // motor steps per mm
   motor_steps = (microsteps * native_steps) ;
-  mm_per_tick = 1 / spindle_encoder_resolution /lead_screw_pitch;
-  encoder_factor = (float)spindle_encoder_resolution / (motor_steps/lead_screw_pitch);
+  stepsPerMM = motor_steps / lead_screw_pitch;
+  mmPerStep = (double) 1/stepsPerMM;
+  init_stepper();
 }
 
 

@@ -7,6 +7,7 @@
 #include "neotimer.h"
 #include <yasm.h>
 #include "rmtStepper.h"
+#include "gear.h"
 
 //Neotimer button_read_timer = Neotimer(10);
 Neotimer button_print_timer = Neotimer(2000);
@@ -21,7 +22,6 @@ volatile bool z_feeding_dir = true;
 
 
 
-int feed_mode_select = 0;
 
 #ifdef DEBUG_CPU_STATS
 char stats[ 2048];
@@ -132,6 +132,7 @@ void read_buttons(){
      
 }
 
+// TODO this is a bit silly since no display
 void updateMode(display_mode_t newDisplayMode,RunMode run){
   Serial.print("updating modes: ");
   Serial.print(display_mode);
@@ -139,7 +140,7 @@ void updateMode(display_mode_t newDisplayMode,RunMode run){
   Serial.println((int)run);
   display_mode = newDisplayMode;
   run_mode = run;
-  updateConfigDoc();
+  updateStateDoc();
 }
 
 void startupState(){
@@ -183,48 +184,20 @@ void slaveJogStatusState(){
 }
 
 
-
+extern struct Gear::State gear;
 void setFactor(){
-
-  // TODO: timer refactor  get rid of factor and all related code
-  //factor= (motor_steps*pitch)/(lead_screw_pitch*spindle_encoder_resolution);            
-  stepsPerMM = motor_steps / lead_screw_pitch;
-  mmPerStep = (double) 1/stepsPerMM;
+  
   int den = lead_screw_pitch * spindle_encoder_resolution ;
   int nom = motor_steps * pitch;
 
+  //
   Serial.printf("nom: %d den: %d",nom,den);
-    if (!zstepper.gear.setRatio(nom,den)){
+    if (!gear.setRatio(nom,den)){
       sprintf(el.buf,"Bad Ratio: Den: %d Nom: %d\n",nom,den);
       el.error();
       pitch = oldPitch;
       return;
     }
-
-  /*   TODO: add back imperial threads
-  else
-    {
-    if(menu<20)
-      {
-        // the depth of cut in mm on the compound slide I need for each thread pitch.  
-        // I use this during operation rather than looking it up each time
-
-        depth=pitch_factor*25.4/tpi;
-
-        // the imperial factor needed to account for details of lead screw pitch, 
-        // stepper motor #pulses/rev and encoder #pulses/rev
-        factor= motor_steps*25.4/(tpi*lead_screw_pitch*spindle_encoder_resolution);  // imperial
-        }
-      else
-        {
-        // the depth of cut in mm on the compound slide
-        depth=pitch_factor*pitch; 
-        // the metric factor needed to account for details of lead screw pitch, 
-        // stepper motor #pulses/rev and encoder #pulses/rev
-        factor=pitch*motor_steps/(lead_screw_pitch*spindle_encoder_resolution); // keep redundant
-        }
-      }
-  */              
 } 
 
 //this defines the parameters for the thread and turning for both metric and imperial threads
@@ -235,6 +208,10 @@ void thread_parameters()
   switch(menu) {
     case(1):     pitch=0.085;                  break;  // Normal Turning
   */
+
+ // TODO: add back imperial
+ //factor= motor_steps*25.4/(tpi*lead_screw_pitch*spindle_encoder_resolution);  // imperial
+
 }
 
 void feed_parameters(){
@@ -270,5 +247,5 @@ void feed_parameters(){
 
   setFactor();
   // TODO:  this needs some thought
-  updateConfigDoc();
+  updateStateDoc();
 }

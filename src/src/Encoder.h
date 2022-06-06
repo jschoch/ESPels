@@ -24,6 +24,8 @@ enum Pullup{
 
 void init_encoder(void);
 void do_rpm(void);
+void stopVenc();
+void startVenc();
 
 // sign function
 #define _sign(a) ( ( (a) < 0 )  ?  -1   : ( (a) > 0 ) )
@@ -45,7 +47,7 @@ void do_rpm(void);
 
 class Encoder {
  public:
- Encoder(int encA, int encB , float ppr);
+ Encoder(int encA, int encB , double ppr);
 
  /** encoder initialise pins */
  void init();
@@ -56,9 +58,9 @@ class Encoder {
     void handleA();
     /** B channel callback function */
     void handleB();
-    float getAngle();
-    float initRelativeZero();
-    float initAbsoluteZero() ;
+    double getAngle();
+    double initRelativeZero();
+    double initAbsoluteZero() ;
     int pinA; //!< encoder hardware pin A
     int pinB; //!< encoder hardware pin B
     int cpr;
@@ -77,7 +79,7 @@ private:
     volatile long pulse_timestamp;//!< last impulse timestamp in us
     volatile int A_active; //!< current active states of A channel
     volatile int B_active; //!< current active states of B channel
-    float prev_Th, pulse_per_second;
+    double prev_Th, pulse_per_second;
 
     volatile long prev_timestamp_us;
 

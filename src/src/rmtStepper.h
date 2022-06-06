@@ -2,7 +2,6 @@
 
 #include "config.h"
 #include <driver/rmt.h>
-#include "gear.h"
 
 
 namespace rmtStepper {
@@ -21,8 +20,8 @@ namespace rmtStepper {
         Config config;
         rmt_item32_t items[2];
         rmt_config_t rconfig;
-        gear::State gear;
         int64_t dir_change_timer;
+        bool dir_has_changed = false;
 
         void step(){
             RMT.conf_ch[RMT_CHANNEL_0].conf1.mem_rd_rst = 1;
@@ -37,7 +36,7 @@ namespace rmtStepper {
             bool olddir = dir;
             if(dir != newdir){
                 // XOR the dir for the inversion bool
-                gear.is_setting_dir = true;
+                dir_has_changed = true;
 
                 // TODO need  to be able to invert
                 //digitalWrite(config.dirPin, newdir ^ config.invert_step_pin);
