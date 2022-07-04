@@ -31,7 +31,7 @@ namespace Log{
 #include "BounceMode.h"
 
 
-
+/*  ###########################  Lolin 32 oled board
 // Pins
 
 #define Z_STEP_PIN 13
@@ -43,6 +43,29 @@ namespace Log{
 
 #define USESSD1306 1
 
+*/
+
+// ############################## az-deliver devkit c
+
+//    Set the machine name for wifi and websockets
+//char* myname = "els";
+//char* myname = "divider";
+constexpr const char* myname = "divider";
+
+//   Motor pins
+#define Z_STEP_PIN 13
+#define Z_DIR_PIN 12
+#define Z_FAULT_PIN 14
+
+// Encoder pins
+//  set for internal pullup or external
+//#define encoder_pullup Pullup::INTERN_PULLDOWN
+#define encoder_pullup Pullup::INTERN_PULLUP
+
+#define EA 16
+#define EB 17
+
+#define error_led 25
 // Machine Settings
 
 #define MOTOR_TYPE 1 // 1 is 1.8 degree, 2 is .9 degree

@@ -159,7 +159,7 @@ Encoder::Encoder(int _encA, int _encB , double _ppr){
 
   // extern pullup as default
   //pullup = Pullup::EXTERN;
-  pullup = Pullup::INTERN_PULLDOWN;
+  pullup = encoder_pullup;
   // enable quadrature encoder by default
   quadrature = Quadrature::ON;
 }
@@ -178,14 +178,17 @@ void Encoder::init(){
 
   // Encoder - check if pullup needed for your encoder
   if(pullup == Pullup::INTERN_PULLUP){
+    Serial.println("Using Internal PULLUP");
     pinMode(pinA, INPUT_PULLUP);
     pinMode(pinB, INPUT_PULLUP);
     //if(hasIndex()) pinMode(index_pin,INPUT_PULLUP);
   }else if(pullup == Pullup::INTERN_PULLDOWN){
+    Serial.println("Using Internal PULLDOWN");
     pinMode(pinA, INPUT_PULLDOWN);
     pinMode(pinB, INPUT_PULLDOWN);
-  }
+  }else
   {
+    Serial.println("Using External PULLUP/PULLDOWN");
     pinMode(pinA, INPUT);
     pinMode(pinB, INPUT);
     //if(hasIndex()) pinMode(index_pin,INPUT);

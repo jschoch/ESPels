@@ -37,7 +37,7 @@ IPAddress subnet(255,255,255,0);
 */
 
 AsyncWebServer server(80);
-AsyncWebSocket ws("/test");
+AsyncWebSocket ws("/els");
 AsyncWebSocketClient * globalClient = NULL;
 bool web = true;
 char outBuffer[450]; 
@@ -507,7 +507,7 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
 void init_web(){
   // Connect to WiFi
   Serial.println("Setting up WiFi");
-  WiFi.setHostname("elsd");
+  WiFi.setHostname(myname);
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print(".");
@@ -518,14 +518,14 @@ void init_web(){
 
   
   //  MDNS hostname must be lowercase
-  if (!MDNS.begin("elsd")) {
+  if (!MDNS.begin(myname)) {
         Serial.println("Error setting up MDNS responder!");
         while(1) {
           Serial.print("*");
             delay(100);
         }
     }
-  MDNS.setInstanceName("mydeskels");
+  MDNS.setInstanceName(myname);
   MDNS.addService("http", "tcp", 80);
   
   ws.onEvent(onWsEvent);
