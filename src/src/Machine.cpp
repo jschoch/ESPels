@@ -32,14 +32,3 @@ void init_machine(){
 }
 
 
-/*
-lead_screw_pitch
-spindle_encoder_resolution
-microsteps
-motor_type
-rapids
-backlash
-
-
-
-*/

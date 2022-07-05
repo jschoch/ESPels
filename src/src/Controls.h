@@ -40,7 +40,7 @@ void slaveJogReadyState(void);
 void feedingState(void);
 void slaveJogStatusState(void);
 void resetToolPos(void);
-void updateMode(display_mode_t newDisplayMode,RunMode run);
+void updateMode(RunMode run);
 void slaveJogPosState();
 
 #endif

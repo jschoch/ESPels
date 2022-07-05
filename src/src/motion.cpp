@@ -27,6 +27,7 @@ void init_gear(){
 }
 
 void init_pos_feed(){
+  setFactor();
   if(!pos_feeding){
     
     //wait for the start to come around
@@ -114,6 +115,20 @@ void waitForDir(){
 }
 
 
+// clean up vars on finish
+
+void finish_jog(){
+  if(rapiding){
+    pitch = oldPitch;
+    pos_feeding = false;
+    rapiding = false;
+  }else{
+    jogging = false;
+    pos_feeding = false;
+  }
+}
+
+
 /*     
   this decides which direction to move the stepper and if it has reached the 
 target position or if it has reached a virtual stop.  it also decides when
@@ -130,16 +145,6 @@ to calculate the next set of jumps (positions to step based on ratio/factor)
   syncStart : if true this will ensure we start motion at spindle position 0 (the starting spindle angle)
 */
 
-void finish_jog(){
-  if(rapiding){
-    pitch = oldPitch;
-    pos_feeding = false;
-    rapiding = false;
-  }else{
-    jogging = false;
-    pos_feeding = false;
-  }
-}
 
 void do_pos_feeding(){
 
@@ -207,23 +212,23 @@ void do_pos_feeding(){
 
       // evaluate stops, no motion if motion would exceed stops
 
-      if (z_feeding_dir == true && toolRelPosMM >= targetToolRelPosMM){
+      if (useStops && z_feeding_dir == true && toolRelPosMM >= targetToolRelPosMM){
         finish_jog();
         return;
       }
-      if(z_feeding_dir == false && toolRelPosMM <= targetToolRelPosMM){
+      if(useStops && z_feeding_dir == false && toolRelPosMM <= targetToolRelPosMM){
         finish_jog();
         return;
       }
 
-      if(toolRelPosMM < stopNeg){
+      if(useStops && (toolRelPosMM < stopNeg)){
         el.addMsg("Tool past stopNeg: HALT");
         el.hasError = true;
         finish_jog();
         return;
       }
 
-      if(toolRelPosMM > stopPos){
+      if(useStops && toolRelPosMM > stopPos){
         el.addMsg("tool past stopPos: HALT");
         el.hasError = true;
 

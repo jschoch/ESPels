@@ -1,15 +1,19 @@
 #include <Arduino.h>
 #include "config.h"
 #include "util.h"
+
+
+
+/* Gutted
 #include "display.h"
 
 #include <Wire.h>
 #include "SSD1306Wire.h"
 #include "neotimer.h"
 
+
 SSD1306Wire  display(0x3c, 5, 4);
 Neotimer display_timer = Neotimer(500);
-Neotimer print_timer = Neotimer(1000);
 
 int display_mode = STARTUP;
 
@@ -107,6 +111,5 @@ void do_display(){
     
   }
   
-  if (print_timer.repeat()){
-  }
 }
+*/  

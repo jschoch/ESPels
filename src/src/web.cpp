@@ -28,6 +28,7 @@ size_t len = 0;
 
 String wsData;
 
+Neotimer update_timer = Neotimer(500);
 
 /*  not used for dhcp
 // Put IP Address details 
@@ -144,7 +145,7 @@ void updateStateDoc(){
   stateDoc["e"] = 0;
   stateDoc["u"] = 0;
   stateDoc["m"] = (int)run_mode; 
-  stateDoc["d"] = (int)display_mode;
+  //stateDoc["d"] = (int)display_mode;
   stateDoc["js"] = jog_steps;
   // this is the distance to jog in mm
   stateDoc["jm"] = jog_mm;
@@ -154,7 +155,6 @@ void updateStateDoc(){
   stateDoc["s"] = syncStart;
 
   sendState();
-  // this needs a timer to send on interval
   
 }
 
@@ -169,6 +169,10 @@ void setRunMode(int mode){
         break;
       case (int)RunMode::SLAVE_READY :
         btn_yasm.next(SlaveModeReadyState);
+        break;
+      case (int)RunMode::HOB_READY :
+        //hob_yasm.next(HobReadyState);
+        HobReadyState();
         break;
       default: 
         btn_yasm.next(startupState);
@@ -244,10 +248,10 @@ void handleJogAbs(){
     }
     init_pos_feed();
     updateStatusDoc();
-    btn_yasm.next(slaveJogPosState);
   }
 }
 
+//  Update the virtual encoder
 void handleVencSpeed(){
   
   JsonObject config = inDoc["config"];
@@ -313,7 +317,6 @@ void handleJog(){
       jogging = true;
       init_pos_feed();
       updateStatusDoc();
-      btn_yasm.next(slaveJogPosState);
     }
     else{
       //Serial.print("already feeding, can't feed");
@@ -323,6 +326,36 @@ void handleJog(){
     //Serial.println("can't jog, failed mode check");
     el.error("can't jog, no jogging mode is set ");
   }
+}
+
+void handleHobRun(){
+  if(run_mode == RunMode::HOB_READY){
+    Serial.println("You should send log msgs to the webapp using the el.xxx thingy.");
+    Serial.println("got Hob Run");
+    // check that we are not already running
+    if(!pos_feeding){
+      // initialize hob run state?
+      JsonObject config = inDoc["config"];
+      pitch = config["pitch"].as<double>();
+      Serial.printf("Pitch %f \n",pitch);
+      feeding_ccw = (bool)config["f"];
+      //syncStart = (bool)config["s"];
+      // TODO: do I need to sync the spindle in this mode?
+      syncStart = false;
+      //hob_yasm.next(HobRunState,true);
+      HobRunState();
+
+    }else{
+      el.error("already feeding, can't set mode to HobRunState");
+    }
+  }else{
+    el.error("previous state wrong, problem!!!");
+  }
+}
+
+void handleHobStop(){
+  Serial.println("got hob stop");
+  HobStopState();
 }
 
 void handleBounce(){
@@ -437,10 +470,13 @@ void parseObj(){
   }else if(strcmp(cmd,"jogAbs") == 0){
     handleJogAbs();  
   }else if(strcmp(cmd,"jog") == 0){
-    
     handleJog();
   }else if(strcmp(cmd,"send") == 0){
     handleSend(); 
+  }else if(strcmp(cmd,"hobrun") ==0){
+    handleHobRun();
+  }else if(strcmp(cmd,"hobstop") == 0){
+    handleHobStop();
   }else if(strcmp(cmd,"setNvConfig") == 0){
     handleNvConfig();
   }else if(strcmp(cmd,"getNvConfig") == 0){
@@ -578,6 +614,13 @@ void init_ota(){
 
   ArduinoOTA.begin();
 
+}
+void sendUpdates(){
+  if(update_timer.repeat()){
+    // only send state when it changes
+    //updateStateDoc();
+    updateStatusDoc();
+  }
 }
 void do_web(){
   if(web){

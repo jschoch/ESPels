@@ -29,6 +29,7 @@ namespace Log{
 #include "rmtStepper.h"
 #include "log.h"
 #include "BounceMode.h"
+#include "hob.h"
 
 
 /*  ###########################  Lolin 32 oled board
@@ -121,6 +122,7 @@ extern double backlash;
 extern bool web;
 extern class YASM btn_yasm;
 extern class YASM bounce_yasm;
+extern class YASM hob_yasm;
 extern struct Bd lbd;
 extern int pitch_menu;
 extern Bd rbd;

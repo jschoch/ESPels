@@ -36,9 +36,8 @@ void BounceJogState(){
     if(bounce_yasm.isFirstRun()){
         Serial.print(toolPos);
         Serial.println("Entering Bounce Jog Mode");
-        run_mode = RunMode::BounceJog;
+        updateMode(RunMode::BounceJog);
         start_jog();
-        updateStateDoc();
         return;
     }
     else if(!jogging){
