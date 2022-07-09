@@ -232,6 +232,11 @@ void startEncInt(void * p){
 void Encoder::enableInterrupts(void (*doA)(), void(*doB)()){
   // attach interrupt if functions provided
 
+
+  // Trying to just start the interrupts not pinned to core 0 to see if wifi improves
+  attachInterrupt(digitalPinToInterrupt(encoder.pinA), doA, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(encoder.pinB), doB, CHANGE);
+  /*
   // do this in a task so the interrupts get pinned to core 0
   xTaskCreatePinnedToCore(
     startEncInt,
@@ -242,6 +247,7 @@ void Encoder::enableInterrupts(void (*doA)(), void(*doB)()){
     NULL,
     0 
   );
+  */
 }
 
 void IRAM_ATTR Encoder::setCount(int64_t count){

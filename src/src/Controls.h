@@ -33,6 +33,7 @@ void handleSBP(void);
 void handleUBP(void);
 void handleDBP(void);
 void setFactor(void);
+void setHobbFactor(void);
 void thread_parameters(void);
 void feed_parameters(void);
 void startupState(void);

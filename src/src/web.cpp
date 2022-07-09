@@ -28,7 +28,7 @@ size_t len = 0;
 
 String wsData;
 
-Neotimer update_timer = Neotimer(500);
+Neotimer update_timer = Neotimer(1000);
 
 /*  not used for dhcp
 // Put IP Address details 
@@ -91,6 +91,7 @@ void loadNvConfigDoc(){
     Serial.println("Loaded Configuration");
     lead_screw_pitch = nvConfigDoc["lead_screw_pitch"];
     motor_steps = nvConfigDoc["motor_steps"];
+    microsteps = nvConfigDoc["microsteps"];
     spindle_encoder_resolution = nvConfigDoc["spindle_encoder_resolution"]; 
     init_machine();
     setFactor();
@@ -181,11 +182,9 @@ void setRunMode(int mode){
 }
 
 void sendState(){
-  len = serializeJson(stateDoc, outBuffer);  
-  //Serial.print("sending config: ");
-  //Serial.println(outBuffer);
-  // send it! 
-  ws.textAll(outBuffer,len);
+  len = serializeMsgPack(stateDoc, outBuffer);  
+  Serial.print(" s ");
+  ws.binaryAll(outBuffer,len);
 }
 
 void sendLogP(Log::Msg *msg){
@@ -471,7 +470,7 @@ void parseObj(){
     handleJogAbs();  
   }else if(strcmp(cmd,"jog") == 0){
     handleJog();
-  }else if(strcmp(cmd,"send") == 0){
+  }else if(strcmp(cmd,"sendConfig") == 0){
     handleSend(); 
   }else if(strcmp(cmd,"hobrun") ==0){
     handleHobRun();
@@ -544,7 +543,10 @@ void init_web(){
   // Connect to WiFi
   Serial.println("Setting up WiFi");
   WiFi.setHostname(myname);
+  WiFi.mode(WIFI_MODE_STA);
   WiFi.begin(ssid, password);
+  WiFi.setTxPower(WIFI_POWER_19_5dBm);
+  //WiFi.setOut
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print(".");
     delay(100);
@@ -619,6 +621,8 @@ void sendUpdates(){
   if(update_timer.repeat()){
     // only send state when it changes
     //updateStateDoc();
+    //Serial.printf(" %d ",(int)run_mode);
+    Serial.printf(" %d %d ",(int)run_mode,WiFi.RSSI());
     updateStatusDoc();
   }
 }

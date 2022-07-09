@@ -3,19 +3,22 @@
 #include <yasm.h>
 
 void HobReadyState(){
-        updateMode(RunMode::HOB_READY);
+    if(run_mode != RunMode::HOB_RUN){
         Serial.println("Enter HobReadyState");
+    }else{
+        el.error("Use HobStopState, invalid state transition");
+    }
 }
 
 void HobRunState(){
         Serial.println("Enter HobRunState");
-        updateMode(RunMode::HOB_RUN);
+        
         // Turn off stops, we just slave to the spindle
         useStops = false;
         // flag processor and encoder to start
         jogging = true;
-        updateStateDoc();
-        init_pos_feed();
+        init_hob_feed();
+        updateMode(RunMode::HOB_RUN);
 }
 
 void HobStopState(){
@@ -23,5 +26,7 @@ void HobStopState(){
         jogging = false;
         feeding = false;
         pos_feeding = false;
+        updateMode(RunMode::HOB_STOP);
         HobReadyState();
+        updateMode(RunMode::HOB_READY);
 }

@@ -1,9 +1,10 @@
 #include <Arduino.h>
 #include "motion.h"
+
 #include "config.h"
+
 #include "gear.h"
 // should just be using accel/decel calcs
-#include "AccelStepper.h"
 
 double mmPerStep = 0;
 volatile double targetToolRelPosMM = 0.0;
@@ -28,6 +29,27 @@ void init_gear(){
 
 void init_pos_feed(){
   setFactor();
+  if(!pos_feeding){
+    
+    //wait for the start to come around
+    if(syncStart){
+      Serial.println("waiting for spindle sync");
+      syncWaiting = true;
+      pos_feeding = true;
+    }
+    else{
+      // this resets the "start" but i'm not sure if it works correctly
+      // TODO:  should warn that turning off sync will  loose the "start"
+      Serial.println("jog without spindle sync");
+      init_gear();
+      pos_feeding = true;
+    }
+  }else{
+  el.error("already started pos_feeding, can't do it again");
+  }
+}
+void init_hob_feed(){
+  setHobbFactor();
   if(!pos_feeding){
     
     //wait for the start to come around

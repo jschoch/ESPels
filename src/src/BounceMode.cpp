@@ -9,7 +9,10 @@ double old_jog_mm = 0;
 Neotimer state_timer(100);
 
 void do_state(){
-    bounce_yasm.run();
+    if(state_timer.repeat()){
+        bounce_yasm.run();
+    }
+    
 }
 
 void start_jog(){

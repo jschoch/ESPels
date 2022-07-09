@@ -23,8 +23,9 @@ enum class RunMode{
   BounceFinish, //8
   HOB_READY, // 9
   HOB_RUN, // 10
-  DIVIDER_READY, //11
-  DIVIDER_RUN //12
+  HOB_STOP, // 11
+  DIVIDER_READY, //12
+  DIVIDER_RUN //13
 };
 
 enum feed_mode_t {

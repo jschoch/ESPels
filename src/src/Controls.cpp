@@ -47,7 +47,7 @@ void init_controls(){
 void read_buttons(){
   // this just prints out the mode every 2 seconds
   if(button_print_timer.repeat()){
-    Serial.printf(" %d ",(int)run_mode);
+    Serial.printf(" %d %d ",(int)run_mode,WiFi.RSSI());
   }
 }
 
@@ -101,6 +101,22 @@ void setFactor(){
     return;
   }
 } 
+
+void setHobbFactor(){
+  int den = lead_screw_pitch * motor_steps;
+  int nom = spindle_encoder_resolution * pitch;
+
+  //
+  Serial.printf("nom: %d den: %d",nom,den);
+
+  // check ratio to be sure it can be done
+  if (!gear.setRatio(nom,den)){
+    sprintf(el.buf,"Bad Ratio: Den: %d Nom: %d\n",nom,den);
+    el.error();
+    pitch = oldPitch;
+    return;
+  }
+}
 
 //this defines the parameters for the thread and turning for both metric and imperial threads
 

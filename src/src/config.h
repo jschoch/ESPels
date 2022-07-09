@@ -32,7 +32,7 @@ namespace Log{
 #include "hob.h"
 
 
-/*  ###########################  Lolin 32 oled board
+// ###########################  Lolin 32 oled board
 // Pins
 
 #define Z_STEP_PIN 13
@@ -41,11 +41,14 @@ namespace Log{
 // Encoder pins
 #define EA 25
 #define EB 26 
+#define error_led 14
 
 #define USESSD1306 1
+constexpr const char* myname = "mx210lathe";
+#define encoder_pullup Pullup::EXTERN
 
-*/
 
+/*
 // ############################## az-deliver devkit c
 
 //    Set the machine name for wifi and websockets
@@ -67,6 +70,7 @@ constexpr const char* myname = "divider";
 #define EB 17
 
 #define error_led 25
+*/
 // Machine Settings
 
 #define MOTOR_TYPE 1 // 1 is 1.8 degree, 2 is .9 degree
