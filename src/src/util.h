@@ -1,5 +1,8 @@
 #pragma once
+
+#ifdef HAS_BUTTONS
 #include <Bounce2.h>
+#endif
 
 enum display_mode_t {
   STARTUP,
@@ -39,7 +42,7 @@ enum feed_mode_t {
 #define zNeg  0
 
 // button data definition
-
+#ifdef HAS_BUTTONS
 struct Bd{
   uint8_t pin;
   const char* name;
@@ -49,3 +52,4 @@ struct Bd{
   Bounce *deb;
   uint8_t idx;
 };
+#endif

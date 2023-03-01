@@ -7,6 +7,9 @@
 #define ARDUINOJSON_USE_LONG_LONG 1
 #define ARDUINOJSON_USE_DOUBLE 1
 
+// For including Bounce2.h
+//#define HAS_BUTTONS 
+
 #include <Arduino.h>
 #include "neotimer.h"
 #include "util.h"
@@ -32,7 +35,6 @@ namespace Log{
 #include "hob.h"
 
 
-// ###########################  Lolin 32 oled board
 // Pins
 
 #define Z_STEP_PIN 13

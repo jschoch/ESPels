@@ -3,7 +3,11 @@
 #include "config.h"
 
 #define BOUNCE_LOCK_OUT
+
+#ifdef HAS_BUTTONS
 #include <Bounce2.h>
+#endif
+
 #include "neotimer.h"
 #include <yasm.h>
 #include "rmtStepper.h"
