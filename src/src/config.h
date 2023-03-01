@@ -1,172 +1,41 @@
 #pragma once
-
-// #  Sourced from prototypicall/Didge on github.  no license when sourced
-#ifndef _CONFIG_H
-#define _CONFIG_H
-
-#define ARDUINOJSON_USE_LONG_LONG 1
-#define ARDUINOJSON_USE_DOUBLE 1
-
 #include <Arduino.h>
-#include "neotimer.h"
 #include "util.h"
-#include "display.h"
-#include "Machine.h"
-#include "Controls.h"
-#include "Stepper.h"
-#include "Encoder.h"
-#include "motion.h"
-#include "freertos/task.h"
-namespace Log{
-    class Msg;
-};
-#include "web.h"
-#include "SlaveMode.h"
-#include "DebugMode.h"
-
-#include <yasm.h>
-#include "myperfmon.h"
-#include "rmtStepper.h"
-#include "log.h"
-#include "BounceMode.h"
-#include "hob.h"
-
-
-// ###########################  Lolin 32 oled board
-// Pins
-
-#define Z_STEP_PIN 13
-#define Z_DIR_PIN 12
-
-// Encoder pins
-#define EA 25
-#define EB 26 
-#define error_led 14
-
-#define USESSD1306 1
+/************* Machine Configuration *************/
 constexpr const char* myname = "mx210lathe";
-#define encoder_pullup Pullup::EXTERN
 
-
-/*
-// ############################## az-deliver devkit c
-
-//    Set the machine name for wifi and websockets
-//char* myname = "els";
-//char* myname = "divider";
-constexpr const char* myname = "divider";
-
-//   Motor pins
-#define Z_STEP_PIN 13
-#define Z_DIR_PIN 12
-#define Z_FAULT_PIN 14
-
-// Encoder pins
-//  set for internal pullup or external
-//#define encoder_pullup Pullup::INTERN_PULLDOWN
-#define encoder_pullup Pullup::INTERN_PULLUP
-
-#define EA 16
-#define EB 17
-
-#define error_led 25
-*/
-// Machine Settings
-
+// Stepper driver Pins
+//NOTE: it's recommended to avoid pins 12 to 18 if you want to use JTAG for on circuit debugging
+#define Z_STEP_PIN 20
+#define Z_DIR_PIN 33
+//I don't think this is needed, we can infer this by microstepping and native steps per rev
 #define MOTOR_TYPE 1 // 1 is 1.8 degree, 2 is .9 degree
+#define Z_NATIVE_STEPS_PER_REV 200
+#define Z_MICROSTEPPING 8
+
+// Spindle Encoder pins
+#define EA 25
+#define EB 26
+/*
+choices are: 
+Pullup::EXTERN //your hardware handles the pullup or pulldown, for example with a resistor to 3v3 or to gnd
+Pullup::INTERN_PULLDOWN //your encoder expects the MCU to pull low, and sends a high for a pulse
+Pullup::INTERN_PULLUP //your esp handles the pullup and your encoder pulls it down.
+For most common quadrature encoders, choose Extern and apply 3.3v to your encoder pins through 1.5k to 4.7k ohm resistors */
+#define ENCODER_PULLUP Pullup::EXTERN
+
+//this should be ON, unless you have a good reason not to. Otherwise your leadscrew will not track reverses.
+#define QUADRATURE_MODE Quadrature::ON
+//this is counts per rev *4 for a quadrature encoder
+#define ENCODER_RESOLUTION 2400
+
+//use the display or not. Recommend not, it doesn't have much functionality. Set to 1 to enable.
+#define USESSD1306 1
+
+#define error_led 21
 
 // read the cpu usage via the web server, only use for testing as it comes with bloat
 //#define DEBUG_CPU_STATS
 
- 
-extern double lead_screw_pitch;
-extern int microsteps;
-extern int native_steps;
-extern int motor_steps;
-extern int tpi;
-extern int motor_steps;
-extern double pitch; //  the thread pitch
-extern double depth;                                       // a parameter to define the thread depth in mm on the compound slide. This is set at 75% of the pitch which seems to work
-extern int display_mode;
-extern volatile int16_t encoder0Pos;
-extern volatile int64_t spindlePos;
-
-
-extern volatile int delta;
-extern int32_t left_limit_max ;
-extern volatile int32_t left_limit;
-
-extern uint8_t menu ; 
-
-extern volatile int64_t toolPos;
-
- 
-extern int spindle_encoder_resolution;   // the number of pulses per revolution of the spindle encoder
-extern volatile int64_t calculated_stepper_pulses;
-
-
-
-
-extern uint8_t menu;
-
-extern const char* FEED_MODE [];
-extern const char* DISPLAY_MODE [];
-extern volatile bool z_moving;
-extern volatile bool z_pause;
-extern volatile int delay_ticks;
-extern class Encoder encoder;
-extern volatile bool feeding;
-extern volatile bool z_feeding_dir;
-extern volatile bool feeding_ccw;
-//extern class BtnState btnState;
-extern int rpm;
-extern double rapids;
-extern uint8_t motor_type;
-extern double backlash;
-extern bool web;
-extern class YASM btn_yasm;
-extern class YASM bounce_yasm;
-extern class YASM hob_yasm;
-extern struct Bd lbd;
-extern int pitch_menu;
-extern Bd rbd;
-extern Bd ubd;
-extern Bd dbd;
-extern Bd sbd;
-extern Bd mbd;
-extern volatile int32_t jog_steps;
-extern volatile bool jogging;
-extern volatile bool jog_done;
-extern volatile uint16_t vel;
-extern int stepsPerMM;
-extern int32_t relativePosition;
-extern int32_t absolutePosition;
-extern RunMode run_mode;
-extern double jog_mm;
-extern volatile double jog_scaler;
-extern volatile double toolRelPos;
-extern volatile double toolRelPosMM;
-extern volatile double targetToolRelPos;
-extern volatile double targetToolRelPosMM;
-extern int virtEncoderCount;
-extern volatile bool useStops;
-extern volatile double stopPos;
-extern volatile double stopNeg;
-extern volatile bool stopPosEx;
-extern volatile bool stopNegEx;
-extern int8_t cpu0;
-extern int8_t cpu1;
-extern volatile int exDelta;
-extern uint8_t statusCounter;
-extern volatile bool pos_feeding;
-extern struct rmtStepper::State zstepper;
-extern double mmPerStep;
-extern double oldPitch;
-extern class Log::Msg el;
-extern bool syncStart;
-extern bool syncWaiting;
-extern volatile bool rapiding;
-extern volatile bool bouncing;
-extern volatile int vEncSpeed;
-extern volatile bool vEncStopped;
-#endif
+//TODO I think this isn't necessary since we can calculate microsteps per rev with the above and can divide the distance into steps instead of degrees
+#define STEPPER_DEGREES_PER_STEP 1.8

@@ -1,21 +1,22 @@
 #include "Encoder.h"
 #include "Stepper.h"
 #include "motion.h"
+#include "config.h"
+#include "state.h"
 
+Encoder encoder = Encoder(EA, EB, 600);
 volatile int64_t spindlePos = 0;
+volatile int vEncSpeed = 0;
+volatile bool vEncStopped = true;
+int spindle_encoder_resolution = ENCODER_RESOLUTION ;
 
-int spindle_encoder_resolution=2400 ;
 int64_t last_count = 0;
-int rpm = 0;
 
 Neotimer rpm_timer = Neotimer(100);
 
 int virtEncoderCount = 0;
 bool virtEncoderEnable = false;
 bool virtEncoderDir = true;
-// encoder instance
-// Pins defines in config.h
-Encoder encoder = Encoder(EA, EB, 600);
 
 void IRAM_ATTR doA(){encoder.handleA();}
 void IRAM_ATTR doB(){encoder.handleB();}
@@ -36,7 +37,6 @@ void do_rpm(){
 }
 
 TaskHandle_t vEncHandle = NULL;
-volatile bool vEncStopped = true;
 
 void vEncTask(void *param){
   for(;;){
@@ -157,9 +157,7 @@ Encoder::Encoder(int _encA, int _encB , double _ppr){
   prev_pulse_counter = 100;
   prev_timestamp_us = esp_timer_get_time();//_micros();
 
-  // extern pullup as default
-  //pullup = Pullup::EXTERN;
-  pullup = encoder_pullup;
+  pullup = ENCODER_PULLUP;
   // enable quadrature encoder by default
   quadrature = Quadrature::ON;
 }

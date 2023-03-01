@@ -29,3 +29,5 @@ namespace Log{
     };
 
 }
+
+extern Log::Msg el;

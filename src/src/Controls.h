@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include "config.h"
+#include "yasm.h"
 
 //#include <neotimer.h>
 
@@ -22,7 +23,7 @@
 // Modifier button
 #define MBP 0
 
-
+extern YASM btn_yasm;
 
 void init_controls(void);
 void read_buttons(void);

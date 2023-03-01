@@ -1,6 +1,12 @@
 #pragma once
 
 #include "config.h"
+#include "neotimer.h"
+
+extern volatile int vEncSpeed;
+extern volatile bool vEncStopped;
+extern int spindle_encoder_resolution;
+extern Neotimer rpm_timer;
 
 enum Quadrature{
   ON, //!<  Enable quadrature mode CPR = 4xPPR
@@ -84,3 +90,7 @@ private:
     volatile long prev_timestamp_us;
 
 };
+
+// encoder instance
+// Pins defines in config.h
+extern Encoder encoder;

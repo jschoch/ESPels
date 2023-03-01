@@ -1,6 +1,11 @@
 #include <Arduino.h>
 #include "config.h"
 #include <yasm.h>
+#include "BounceMode.h"
+#include "state.h"
+#include "Machine.h"
+#include "web.h"
+#include "motion.h"
 
 YASM bounce_yasm;
 volatile bool bouncing = false;

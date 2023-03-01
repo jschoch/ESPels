@@ -1,20 +1,21 @@
 #include <Arduino.h>
 #include "config.h"
 #include "Machine.h"
+#include "state.h"
+#include "Stepper.h"
+
+uint8_t motor_type = MOTOR_TYPE;
 
 double lead_screw_pitch = 2.0;
-int microsteps = 8;
-int native_steps = 200;
-int motor_steps = 0;
 double pitch = 0.06;
 double oldPitch = pitch;
+
 int tpi = 0;
 double depth = 0.0;
 
+//TODO configure using config.h
 double rapids = 1.0;
 double backlash = 0.0;
-uint8_t motor_type = MOTOR_TYPE;
-
 
 void init_machine(){
 

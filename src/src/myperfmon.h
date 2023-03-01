@@ -8,6 +8,9 @@ extern "C" {
 
 #include "esp_err.h"
 
+extern int8_t cpu0;
+extern int8_t cpu1;
+
 esp_err_t perfmon_start();
 
 #ifdef __cplusplus

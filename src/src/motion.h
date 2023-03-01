@@ -7,3 +7,4 @@ void start_rapid(double distance);
 void init_hob_feed(void);
 //void calcDelta(void *pvParaeters);
 
+void init_pos_feed();

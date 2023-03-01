@@ -14,8 +14,9 @@
 
 static const char *TAG = "perfmon";
 
-static uint64_t idle0Calls = 0;
-static uint64_t idle1Calls = 0;
+static uint64_t idle0Calls;
+static uint64_t idle1Calls;
+
 int8_t cpu0 = 0;
 int8_t cpu1 = 1;
 

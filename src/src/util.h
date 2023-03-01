@@ -1,6 +1,10 @@
 #pragma once
 #include <Bounce2.h>
 
+namespace Log{
+    class Msg;
+};
+
 enum display_mode_t {
   STARTUP,
   CONFIGURE,

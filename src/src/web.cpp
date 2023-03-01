@@ -2,10 +2,25 @@
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 #include "config.h"
+#include "log.h"
+#include "Encoder.h"
+#include "state.h"
+#include "Stepper.h"
+#include "BounceMode.h"
+#include "Machine.h"
+#include "Controls.h"
+#include "SlaveMode.h"
+#include "myperfmon.h"
+#include "display.h"
+#include "DebugMode.h"
+#include "Stepper.h"
+#include "motion.h"
 
+bool web = true;
 
 // This defines ssid and password for the wifi configuration
-#include "c:\Users\jesse\Documents\Arduino\config.h"
+//TODO move the location of this into a platformio variable or something? Maybe the location of the file as a constant in config.h
+#include "../../wifisecret.h"
 
 // json buffer
 
@@ -40,14 +55,10 @@ IPAddress subnet(255,255,255,0);
 AsyncWebServer server(80);
 AsyncWebSocket ws("/els");
 AsyncWebSocketClient * globalClient = NULL;
-bool web = true;
-char outBuffer[450]; 
-RunMode run_mode = RunMode::STARTUP;
+char outBuffer[450];
 uint8_t statusCounter = 0;
 
 double jogAbs = 0;
-
-volatile int vEncSpeed = 0;
 
 void saveNvConfigDoc(){
   EepromStream eepromStream(0, 512);

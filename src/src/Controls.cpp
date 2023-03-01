@@ -8,18 +8,19 @@
 #include <yasm.h>
 #include "rmtStepper.h"
 #include "gear.h"
+#include "Machine.h"
+#include "Encoder.h"
+#include "log.h"
+#include "state.h"
+#include "Stepper.h"
+#include "display.h"
 
 Neotimer button_print_timer = Neotimer(2000);
 Neotimer dro_timer = Neotimer(600);
-Log::Msg el;
 
 
 uint8_t menu = 3; 
 int pitch_menu= 1;
-volatile bool feeding = false;
-volatile bool z_feeding_dir = true;
-
-
 
 
 #ifdef DEBUG_CPU_STATS
@@ -87,7 +88,11 @@ extern struct Gear::State gear;
 
 void setFactor(){
   
-  int den = lead_screw_pitch * spindle_encoder_resolution ;
+  //recommended refactor for a leadscrew or feed class, den = feed.GetEncoderStepsPerSpindleRotation();
+  //feed being initialized internally with the leadscrew pitch and encoder PPR
+  int den = lead_screw_pitch * spindle_encoder_resolution;
+
+  //recommended refactor using a stepper class: nom = stepper.GetStepsForDistance(Units::Metric, pitch);
   int nom = motor_steps * pitch;
 
   //

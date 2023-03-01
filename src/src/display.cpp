@@ -10,6 +10,9 @@
 #include <Wire.h>
 #include "SSD1306Wire.h"
 #include "neotimer.h"
+#include "state.h"
+#include "Machine.h"
+#include "Stepper.h"
 
 
 SSD1306Wire  display(0x3c, 5, 4);

@@ -5,18 +5,17 @@
 
 #include "gear.h"
 // should just be using accel/decel calcs
+#include "AccelStepper.h"
+#include "Encoder.h"
+#include "Stepper.h"
+#include "state.h"
+#include "log.h"
+#include "Controls.h"
+#include "Machine.h"
 
-double mmPerStep = 0;
-volatile double targetToolRelPosMM = 0.0;
-volatile double toolRelPosMM = 0.0;
 volatile int64_t thetimes = 0;
 volatile int badTicks = 0;
 char err[200] = "";
-bool syncStart = true;
-bool syncWaiting = false;
-volatile bool rapiding = false;
-
-volatile bool feeding_ccw = true;
 
 int perfCount = 0;
 Gear::State gear;
