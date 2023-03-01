@@ -28,6 +28,7 @@ size_t len = 0;
 
 String wsData;
 
+Neotimer update_timer = Neotimer(1000);
 
 /*  not used for dhcp
 // Put IP Address details 
@@ -37,7 +38,7 @@ IPAddress subnet(255,255,255,0);
 */
 
 AsyncWebServer server(80);
-AsyncWebSocket ws("/test");
+AsyncWebSocket ws("/els");
 AsyncWebSocketClient * globalClient = NULL;
 bool web = true;
 char outBuffer[450]; 
@@ -90,6 +91,7 @@ void loadNvConfigDoc(){
     Serial.println("Loaded Configuration");
     lead_screw_pitch = nvConfigDoc["lead_screw_pitch"];
     motor_steps = nvConfigDoc["motor_steps"];
+    microsteps = nvConfigDoc["microsteps"];
     spindle_encoder_resolution = nvConfigDoc["spindle_encoder_resolution"]; 
     init_machine();
     setFactor();
@@ -144,7 +146,7 @@ void updateStateDoc(){
   stateDoc["e"] = 0;
   stateDoc["u"] = 0;
   stateDoc["m"] = (int)run_mode; 
-  stateDoc["d"] = (int)display_mode;
+  //stateDoc["d"] = (int)display_mode;
   stateDoc["js"] = jog_steps;
   // this is the distance to jog in mm
   stateDoc["jm"] = jog_mm;
@@ -154,7 +156,6 @@ void updateStateDoc(){
   stateDoc["s"] = syncStart;
 
   sendState();
-  // this needs a timer to send on interval
   
 }
 
@@ -170,6 +171,10 @@ void setRunMode(int mode){
       case (int)RunMode::SLAVE_READY :
         btn_yasm.next(SlaveModeReadyState);
         break;
+      case (int)RunMode::HOB_READY :
+        //hob_yasm.next(HobReadyState);
+        HobReadyState();
+        break;
       default: 
         btn_yasm.next(startupState);
         break;
@@ -177,11 +182,9 @@ void setRunMode(int mode){
 }
 
 void sendState(){
-  len = serializeJson(stateDoc, outBuffer);  
-  //Serial.print("sending config: ");
-  //Serial.println(outBuffer);
-  // send it! 
-  ws.textAll(outBuffer,len);
+  len = serializeMsgPack(stateDoc, outBuffer);  
+  Serial.print(" s ");
+  ws.binaryAll(outBuffer,len);
 }
 
 void sendLogP(Log::Msg *msg){
@@ -244,10 +247,10 @@ void handleJogAbs(){
     }
     init_pos_feed();
     updateStatusDoc();
-    btn_yasm.next(slaveJogPosState);
   }
 }
 
+//  Update the virtual encoder
 void handleVencSpeed(){
   
   JsonObject config = inDoc["config"];
@@ -313,7 +316,6 @@ void handleJog(){
       jogging = true;
       init_pos_feed();
       updateStatusDoc();
-      btn_yasm.next(slaveJogPosState);
     }
     else{
       //Serial.print("already feeding, can't feed");
@@ -323,6 +325,36 @@ void handleJog(){
     //Serial.println("can't jog, failed mode check");
     el.error("can't jog, no jogging mode is set ");
   }
+}
+
+void handleHobRun(){
+  if(run_mode == RunMode::HOB_READY){
+    Serial.println("You should send log msgs to the webapp using the el.xxx thingy.");
+    Serial.println("got Hob Run");
+    // check that we are not already running
+    if(!pos_feeding){
+      // initialize hob run state?
+      JsonObject config = inDoc["config"];
+      pitch = config["pitch"].as<double>();
+      Serial.printf("Pitch %f \n",pitch);
+      feeding_ccw = (bool)config["f"];
+      //syncStart = (bool)config["s"];
+      // TODO: do I need to sync the spindle in this mode?
+      syncStart = false;
+      //hob_yasm.next(HobRunState,true);
+      HobRunState();
+
+    }else{
+      el.error("already feeding, can't set mode to HobRunState");
+    }
+  }else{
+    el.error("previous state wrong, problem!!!");
+  }
+}
+
+void handleHobStop(){
+  Serial.println("got hob stop");
+  HobStopState();
 }
 
 void handleBounce(){
@@ -437,10 +469,13 @@ void parseObj(){
   }else if(strcmp(cmd,"jogAbs") == 0){
     handleJogAbs();  
   }else if(strcmp(cmd,"jog") == 0){
-    
     handleJog();
-  }else if(strcmp(cmd,"send") == 0){
+  }else if(strcmp(cmd,"sendConfig") == 0){
     handleSend(); 
+  }else if(strcmp(cmd,"hobrun") ==0){
+    handleHobRun();
+  }else if(strcmp(cmd,"hobstop") == 0){
+    handleHobStop();
   }else if(strcmp(cmd,"setNvConfig") == 0){
     handleNvConfig();
   }else if(strcmp(cmd,"getNvConfig") == 0){
@@ -507,8 +542,11 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
 void init_web(){
   // Connect to WiFi
   Serial.println("Setting up WiFi");
-  WiFi.setHostname("elsd");
+  WiFi.setHostname(myname);
+  WiFi.mode(WIFI_MODE_STA);
   WiFi.begin(ssid, password);
+  WiFi.setTxPower(WIFI_POWER_19_5dBm);
+  //WiFi.setOut
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print(".");
     delay(100);
@@ -518,14 +556,14 @@ void init_web(){
 
   
   //  MDNS hostname must be lowercase
-  if (!MDNS.begin("elsd")) {
+  if (!MDNS.begin(myname)) {
         Serial.println("Error setting up MDNS responder!");
         while(1) {
           Serial.print("*");
             delay(100);
         }
     }
-  MDNS.setInstanceName("mydeskels");
+  MDNS.setInstanceName(myname);
   MDNS.addService("http", "tcp", 80);
   
   ws.onEvent(onWsEvent);
@@ -578,6 +616,15 @@ void init_ota(){
 
   ArduinoOTA.begin();
 
+}
+void sendUpdates(){
+  if(update_timer.repeat()){
+    // only send state when it changes
+    //updateStateDoc();
+    //Serial.printf(" %d ",(int)run_mode);
+    Serial.printf(" %d %d ",(int)run_mode,WiFi.RSSI());
+    updateStatusDoc();
+  }
 }
 void do_web(){
   if(web){

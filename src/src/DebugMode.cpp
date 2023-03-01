@@ -6,7 +6,7 @@
 
 void debugState(){
     if(btn_yasm.isFirstRun()){
-        updateMode(DEBUG_READY,RunMode::DEBUG_READY);
+        updateMode(RunMode::DEBUG_READY);
         web = true;
     }
     

@@ -18,8 +18,6 @@ void setup() {
  
   Serial.begin(115200);
 
-  init_display();
-
   init_encoder();  
 
   //moved to init_machine
@@ -53,12 +51,12 @@ void setup() {
 }
 
 void loop() {
-  do_display();
-  
   do_web();
 
   // read controls
-  read_buttons();
+  //read_buttons();
+
+  sendUpdates();
 
   do_rpm();
   do_state();

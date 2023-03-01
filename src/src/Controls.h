@@ -33,6 +33,7 @@ void handleSBP(void);
 void handleUBP(void);
 void handleDBP(void);
 void setFactor(void);
+void setHobbFactor(void);
 void thread_parameters(void);
 void feed_parameters(void);
 void startupState(void);
@@ -40,7 +41,7 @@ void slaveJogReadyState(void);
 void feedingState(void);
 void slaveJogStatusState(void);
 void resetToolPos(void);
-void updateMode(display_mode_t newDisplayMode,RunMode run);
+void updateMode(RunMode run);
 void slaveJogPosState();
 
 #endif
