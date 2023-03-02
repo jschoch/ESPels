@@ -2,11 +2,15 @@
 #include <Arduino.h>
 #include "util.h"
 /************* Machine Configuration *************/
-constexpr const char* myname = "mx210lathe";
+
+//web interface hostname
+#define HOSTNAME "mx210lathe";
+
+#define LEADSCREW_LEAD 2.0
 
 // Stepper driver Pins
 //NOTE: it's recommended to avoid pins 12 to 18 if you want to use JTAG for on circuit debugging
-#define Z_STEP_PIN 20
+#define Z_STEP_PIN 18
 #define Z_DIR_PIN 33
 //I don't think this is needed, we can infer this by microstepping and native steps per rev
 #define MOTOR_TYPE 1 // 1 is 1.8 degree, 2 is .9 degree
