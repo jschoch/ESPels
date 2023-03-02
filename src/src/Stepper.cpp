@@ -36,16 +36,12 @@ volatile double targetToolRelPos = 0;
 int use_limit = false;
 volatile int64_t calculated_stepper_pulses=0;
 
-volatile bool jog_done = true;
 volatile int32_t jog_steps = 0;
 volatile double jog_scaler = 0.2;
 volatile uint16_t vel = 1;
 volatile double stopPos = 0;
 volatile double stopNeg = 0;
 volatile bool useStops = true;
-volatile bool stopPosEx = false;
-volatile bool stopNegEx = false;
-volatile int exDelta = 0;
 volatile bool pos_feeding = false;
 
 rmtStepper::State zstepper;

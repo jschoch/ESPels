@@ -23,7 +23,7 @@ bool web = true;
 //TODO move the location of this into a platformio variable or something? Maybe the location of the file as a constant in config.h
 #include "../../wifisecret.h"
 
-// json buffer
+// json docs
 
 // config stateDoc
 StaticJsonDocument<600> stateDoc;
@@ -40,31 +40,34 @@ StaticJsonDocument<600> statusDoc;
 // Used to log to UI
 StaticJsonDocument<600> logDoc;
 
-size_t len = 0;
+// buffer for msgpack
+char outBuffer[450];
 
+
+
+size_t serialize_len = 0;
+
+// stores websocket data from asyncWebServer that gets fed to arduinoJSON
 String wsData;
 
+// sends updates (statusDoc) to UI every interval
 Neotimer update_timer = Neotimer(1000);
 
-/*  not used for dhcp
-// Put IP Address details 
-IPAddress local_ip(192,168,1,1);
-IPAddress gateway(192,168,1,1);
-IPAddress subnet(255,255,255,0);
-*/
-
+// TOOD: consider configs from config.h to update this stuff
 AsyncWebServer server(80);
 AsyncWebSocket ws("/els");
 AsyncWebSocketClient * globalClient = NULL;
-char outBuffer[450];
+
+
+// This is a bit like a ping counter, increments each time a new status is sent to the UI
 uint8_t statusCounter = 0;
 
+// I htink this is sent from the UI and used to set the absolute target postion, in the Doc it is "ja"
 double jogAbs = 0;
 
 void saveNvConfigDoc(){
   EepromStream eepromStream(0, 512);
   serializeJson(nvConfigDoc, eepromStream);
-  //EEPROM.commit();
   eepromStream.flush();
   loadNvConfigDoc();
 }
@@ -89,6 +92,7 @@ void initNvConfigDoc(){
 
   */
   //nvConfigDoc[""] = ;
+
   saveNvConfigDoc();
 }
 
@@ -113,32 +117,60 @@ void loadNvConfigDoc(){
 
 
 void updateStatusDoc(){
-  statusDoc["p"] = toolRelPos;
+  // types the message as a status update for the UI
+  statusDoc["cmd"] = "status";
+  
+  // Currently used for the UI DRO display, 
+  //TODO: needs renamed and this is likely better to compute this in the browser!
+  // TODO:  this means that we need to convert any "distance" move to steps befor it gets send to the controller 
   statusDoc["pmm"] = toolRelPosMM;
+  // defined in util.h and helps UI figure out what to display
   statusDoc["m"] = (int)run_mode;
+  // the position in steps, only used in the "debug" screen of the ui
+  // TODO: could just send this and remove "pmm" and calculate position in MM in the browser
+  // TODO: toolPos and toolRelPos should be consolidated as they seem largely redundant
+  statusDoc["p"] = toolRelPos;
   statusDoc["tp"] = toolPos;
-  statusDoc["encoderPos"] = encoder.pulse_counter;
+
+  statusDoc["encoderPos"] = encoder.getCount();
+  // This is the number of encoder pulses needed before the next stepper pulse
+  // TODO: make this optional and move to a "debug" doc
   statusDoc["delta"] = delta;
-  statusDoc["calcPos"] = calculated_stepper_pulses;
+  // this doesn't appear to be used now, but...
   statusDoc["targetPos"] = targetToolRelPos;
+  // I think this is used for aboslute movements
+  // TODO: We should convert to steps in the UI and not have to do the conversion in the controller
   statusDoc["targetPosMM"] = targetToolRelPosMM;
+  // bool for constant run mode, TODO:  bad name though
   statusDoc["feeding"] = feeding;
+  // bools for sync movements, TODO:  bad name
   statusDoc["jogging"] = jogging;
+  // bool for rapid sync movement TODO: bad name
   statusDoc["rap"] = rapiding;
+  // main bool to turn movement on/off
   statusDoc["pos_feed"] = pos_feeding;
-  statusDoc["jog_dong"] = jog_done;
-  statusDoc["sne"] = stopNegEx;
-  statusDoc["spe"] = stopPosEx;
+  // the virtual stop in the Z + direction
   statusDoc["sp"] = stopPos;
+  // the stop in the Z - direction
   statusDoc["sn"] = stopNeg;
+  // for stats
+  // TODO: move this to a debug doc
   statusDoc["c0"] = cpu0;
   statusDoc["c1"] = cpu1;
-  statusDoc["xd"] = exDelta;
+  // this is incremented every status update
   statusDoc["c"] = statusCounter++;
-  statusDoc["cmd"] = "status";
+  
+  // intended feeding "handiness" CCW or CW 
+  // so if the spindle is rotating CW, and the intension is to feed in the Z- direction this should be false
+  // but this somewhat depends on the setup  
   statusDoc["fd"] = z_feeding_dir;
+  // Wait for the spindle/ncoder "0" position
+  // this acts like a thread dial
   statusDoc["sw"] = syncWaiting;
+  // generated in the encoder and displayed in the UI
+  // TODO: consider making the smoothing configurable or done in the browser
   statusDoc["rpm"] = rpm;
+  // this is the effective pulses, so 600 line encoder using full quad is 2400 CPR
   statusDoc["cpr"] = encoder.cpr;
   sendStatus();
 }
@@ -196,29 +228,29 @@ void setRunMode(int mode){
 }
 
 void sendState(){
-  len = serializeMsgPack(stateDoc, outBuffer);  
+  serialize_len = serializeMsgPack(stateDoc, outBuffer);  
   Serial.print(" s ");
-  ws.binaryAll(outBuffer,len);
+  ws.binaryAll(outBuffer,serialize_len);
 }
 
 void sendLogP(Log::Msg *msg){
   logDoc["msg"] = msg->buf;
   logDoc["level"] = (int)msg->level;
   logDoc["cmd"] = "log";
-  len = serializeMsgPack(logDoc,outBuffer);
-  ws.binaryAll(outBuffer,len);
+  serialize_len = serializeMsgPack(logDoc,outBuffer);
+  ws.binaryAll(outBuffer,serialize_len);
 }
 
 void sendStatus(){
-  len = serializeMsgPack(statusDoc, outBuffer);
-  ws.binaryAll(outBuffer,len);
+  serialize_len = serializeMsgPack(statusDoc, outBuffer);
+  ws.binaryAll(outBuffer,serialize_len);
 
 }
 
 void sendNvConfigDoc(){
   nvConfigDoc["cmd"] = "nvConfig";
-  len = serializeMsgPack(nvConfigDoc, outBuffer);
-  ws.binaryAll(outBuffer,len);
+  serialize_len = serializeMsgPack(nvConfigDoc, outBuffer);
+  ws.binaryAll(outBuffer,serialize_len);
 }
 
 
@@ -325,8 +357,6 @@ void handleJog(){
     */
     if(!pos_feeding){
       setStops();   
-      //Serial.print("updated targetToolRelPos");
-      //Serial.println(targetToolRelPos);
       jogging = true;
       init_pos_feed();
       updateStatusDoc();
@@ -632,6 +662,7 @@ void init_ota(){
 
 }
 void sendUpdates(){
+  // called in main loop
   if(update_timer.repeat()){
     // only send state when it changes
     //updateStateDoc();
