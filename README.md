@@ -22,10 +22,23 @@ the webfrontend can be found here [https://github.com/jschoch/espELSfrontend]
 ## Configuration
 
 
-Wifi:  ssid and password need to be defined, I did this via a .h file outside of the project
+Wifi:  ssid and password need to be defined, this is default a file ../../wifisecret.h
+
+```c
+#pragma once
+#ifndef _WEBCONFIG_H
+#define _WEBCONFIG_H
+
+static const char* ssid = "";
+static const char* password = "";
+
+#endif
+```
 
 in config.h update Z_STEP_PIN, Z_DIR_PIN for your stepper.
 Update  EA, and EB for your encoder signals.  Let me know if you want to have an index pulse defined as my encoder does not have one.
+
+See (Install.md) for more info on installation
 
 
 ## HOW
