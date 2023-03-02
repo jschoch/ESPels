@@ -144,6 +144,7 @@ void updateStatusDoc(){
 }
 
 void updateStateDoc(){
+  // TODO: audit this
   stateDoc["absP"] = absolutePosition;
   stateDoc["P"] = relativePosition;
   stateDoc["pitch"] = pitch;
@@ -166,6 +167,7 @@ void updateStateDoc(){
   stateDoc["f"] = feeding_ccw;
   stateDoc["ja"] = jogAbs;
   stateDoc["s"] = syncStart;
+  // TODO: add angle for angle readout in UI
 
   sendState();
   

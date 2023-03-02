@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-#include "esp_err.h"
+#include <esp_err.h>
 
 extern int8_t cpu0;
 extern int8_t cpu1;

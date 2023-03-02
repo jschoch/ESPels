@@ -165,6 +165,7 @@ double Encoder::getAngle(){
   return  natural_direction * _2PI * (pulse_counter) / ((double)cpr);
 }
 // initialize counter to zero
+// TODO: not implmeented, need some nottion of work coordinates developed
 double Encoder::initRelativeZero(){
   long angle_offset = -pulse_counter;
   pulse_counter = 0;
@@ -209,43 +210,12 @@ void Encoder::init(){
 
 }
 
-void startEncInt(void * p){
-  switch(encoder.quadrature){
-    case Quadrature::ON:
-      // A callback and B callback
-      attachInterrupt(digitalPinToInterrupt(encoder.pinA), doA, CHANGE);
-      attachInterrupt(digitalPinToInterrupt(encoder.pinB), doB, CHANGE);
-      break;
-    case Quadrature::OFF:
-      // A callback and B callback
-      attachInterrupt(digitalPinToInterrupt(encoder.pinA), doA, RISING);
-      attachInterrupt(digitalPinToInterrupt(encoder.pinB), doB, RISING);
-      break;
-  }
-  vTaskDelete(NULL);
-}
 
-// function enabling hardware interrupts of the for the callback provided
-// if callback is not provided then the interrupt is not enabled
 void Encoder::enableInterrupts(void (*doA)(), void(*doB)()){
   // attach interrupt if functions provided
-
-
-  // Trying to just start the interrupts not pinned to core 0 to see if wifi improves
+  // pinning to core 0 is slow and creates jitter
   attachInterrupt(digitalPinToInterrupt(encoder.pinA), doA, CHANGE);
   attachInterrupt(digitalPinToInterrupt(encoder.pinB), doB, CHANGE);
-  /*
-  // do this in a task so the interrupts get pinned to core 0
-  xTaskCreatePinnedToCore(
-    startEncInt,
-    "startEncInt",
-    4000,
-    NULL,
-    1,
-    NULL,
-    0 
-  );
-  */
 }
 
 void IRAM_ATTR Encoder::setCount(int64_t count){

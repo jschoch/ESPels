@@ -39,12 +39,6 @@ void init_controls(){
 
 
 
-void read_buttons(){
-  // this just prints out the mode every 2 seconds
-  if(button_print_timer.repeat()){
-    Serial.printf(" %d %d ",(int)run_mode,WiFi.RSSI());
-  }
-}
 
 void updateMode(RunMode run){
   Serial.print("updating modes: ");

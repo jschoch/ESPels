@@ -74,6 +74,7 @@ void BounceRapidState(){
         pitch = oldPitch;
         jog_mm = old_jog_mm;
         bouncing = false;
+        // TOOD this ends up undefined in the UI
         bounce_yasm.next(BounceIdleState);
     }
 

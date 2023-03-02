@@ -17,34 +17,18 @@
 #include "src/myperfmon.h"
 #include "src/Machine.h"
 
-// track the sync to encoder 0 position?
-
-volatile boolean start_sync = false;
-
-// the ratio of needs steps/rev for stepper to spindle_encoder_resolution for each thread pitch we pick, this is calculated in the programme 
-volatile int32_t delivered_stepper_pulses=0;          //number of steps delivered to the lead screw stepper motor
-//number of steps we should have delivered for a given lead screw pitch
-
-
 void setup() {
  
   Serial.begin(115200);
 
   init_encoder();  
 
-  //moved to init_machine
-  //init_stepper();
-
   init_motion();
 
   init_machine();
 
-  // setup buttons
-  
   init_controls();
   
-  thread_parameters();
-
   setFactor();
 
   init_web();
@@ -64,9 +48,6 @@ void setup() {
 
 void loop() {
   do_web();
-
-  // read controls
-  //read_buttons();
 
   sendUpdates();
 

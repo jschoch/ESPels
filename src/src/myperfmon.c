@@ -115,6 +115,5 @@ esp_err_t perfmon_start()
 	ESP_ERROR_CHECK(esp_register_freertos_idle_hook_for_cpu(idle_task_0, 0));
 	ESP_ERROR_CHECK(esp_register_freertos_idle_hook_for_cpu(idle_task_1, 1));
 	// TODO calculate optimal stack size
-	xTaskCreate(perfmon_task, "perfmon", 2048, NULL, 1, NULL);
-	return ESP_OK;
+	return xTaskCreate(perfmon_task, "perfmon", 2048, NULL, 1, NULL);
 }
