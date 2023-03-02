@@ -4,7 +4,7 @@
 /************* Machine Configuration *************/
 
 //web interface hostname
-#define HOSTNAME "mx210lathe";
+#define HOSTNAME "mx210lathe"
 
 #define LEADSCREW_LEAD 2.0
 
@@ -19,7 +19,7 @@
 
 // Spindle Encoder pins
 #define EA 25
-#define EB 26
+#define EB 32
 /*
 choices are: 
 Pullup::EXTERN //your hardware handles the pullup or pulldown, for example with a resistor to 3v3 or to gnd
