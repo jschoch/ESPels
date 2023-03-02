@@ -14,6 +14,7 @@ extern double mmPerStep;
 extern int32_t stepsPerMM;
 extern int32_t relativePosition;
 extern int32_t absolutePosition;
+extern bool sendDebug;
 
 extern volatile bool z_feeding_dir;
 extern volatile double targetToolRelPosMM;

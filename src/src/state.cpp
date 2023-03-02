@@ -9,6 +9,7 @@ double mmPerStep = 0;
 int32_t stepsPerMM = 0;
 int32_t relativePosition = 0;
 int32_t absolutePosition = 0;
+bool sendDebug = false;
 
 volatile bool z_feeding_dir = true;
 volatile double targetToolRelPosMM = 0.0;

@@ -177,9 +177,13 @@ void do_pos_feeding(){
     // Sanity check
     //  make sure we are not getting a huge jump in encoder values
 
-    if(encoder.pulse_counter > gear.jumps.next+1 || encoder.pulse_counter < gear.jumps.prev -1){
+    // only read this once for the whole loop
+    //
+    int64_t pulse_counter = encoder.getCount();
+
+    if(pulse_counter > gear.jumps.next+1 || pulse_counter < gear.jumps.prev -1){
       sprintf(err,"Tool outside expected range.  encPos: %lld next: %i  pos %i dirChang? %i",
-        encoder.pulse_counter,
+        pulse_counter,
         gear.jumps.next,
         gear.jumps.prev,
         gear.is_setting_dir);
@@ -225,9 +229,9 @@ void do_pos_feeding(){
 
       // calculate jumps and delta
 
-      //
-      if((encoder.pulse_counter == gear.jumps.next) || (encoder.pulse_counter== gear.jumps.prev)){
-        gear.calc_jumps(encoder.pulse_counter,true);
+      
+      if((pulse_counter == gear.jumps.next) || (pulse_counter== gear.jumps.prev)){
+        gear.calc_jumps(pulse_counter,true);
 
         if(zstepper.dir){
           stepPos();
@@ -271,7 +275,8 @@ void IRAM_ATTR processMotion(){
 
   // check if we want to sync our start position
   if(syncWaiting && pos_feeding){
-    if(encoder.pulse_counter % encoder.start == 0){
+    // faster to pass this count here or store it in do_pos_feeding?
+    if(encoder.getCount() % encoder.start == 0){
       syncWaiting = false;
       init_gear();
       do_pos_feeding();

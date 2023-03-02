@@ -19,29 +19,38 @@
 
 bool web = true;
 
+// TODO: can this be automagical somehow?
+const char* vsn = "0.0.2";
+
 // This defines ssid and password for the wifi configuration
 //TODO move the location of this into a platformio variable or something? Maybe the location of the file as a constant in config.h
 #include "../../wifisecret.h"
 
+// TODO: need a way to tie versions of the firmware to compatable versions of the UI
+// also need to have a compiled UI version linked in firmware releases
+
 // json docs
 
 // config stateDoc
-StaticJsonDocument<600> stateDoc;
+StaticJsonDocument<1000> stateDoc;
 
 //  items to store in NV ram/EEPROM
-StaticJsonDocument<500> nvConfigDoc;
+StaticJsonDocument<1000> nvConfigDoc;
 
 // Used for msgs from UI
-StaticJsonDocument<500> inDoc;
+StaticJsonDocument<1000> inDoc;
 
 // used to send status to UI
 StaticJsonDocument<600> statusDoc;
 
 // Used to log to UI
-StaticJsonDocument<600> logDoc;
+StaticJsonDocument<5000> logDoc;
+
+// used for debugging, to slim down status doc 
+StaticJsonDocument<500> debugStatusDoc;
 
 // buffer for msgpack
-char outBuffer[450];
+char outBuffer[6000];
 
 
 
@@ -81,6 +90,8 @@ void initNvConfigDoc(){
   nvConfigDoc["lead_screw_pitch"] = LEADSCREW_LEAD;
   nvConfigDoc["spindle_encoder_resolution"] = ENCODER_RESOLUTION;
   nvConfigDoc["microsteps"] = Z_MICROSTEPPING;
+  // the communication version, used to detect UI compatability
+  nvConfigDoc["vsn"] = vsn;
 
   // TODO list of things to add
   /*
@@ -104,11 +115,12 @@ void loadNvConfigDoc(){
     Serial.println((int)nvConfigDoc["i"]);
     el.error("no config found this is bad");
   }else{
-    Serial.println("Loaded Configuration");
+
     lead_screw_pitch = nvConfigDoc["lead_screw_pitch"];
     motor_steps = nvConfigDoc["motor_steps"];
     microsteps = nvConfigDoc["microsteps"];
     spindle_encoder_resolution = nvConfigDoc["spindle_encoder_resolution"]; 
+    Serial.printf("Loaded Configuration com version %s lead screw pitch: %f\n",vsn,lead_screw_pitch);
     init_machine();
     setFactor();
   }
@@ -118,7 +130,7 @@ void loadNvConfigDoc(){
 
 void updateStatusDoc(){
   // types the message as a status update for the UI
-  statusDoc["cmd"] = "status";
+  statusDoc["t"] = "status";
   
   // Currently used for the UI DRO display, 
   //TODO: needs renamed and this is likely better to compute this in the browser!
@@ -130,14 +142,12 @@ void updateStatusDoc(){
   // TODO: could just send this and remove "pmm" and calculate position in MM in the browser
   // TODO: toolPos and toolRelPos should be consolidated as they seem largely redundant
   statusDoc["p"] = toolRelPos;
+  // tool positoin in stepper steps
   statusDoc["tp"] = toolPos;
 
+  // encoder postion in cpr pulses
   statusDoc["encoderPos"] = encoder.getCount();
-  // This is the number of encoder pulses needed before the next stepper pulse
-  // TODO: make this optional and move to a "debug" doc
-  statusDoc["delta"] = delta;
-  // this doesn't appear to be used now, but...
-  statusDoc["targetPos"] = targetToolRelPos;
+
   // I think this is used for aboslute movements
   // TODO: We should convert to steps in the UI and not have to do the conversion in the controller
   statusDoc["targetPosMM"] = targetToolRelPosMM;
@@ -149,55 +159,70 @@ void updateStatusDoc(){
   statusDoc["rap"] = rapiding;
   // main bool to turn movement on/off
   statusDoc["pos_feed"] = pos_feeding;
-  // the virtual stop in the Z + direction
-  statusDoc["sp"] = stopPos;
-  // the stop in the Z - direction
-  statusDoc["sn"] = stopNeg;
-  // for stats
-  // TODO: move this to a debug doc
-  statusDoc["c0"] = cpu0;
-  statusDoc["c1"] = cpu1;
-  // this is incremented every status update
-  statusDoc["c"] = statusCounter++;
   
-  // intended feeding "handiness" CCW or CW 
-  // so if the spindle is rotating CW, and the intension is to feed in the Z- direction this should be false
-  // but this somewhat depends on the setup  
-  statusDoc["fd"] = z_feeding_dir;
   // Wait for the spindle/ncoder "0" position
   // this acts like a thread dial
   statusDoc["sw"] = syncWaiting;
   // generated in the encoder and displayed in the UI
   // TODO: consider making the smoothing configurable or done in the browser
   statusDoc["rpm"] = rpm;
-  // this is the effective pulses, so 600 line encoder using full quad is 2400 CPR
-  statusDoc["cpr"] = encoder.cpr;
+
+   // the virtual stop in the Z + direction, used to calculate "distance to go" in the UI
+  statusDoc["sp"] = stopPos;
+  // the stop in the Z - direction
+  statusDoc["sn"] = stopNeg;
   sendStatus();
 }
 
+void updateDebugStatusDoc(){
+  // types as a debug status msg
+  debugStatusDoc["t"] = "dbg_st";
+  // intended feeding "handiness" CCW or CW 
+  // so if the spindle is rotating CW, and the intension is to feed in the Z- direction this should be false
+  // but this somewhat depends on the setup  
+  debugStatusDoc["fd"] = z_feeding_dir;
+ 
+  // This is the number of encoder pulses needed before the next stepper pulse
+  // TODO: make this optional and move to a "debug" doc
+  debugStatusDoc["delta"] = delta;
+  // this doesn't appear to be used now, but...
+  debugStatusDoc["targetPos"] = targetToolRelPos;
+  // for cpu stats
+  // TODO: move this to a debug doc
+  debugStatusDoc["c0"] = cpu0;
+  debugStatusDoc["c1"] = cpu1;
+  // this is incremented every status update
+  debugStatusDoc["c"] = statusCounter++;
+}
+
 void updateStateDoc(){
-  // TODO: audit this
-  stateDoc["absP"] = absolutePosition;
-  stateDoc["P"] = relativePosition;
+  stateDoc["t"] = "state"; 
+  // don't appear to be used
+  //stateDoc["absP"] = absolutePosition;
+  //stateDoc["P"] = relativePosition;
+
+  // the pitch for the sync move calculation in MM
   stateDoc["pitch"] = pitch;
+  // the pitch for sync rapid moves
   stateDoc["rapid"] = rapids;
-  stateDoc["stopA"] = 1.0;
-  stateDoc["stopB"] = 2.0;
-  stateDoc["zero"] = 3.0;
-  stateDoc["jogD"] = 0.1;
-  stateDoc["lead"] = lead_screw_pitch;
-  stateDoc["enc"] = spindle_encoder_resolution;
-  stateDoc["micro"] = microsteps;
-  stateDoc["e"] = 0;
-  stateDoc["u"] = 0;
+
+  // TODO: this redundant to nvConfigDoc, remove after testing?
+  //stateDoc["lead"] = lead_screw_pitch;
+  //stateDoc["enc"] = spindle_encoder_resolution;
+  //stateDoc["micro"] = microsteps;
+
+  // the run mode 
   stateDoc["m"] = (int)run_mode; 
-  //stateDoc["d"] = (int)display_mode;
+  // TODO: not used but this shold be used instead of jog_mm and the UI should do the conversion
   stateDoc["js"] = jog_steps;
   // this is the distance to jog in mm
+  // TODO: depricate and have the UI convert and use steps
   stateDoc["jm"] = jog_mm;
-  stateDoc["sc"] = jog_scaler;
+  // this sets the desired "handedness" CW or CCW
   stateDoc["f"] = feeding_ccw;
+  // this is the target postion for sync absolute movements
   stateDoc["ja"] = jogAbs;
+  // flag to wait for encocer "0" position
   stateDoc["s"] = syncStart;
   // TODO: add angle for angle readout in UI
 
@@ -227,30 +252,35 @@ void setRunMode(int mode){
     }
 }
 
-void sendState(){
-  serialize_len = serializeMsgPack(stateDoc, outBuffer);  
-  Serial.print(" s ");
+void sendDoc(const JsonDocument & doc){
+  serialize_len = serializeMsgPack(doc, outBuffer);  
+  // TODO: debug flag?
   ws.binaryAll(outBuffer,serialize_len);
+}
+
+void sendState(){
+  sendDoc(stateDoc);
 }
 
 void sendLogP(Log::Msg *msg){
   logDoc["msg"] = msg->buf;
   logDoc["level"] = (int)msg->level;
-  logDoc["cmd"] = "log";
-  serialize_len = serializeMsgPack(logDoc,outBuffer);
-  ws.binaryAll(outBuffer,serialize_len);
+  logDoc["t"] = "log";
+  sendDoc(logDoc);
 }
 
 void sendStatus(){
-  serialize_len = serializeMsgPack(statusDoc, outBuffer);
-  ws.binaryAll(outBuffer,serialize_len);
+  sendDoc(statusDoc);
+  if(sendDebug){
+    sendDoc(debugStatusDoc);
+  }
 
 }
 
+
 void sendNvConfigDoc(){
-  nvConfigDoc["cmd"] = "nvConfig";
-  serialize_len = serializeMsgPack(nvConfigDoc, outBuffer);
-  ws.binaryAll(outBuffer,serialize_len);
+  nvConfigDoc["t"] = "nvConfig";
+  sendDoc(nvConfigDoc);
 }
 
 
@@ -459,16 +489,11 @@ void handleSend(){
       Serial.println((int)run_mode);
       setRunMode(got_run_mode);
     }
-    double sc = config["sc"];
-    if(sc != jog_scaler){
-      Serial.println("updating jog scaler");
-      jog_scaler = sc;
-    }
     updateStateDoc();
 }
 void handleNvConfig(){
   Serial.println("saving configuration");
-    inDoc.remove("cmd");
+    inDoc.remove("t");
     // TODO better checks than this~
     if(inDoc["lead_screw_pitch"]){
       // Save 
@@ -500,6 +525,7 @@ void parseObj(){
 
   if(strcmp(cmd,"fetch") == 0){
     // regenerate config and send it along
+    // TODO: compare version here
     Serial.println("fetch received: sending config");
     updateStateDoc();
   }else if(strcmp(cmd,"debug") ==0){

@@ -75,6 +75,14 @@ void slaveJogStatusState(){
 extern struct Gear::State gear;
 
 void setFactor(){
+  if(pitch == 0){
+    el.error("pitch was zero");
+    btn_yasm.next(startupState);
+    updateMode(RunMode::STARTUP);
+    // TODO: need a halt functions for bad things like this case
+    //halt();
+    return;
+  }
   
   //recommended refactor for a leadscrew or feed class, den = feed.GetEncoderStepsPerSpindleRotation();
   //feed being initialized internally with the leadscrew pitch and encoder PPR
@@ -84,7 +92,7 @@ void setFactor(){
   int nom = motor_steps * pitch;
 
   //
-  Serial.printf("nom: %d den: %d",nom,den);
+  Serial.printf("SF: nom: %d den: %d\n",nom,den);
 
   // check ratio to be sure it can be done
   if (!gear.setRatio(nom,den)){

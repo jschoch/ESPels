@@ -22,3 +22,4 @@ void loadNvConfigDoc();
 void handleJog();
 void setStops();
 void sendUpdates();
+void sendDoc(const JsonDocument& doc);
