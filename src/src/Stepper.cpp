@@ -2,12 +2,12 @@
 #include <cmath>
 #include "gear.h"
 #include "rmtStepper.h"
-/////////////////////////////////////////////////
-// stepper timer stuff
-//////////////////////////////////////////////////
+#include "state.h"
 
+int microsteps = Z_MICROSTEPPING;
 
-volatile bool z_pause = false;
+int native_steps = Z_NATIVE_STEPS_PER_REV;
+int motor_steps = 0;
 
 
 // number of ticks to wait between timer events
@@ -27,7 +27,6 @@ volatile int jog_delay_ticks = 0;
 volatile bool z_dir = true; //CW
 volatile bool z_prev_dir = true;
 volatile bool z_moving = false;
-volatile bool jogging = false;
 volatile int32_t jogs = 0;
 volatile double toolRelPos = 0;
 double oldToolRelPosMM = 0;
@@ -39,7 +38,6 @@ volatile int64_t calculated_stepper_pulses=0;
 
 volatile bool jog_done = true;
 volatile int32_t jog_steps = 0;
-double jog_mm = 0;
 volatile double jog_scaler = 0.2;
 volatile uint16_t vel = 1;
 volatile double stopPos = 0;
@@ -102,11 +100,9 @@ static uint16_t defaultAccelTable[][2] = {
   
 };
 #define DEFAULT_ACCEL_TABLE_SIZE (sizeof(defaultAccelTable)/sizeof(*defaultAccelTable))
-static uint16_t scaledAccelTable[DEFAULT_ACCEL_TABLE_SIZE][2] = {0,0};
 int maxVel = defaultAccelTable[DEFAULT_ACCEL_TABLE_SIZE-1][0]; // last value in table.
 
-
-
+volatile bool z_pause = false;
 
 
 void init_stepper(){

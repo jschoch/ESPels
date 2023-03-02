@@ -1,5 +1,7 @@
 #include "log.h"
 
+Log::Msg el;
+
 void Log::Msg::error(){
     Serial.println("error");
     //sendLog(this);

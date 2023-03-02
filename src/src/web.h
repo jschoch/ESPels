@@ -8,6 +8,8 @@
 #include <ArduinoJson.h>
 #include <StreamUtils.h>
 
+extern bool web;
+
 void init_web(void);
 void do_web(void);
 void init_ota(void);

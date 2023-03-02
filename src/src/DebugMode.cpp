@@ -1,7 +1,9 @@
 #include <Arduino.h>
 #include "config.h"
-#include <yasm.h>
-
+#include "yasm.h"
+#include "web.h"
+#include "controls.h"
+#include "stepper.h"
 
 
 void debugState(){

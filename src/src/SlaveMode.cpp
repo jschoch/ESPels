@@ -1,6 +1,10 @@
 #include <Arduino.h>
 #include "config.h"
 #include <yasm.h>
+#include "state.h"
+#include "web.h"
+#include "Controls.h"
+#include "motion.h"
 
 
 void SlaveModeReadyState(){

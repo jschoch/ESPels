@@ -2,10 +2,26 @@
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 #include "config.h"
+#include "log.h"
+#include "Encoder.h"
+#include "state.h"
+#include "Stepper.h"
+#include "BounceMode.h"
+#include "Machine.h"
+#include "Controls.h"
+#include "SlaveMode.h"
+#include "myperfmon.h"
+#include "display.h"
+#include "DebugMode.h"
+#include "Stepper.h"
+#include "motion.h"
+#include "hob.h"
 
+bool web = true;
 
 // This defines ssid and password for the wifi configuration
-#include "c:\Users\jesse\Documents\Arduino\config.h"
+//TODO move the location of this into a platformio variable or something? Maybe the location of the file as a constant in config.h
+#include "../../wifisecret.h"
 
 // json buffer
 
@@ -40,14 +56,10 @@ IPAddress subnet(255,255,255,0);
 AsyncWebServer server(80);
 AsyncWebSocket ws("/els");
 AsyncWebSocketClient * globalClient = NULL;
-bool web = true;
-char outBuffer[450]; 
-RunMode run_mode = RunMode::STARTUP;
+char outBuffer[450];
 uint8_t statusCounter = 0;
 
 double jogAbs = 0;
-
-volatile int vEncSpeed = 0;
 
 void saveNvConfigDoc(){
   EepromStream eepromStream(0, 512);
@@ -63,9 +75,9 @@ void initNvConfigDoc(){
   nvConfigDoc["i"] = 1;
 
   // the config
-  nvConfigDoc["lead_screw_pitch"] = lead_screw_pitch;
-  nvConfigDoc["spindle_encoder_resolution"] = spindle_encoder_resolution;
-  nvConfigDoc["microsteps"] = microsteps;
+  nvConfigDoc["lead_screw_pitch"] = LEADSCREW_LEAD;
+  nvConfigDoc["spindle_encoder_resolution"] = ENCODER_RESOLUTION;
+  nvConfigDoc["microsteps"] = Z_MICROSTEPPING;
 
   // TODO list of things to add
   /*
@@ -542,7 +554,7 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
 void init_web(){
   // Connect to WiFi
   Serial.println("Setting up WiFi");
-  WiFi.setHostname(myname);
+  WiFi.setHostname(HOSTNAME);
   WiFi.mode(WIFI_MODE_STA);
   WiFi.begin(ssid, password);
   WiFi.setTxPower(WIFI_POWER_19_5dBm);
@@ -556,14 +568,14 @@ void init_web(){
 
   
   //  MDNS hostname must be lowercase
-  if (!MDNS.begin(myname)) {
+  if (!MDNS.begin(HOSTNAME)) {
         Serial.println("Error setting up MDNS responder!");
         while(1) {
           Serial.print("*");
             delay(100);
         }
     }
-  MDNS.setInstanceName(myname);
+  MDNS.setInstanceName(HOSTNAME);
   MDNS.addService("http", "tcp", 80);
   
   ws.onEvent(onWsEvent);
