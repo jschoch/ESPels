@@ -13,6 +13,11 @@
 #include "Controls.h"
 #include "Machine.h"
 
+volatile bool feeding = false;
+
+//TODO there's a direction enum that can be used, maybe do it at the same time the state machine is refactored
+volatile bool feeding_ccw = true;
+
 volatile int64_t thetimes = 0;
 volatile int badTicks = 0;
 char err[200] = "";

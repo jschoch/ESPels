@@ -5,6 +5,7 @@
 // is writing to this memory when it shouldn't be (makes future expansion easier)
 //TODO: identify which of these belong to other objects and make those objects "own" these
 #include "Encoder.h"
+#include "Controls.h"
 
 //common variables used by multipe things
 extern volatile double jog_mm;
@@ -23,10 +24,6 @@ extern bool syncStart;
 extern bool syncWaiting;
 extern volatile bool jogging;
 extern volatile bool rapiding;
-extern volatile bool feeding;
-
-//TODO there's a direction enum that can be used, maybe do it at the same time the state machine is refactored
-extern volatile bool feeding_ccw;
 
 extern RunMode run_mode;
 

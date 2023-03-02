@@ -22,9 +22,6 @@ bool syncStart = true;
 bool syncWaiting = false;
 volatile bool jogging = false;
 volatile bool rapiding = false;
-volatile bool feeding = false;
 
-//TODO there's a direction enum that can be used, maybe do it at the same time the state machine is refactored
-volatile bool feeding_ccw = true;
 
 RunMode run_mode = RunMode::STARTUP;

@@ -15,6 +15,7 @@
 #include "DebugMode.h"
 #include "Stepper.h"
 #include "motion.h"
+#include "hob.h"
 
 bool web = true;
 

@@ -33,12 +33,6 @@ char stats[ 2048];
 
 YASM btn_yasm;
 
-
-int32_t stepsPerMM = 0;
-int32_t relativePosition = 0;
-int32_t absolutePosition = 0;
-
-
 void init_controls(){
   btn_yasm.next(startupState);  
 }

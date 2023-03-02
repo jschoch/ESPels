@@ -27,7 +27,6 @@ volatile int jog_delay_ticks = 0;
 volatile bool z_dir = true; //CW
 volatile bool z_prev_dir = true;
 volatile bool z_moving = false;
-volatile bool jogging = false;
 volatile int32_t jogs = 0;
 volatile double toolRelPos = 0;
 double oldToolRelPosMM = 0;
@@ -39,7 +38,6 @@ volatile int64_t calculated_stepper_pulses=0;
 
 volatile bool jog_done = true;
 volatile int32_t jog_steps = 0;
-double jog_mm = 0;
 volatile double jog_scaler = 0.2;
 volatile uint16_t vel = 1;
 volatile double stopPos = 0;
@@ -104,48 +102,7 @@ static uint16_t defaultAccelTable[][2] = {
 #define DEFAULT_ACCEL_TABLE_SIZE (sizeof(defaultAccelTable)/sizeof(*defaultAccelTable))
 int maxVel = defaultAccelTable[DEFAULT_ACCEL_TABLE_SIZE-1][0]; // last value in table.
 
-
 volatile bool z_pause = false;
-
-// number of ticks to wait between timer events
-int timertics = 10;
-
-// used to figure out how many steps we need to get to the right position
-// delta is in stepper steps
-volatile int delta = 0;
-
-// this is the time between a low and the next high or dir and step
-volatile int delay_ticks = 3;
-volatile int previous_delay_ticks = 0;
-volatile int min_delay_ticks = 5;
-
-// jog delay based on accel table
-volatile int jog_delay_ticks = 0;
-//todo use the direction enum instead
-volatile bool z_dir = true; //CW
-volatile bool z_prev_dir = true;
-volatile bool z_moving = false;
-volatile int32_t jogs = 0;
-volatile double toolRelPos = 0;
-double oldToolRelPosMM = 0;
-volatile double targetToolRelPos = 0;
-
-int use_limit = false;
-volatile int64_t calculated_stepper_pulses=0;
-
-volatile bool jog_done = true;
-volatile int32_t jog_steps = 0;
-volatile double jog_scaler = 0.2;
-volatile uint16_t vel = 1;
-volatile double stopPos = 0;
-volatile double stopNeg = 0;
-volatile bool useStops = false;
-volatile bool stopPosEx = false;
-volatile bool stopNegEx = false;
-volatile int exDelta = 0;
-volatile bool pos_feeding = false;
-
-rmtStepper::State zstepper;
 
 
 void init_stepper(){

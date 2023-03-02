@@ -1,6 +1,10 @@
 #include <Arduino.h>
 #include "config.h"
 #include <yasm.h>
+#include "Stepper.h"
+#include "state.h"
+#include "motion.h"
+#include "log.h"
 
 void HobReadyState(){
     if(run_mode != RunMode::HOB_RUN){
