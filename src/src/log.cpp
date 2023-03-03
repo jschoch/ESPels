@@ -19,6 +19,13 @@ void Log::Msg::error(const char* s){
         Serial.println(s);
     }
 }
+void Log::Msg::halt(const char* s){
+    if(this->t == T::WS){
+        sprintf(buf,s);
+        sendLogP(this);
+        Serial.println(s);
+    }
+}
 
 void Log::Msg::errorTaskImpl(void* _this){
     //(Log::Msg)_this->error();

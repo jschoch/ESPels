@@ -13,7 +13,8 @@ namespace Log{
     enum class Level {
         ERROR,
         WARN,
-        INFO
+        INFO,
+        HALT
     };
     class Msg{
         public:
@@ -23,6 +24,7 @@ namespace Log{
         Level level = Level::ERROR;
         void error();
         void error(const char*);
+        void halt(const char*);
         void addMsg(const char*);
         void errorTask();
         static void errorTaskImpl(void* _this);

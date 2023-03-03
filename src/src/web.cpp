@@ -445,18 +445,27 @@ void handleBounce(){
 }
 
 void handleDebug(){
-  int t = inDoc["dir"];
+  if(inDoc["basic"]){
+
+    auto t1 = inDoc["basic"];
+    auto t = t1.as<int>();
     if(t ==1){
-      encoder.setCount(encoder.pulse_counter+ 2400);
+      encoder.setCount(encoder.getCount()+ 2400);
     }else if (t == 0){
-      encoder.setCount(encoder.pulse_counter- 2400);
+      encoder.setCount(encoder.getCount() - 2400);
     }else if( t==2){
       encoder.dir = true;
-      encoder.setCount((encoder.pulse_counter+ 1));
+      encoder.setCount((encoder.getCount() + 1));
     }else if (t == 3){
       encoder.dir = false;
-      encoder.setCount((encoder.pulse_counter - 1));
+      encoder.setCount((encoder.getCount() - 1));
     }
+  }
+
+  if(inDoc["ticks"]){
+    auto ticks = inDoc["ticks"];
+    encoder.setCount(encoder.getCount() + ticks.as<int>());
+  }
 
     //Serial.printf("fccw: %d  fz: %d sd: %d encDir: %i \n",feeding_ccw,z_feeding_dir,zstepper.dir, encoder.dir);
 
@@ -513,7 +522,7 @@ void handleNvConfig(){
 //void parseObj(String msg){
 // This handles deserializing UI msgs and handling commands
 //void parseObj(void * param){
-void parseObj(){
+void parseObj(AsyncWebSocketClient * client){
   DeserializationError error = deserializeJson(inDoc,wsData);
   if (error) {
     Serial.print(F("deserializeJson() failed: "));
@@ -522,11 +531,23 @@ void parseObj(){
   }
   
   const char * cmd = inDoc["cmd"];
-
-  if(strcmp(cmd,"fetch") == 0){
+  if(strcmp(cmd,"helo") == 0){
+    Serial.println("helo received, sending nvconfig");
+    const char * uiVsn = inDoc["vsn"];
+    if(strcmp(uiVsn, vsn)== 0){
+      sendNvConfigDoc();
+      updateStateDoc();
+    }else{
+      el.halt("bad version");
+      client->close();
+    }
+    
+  }
+  else if(strcmp(cmd,"fetch") == 0){
     // regenerate config and send it along
     // TODO: compare version here
     Serial.println("fetch received: sending config");
+
     updateStateDoc();
   }else if(strcmp(cmd,"debug") ==0){
     // Debugging tools
@@ -599,7 +620,7 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
         data[len] = 0;
         //parseObj(String((char*) data));
         wsData = String((char*) data);
-        parseObj();
+        parseObj(client);
         //pinned_parseObj();
       }
     }
