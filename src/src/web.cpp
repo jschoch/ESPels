@@ -20,7 +20,7 @@
 bool web = true;
 
 // TODO: can this be automagical somehow?
-const char* vsn = "0.0.2";
+const char* vsn = "0.0.3";
 
 // This defines ssid and password for the wifi configuration
 //TODO move the location of this into a platformio variable or something? Maybe the location of the file as a constant in config.h
@@ -440,6 +440,7 @@ void handleBounce(){
   rapids = config["rapid"].as<double>();
   jog_mm = config["jog_mm"].as<double>();
   feeding_ccw = (bool)config["f"];
+  el.error("warning, TOOD: this only is setup for one spindle direction");
   setStops();
   bouncing = true;
 }
@@ -553,11 +554,13 @@ void parseObj(AsyncWebSocketClient * client){
     // Debugging tools
     handleDebug(); 
   //  JOG COMMANDS
-  }else if(strcmp(cmd,"jogcancel") == 0){
+  }else if(strcmp(cmd,"moveCancel") == 0){
     // TODO wheat cleanup needs to be done?
+    Serial.println("Move Canceled");
+    syncWaiting = false;
     pos_feeding = false;  
     // TODO: need rapid cancel
-  }else if(strcmp(cmd,"jogAbs") == 0){
+  }else if(strcmp(cmd,"moveSyncAbs") == 0){
     handleJogAbs();  
   }else if(strcmp(cmd,"jog") == 0){
     handleJog();

@@ -1,16 +1,24 @@
 #ifdef UNIT_TEST
 
 #include <unity.h>
-#include "src/gear.h"
+#include "src/Gear.h"
 #include <iostream>
 
 
-void printJump(char *s,gear::Jump j){
+void printJump(char *s,Gear::Jump j){
     std::cout << s << "jump delta " << j.delta  << " , ";
     std::cout << "count " << j.count << " , ";
     std::cout << "error" << j.error<< "\n";
 
 
+}
+
+void setUp(void) {
+    // set stuff up here
+}
+
+void tearDown(void) {
+    // clean stuff up here
 }
 
 
@@ -41,7 +49,7 @@ int main( int argc, char **argv) {
 
    */
 
-    gear::State state;
+    Gear::State state;
     state.output_position = 0;
     int micro_steps = 8;
     int motor_steps = 200 * micro_steps;
@@ -81,8 +89,8 @@ int main( int argc, char **argv) {
         
         if(i == state.jumps.next ) {
             state.calc_jumps(i,dir);
-            //std::cout << "+ p:" << gear::state.jumps.prev << " -- count: "<<  i << " -- n: " 
-                //<< gear::state.jumps.next << "+";
+            //std::cout << "+ p:" << Gear::state.jumps.prev << " -- count: "<<  i << " -- n: " 
+                //<< Gear::state.jumps.next << "+";
             std::cout << "*" << i << "," << state.jumps.next << "," << state.jumps.prev << " ";
         }
 
