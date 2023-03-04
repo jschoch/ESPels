@@ -10,8 +10,14 @@
 
 // Stepper driver Pins
 //NOTE: it's recommended to avoid pins 12 to 18 if you want to use JTAG for on circuit debugging
-#define Z_STEP_PIN 18
-#define Z_DIR_PIN 33
+
+// jesse's pin config
+#define Z_STEP_PIN 13
+#define Z_DIR_PIN 12
+
+// Chris's pin config
+//#define Z_STEP_PIN 18
+//#define Z_DIR_PIN 33
 //I don't think this is needed, we can infer this by microstepping and native steps per rev
 #define MOTOR_TYPE 1 // 1 is 1.8 degree, 2 is .9 degree
 #define Z_NATIVE_STEPS_PER_REV 200
@@ -19,7 +25,7 @@
 
 // Spindle Encoder pins
 #define EA 25
-#define EB 32
+#define EB 26
 /*
 choices are: 
 Pullup::EXTERN //your hardware handles the pullup or pulldown, for example with a resistor to 3v3 or to gnd
