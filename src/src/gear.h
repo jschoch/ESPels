@@ -42,6 +42,7 @@ namespace Gear {
     //int err = 0;
     int nerror = 0;
     int perror = 0;
+    float pitch = 0.1;
     // what units is this, seems to be encoder tics
     int output_position = 0;
     Jumps jumps = {0,0,0};

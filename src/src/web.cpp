@@ -1,6 +1,8 @@
-
+#include <Arduino.h>
+#include "web.h"
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
+#include <ArduinoJson.h>
 #include "config.h"
 #include "log.h"
 #include "Encoder.h"

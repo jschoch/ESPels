@@ -14,6 +14,7 @@
 #include "state.h"
 #include "Stepper.h"
 #include "display.h"
+#include "web.h"
 
 Neotimer button_print_timer = Neotimer(2000);
 Neotimer dro_timer = Neotimer(600);

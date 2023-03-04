@@ -23,3 +23,4 @@ void handleJog();
 void setStops();
 void sendUpdates();
 void sendDoc(const JsonDocument& doc);
+void sendLogP(Log::Msg *msg);
