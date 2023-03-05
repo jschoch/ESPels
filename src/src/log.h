@@ -26,7 +26,7 @@ namespace Log{
         char buf[500] = "";
         Level level = Level::ERROR;
         void maybeSend();
-        void error();
+        void error(void);
         void error(const char*);
         void halt(const char*);
         void addMsg(const char*);

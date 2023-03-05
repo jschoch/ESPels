@@ -1,16 +1,17 @@
 #include <Arduino.h> //redirects to ArduinoFake.h in this case
 #include <unity.h>
 #include <iostream>
-#include "src/genStepper.h"
 #include "src/log.h"
+#include "src/genStepper.h"
 #include "src/moveConfig.h"
 #include "src/mocks.h"
 
 using namespace fakeit;
 
 // run using `pio test -e ESPelsTest -v`
+// debug `pio debug -e ESPelsTest --interface gdb -x .pioinit`
 
-Log::Msg el;
+
 
 
 void tearDown(void) {
@@ -31,11 +32,10 @@ void loop(){
 }
 
 void test_genstepper(){
+    Log::Msg lm;
     //GenStepper::State gs;
-    GenStepper::State gs = GenStepper::init("Z");
+    GenStepper::State gs = GenStepper::init("Z",lm);
 
-    // how does this not crash
-    //el.error("foo");
     TEST_ASSERT(gs.c.dir == 0);
     std::cout << "name: " << gs.c.name << " pitch: " <<  gs.mygear.pitch << "\n";
     
@@ -49,8 +49,12 @@ void test_genstepper(){
     std::cout << "gear nom: " << gs.mygear.N << " den: " << gs.mygear.D << " \n";
     gs.mygear.calc_jumps(100,true);
     std::cout << "jumps: " << gs.mygear.jumps.last << " - " << gs.mygear.jumps.prev <<  "\n";
+
+    bool fails_zero_pitch = gs.setELSFactor(0,false);
+    TEST_ASSERT(fails_zero_pitch == false);
 }
 void test_moveConfig(){
+    Log::Msg lm;
     MoveConfig::State mc = MoveConfig::init();
 
 
@@ -62,10 +66,12 @@ void test_moveConfig(){
     std::cout << "step dir bool: " << r << " stopPos: " << mc.stopPos << " stopNeg: " << mc.stopNeg << " target: " << mc.moveSyncTarget <<  "\n";
     TEST_ASSERT(r);
     TEST_ASSERT(mc.stopPos == distance);
+    
 }
 
 
 void test_fakePosFeeding(){
+    Log::Msg lm;
     //      How it works
     // 1.record current encoder position
     // 2. sanity check to make sure jumps are sane
@@ -77,7 +83,7 @@ void test_fakePosFeeding(){
 
     //      Impl
 
-    GenStepper::State gs = GenStepper::init("Z");
+    GenStepper::State gs = GenStepper::init("Z",lm);
     MoveConfig::State mc = MoveConfig::init();
 
     // must mock this
@@ -90,32 +96,39 @@ void test_fakePosFeeding(){
     
     // setup
     //bool t = true;
-    int64_t pulse_counter = 99;
-    /*
-    gs.setELSFactor(1.0);
+    int64_t pulse_counter = 100;
+    bool t = gs.setELSFactor(0.1);
+    TEST_ASSERT(t == true);
     gs.mygear.calc_jumps(pulse_counter,true);
+    
 
     // sanity check to make sure jumps are sane
     
 
     if(pulse_counter > gs.mygear.jumps.next+1 || pulse_counter < gs.mygear.jumps.prev -1){
         std::cout << "doh! sanity check fail\n";
+        std::cout <<  gs.mygear.jumps.next+1 << " prev: " << gs.mygear.jumps.prev-1 << "\n";
     }else{
         std::cout << "sanity check passed\n";
     }
 
     // deal with spindle direction changes
+    
+    // skipping, need to test in encoder tests
 
     // deal with dir change pauses for stepper
 
+    // this goes away with fastaccelstepper
+
     // evaluate if we have reached a "jump"
 
+    // based on pitch 0.1 and default setup we should be at a jump
+    TEST_ASSERT_EQUAL_INT(99,gs.mygear.jumps.next );
     // if yes command stepper
 
     // evaluate stops, if reached finish move
 
-    */
-    TEST_ASSERT(true);
+    std::cout << "done\n";
 }
 
 int main( int argc, char **argv) {
