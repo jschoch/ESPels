@@ -75,38 +75,15 @@ void init_hob_feed(){
 }
 
 int64_t last_step_time = 0;
-int aSteps = 0;
-volatile bool useAccel = false;
-float acceleration = 10;
 
 
-// TODO:
-/*
-  Need to know how far we need to go and decide if we should accel or decel
-*/
-bool calcAccelDelay(){
-  // TODO: need to simplify to get accel working
-  if(useAccel){
-    aSteps += 1;
-    float n = 1000000 / sqrt(2 * aSteps * acceleration);
-    if(esp_timer_get_time() - last_step_time >= n){
-      return true;
-    }else{
-      return false;
-    }
-  }else{
-    return true;
-  }
-}
 
 void stepPos(){
-  if(calcAccelDelay()){
     zstepper.step();
     toolPos++;
     toolRelPos++;
     toolRelPosMM += mmPerStep;
     last_step_time = esp_timer_get_time();
-  }
 }
 
 void stepNeg(){
