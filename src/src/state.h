@@ -7,6 +7,9 @@
 #include "Encoder.h"
 #include "Controls.h"
 
+// TODO: can this be automagical somehow?
+extern const char* vsn;
+
 #include "ArduinoJson.h"
 
 //common variables used by multipe things

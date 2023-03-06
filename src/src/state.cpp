@@ -1,7 +1,9 @@
 #include "state.h"
 #include "ArduinoJson.h"
-//Initialize the starting memory. 
-//TODO: move this into a class constructor
+//Initialize the starting memory.
+
+// TODO: can this be automagical somehow?
+const char* vsn = VSN;
 
 //common variables used by multipe things
 volatile double jog_mm = 0;

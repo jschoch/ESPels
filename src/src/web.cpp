@@ -21,16 +21,6 @@
 
 bool web = true;
 
-// TODO: can this be automagical somehow?
-const char* vsn = "0.0.2";
-
-// This defines ssid and password for the wifi configuration
-//TODO move the location of this into a platformio variable or something? Maybe the location of the file as a constant in config.h
-#include "../../wifisecret.h"
-
-// TODO: need a way to tie versions of the firmware to compatable versions of the UI
-// also need to have a compiled UI version linked in firmware releases
-
 // buffer for msgpack
 char outBuffer[6000];
 
@@ -617,7 +607,7 @@ void init_web(){
   Serial.println("Setting up WiFi");
   WiFi.setHostname(HOSTNAME);
   WiFi.mode(WIFI_MODE_STA);
-  WiFi.begin(ssid, password);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   WiFi.setTxPower(WIFI_POWER_19_5dBm);
   //WiFi.setOut
   while (WiFi.status() != WL_CONNECTED) {
