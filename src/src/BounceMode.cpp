@@ -45,7 +45,6 @@ void BounceIdleState(){
 
 void BounceJogState(){
     if(bounce_yasm.isFirstRun()){
-        Serial.print(toolPos);
         Serial.println("Entering Bounce Jog Mode");
         updateMode(RunMode::BounceJog);
         start_jog();
@@ -60,7 +59,6 @@ void BounceJogState(){
 
 void BounceRapidState(){
     if(bounce_yasm.isFirstRun()){
-        Serial.print(toolPos);
         Serial.println(" Entering Rapid Mode");
         // TODO: yuck refactor this
         mc.oldPitch = mc.pitch;

@@ -16,5 +16,4 @@ void init_hob_feed(void);
 
 void init_pos_feed();
 
-extern GenStepper::State gs;
-extern MoveConfig::State mc;
+

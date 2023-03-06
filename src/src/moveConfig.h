@@ -18,8 +18,9 @@ namespace MoveConfig{
         float pitch = 0;
         float rapidPitch = 0;
         float oldPitch = 0;
-        bool syncMove = true;
+        bool syncMoveStart = true;
         bool isAbs = false;
+        bool useStops = true;
 
         // returns a bool to be used by stepper.setDir
         inline bool setStops(int32_t current_position){

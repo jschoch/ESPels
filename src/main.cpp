@@ -20,6 +20,7 @@
 #include "src/BounceMode.h"
 #include "src/myperfmon.h"
 #include "src/Machine.h"
+#include "src/state.h"
 
 void setup() {
  

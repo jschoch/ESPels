@@ -26,9 +26,6 @@ extern volatile bool z_dir; //CW
 extern volatile bool z_prev_dir;
 extern volatile bool z_moving;
 extern volatile int32_t jogs;
-extern volatile double toolRelPos;
-extern double oldToolRelPosMM;
-extern volatile double targetToolRelPos;
 
 
 extern int use_limit;
@@ -37,9 +34,6 @@ extern volatile int64_t calculated_stepper_pulses;
 extern volatile int32_t jog_steps;
 extern volatile double jog_scaler;
 extern volatile uint16_t vel;
-extern volatile double stopPos;
-extern volatile double stopNeg;
-extern volatile bool useStops;
 extern volatile bool pos_feeding;
 
 extern int microsteps;

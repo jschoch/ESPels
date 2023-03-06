@@ -13,6 +13,10 @@
 #include "Controls.h"
 #include "Machine.h"
 #include "genStepper.h"
+#define LOG_LOCAL_LEVEL ESP_LOG_INFO
+#include <esp_log.h>
+
+static const char* TAG = "Mo";
 
 volatile bool feeding = false;
 
@@ -21,8 +25,7 @@ volatile bool feeding_ccw = true;
 
 char err[500] = "";
 
-GenStepper::State gs = GenStepper::init("Z",el);
-MoveConfig::State mc = MoveConfig::init();
+
 
 
 void init_pos_feed(){
@@ -31,8 +34,8 @@ void init_pos_feed(){
   if(!pos_feeding){
     
     //wait for the start to come around
-    if(syncStart){
-      Serial.println("waiting for spindle sync");
+    if(mc.syncMoveStart){
+      Serial.println("Move: waiting for spindle sync");
       syncWaiting = true;
       pos_feeding = true;
     }
@@ -53,7 +56,7 @@ void init_hob_feed(){
   if(!pos_feeding){
     
     //wait for the start to come around
-    if(syncStart){
+    if(mc.syncMoveStart){
       Serial.println("waiting for spindle sync");
       syncWaiting = true;
       pos_feeding = true;
@@ -75,10 +78,10 @@ int64_t last_step_time = 0;
 
 // ensure we don't send steps after changing dir pin until the proper delay has expired
 void waitForDir(){
-  if(zstepper.dir_has_changed){
-    while(zstepper.dir_has_changed && ((zstepper.dir_change_timer + 5) - esp_timer_get_time() > 0)){
-        zstepper.dir_has_changed = false;
-        if(!zstepper.dir){
+  if(gs.stepper.dir_has_changed){
+    while(gs.stepper.dir_has_changed && ((gs.stepper.dir_change_timer + 5) - esp_timer_get_time() > 0)){
+        gs.stepper.dir_has_changed = false;
+        if(!gs.stepper.dir){
           // reset stuff for dir changes guard against swapping when we just moved
           if(gs.mygear.jumps.last < encoder.pulse_counter){
             gs.mygear.jumps.prev = gs.mygear.jumps.last;
@@ -118,13 +121,13 @@ to calculate the next set of jumps (positions to step based on ratio/factor)
 
   this requires that everything is setup and ready to go: the vars that need to be set are:
 
-  z_feeding_dir : the intended direction to feed
+  mc.moveDirection: the intended direction to feed
     if true: 
-      stopNeg : the current tool position, this ensures if the spindle is reversed we will not jog beyond this point
-      stopPos : the target postion set from the "config" doc 
+      mc.stopNeg : the current tool position, this ensures if the spindle is reversed we will not jog beyond this point
+      mc.stopPos : the target postion set from the "config" doc 
     if false:
       swap Neg/Pos.  Pos becomes the current position, Neg the target
-  syncStart : if true this will ensure we start motion at spindle position 0 (the starting spindle angle)
+  mc.syncMoveStart: if true this will ensure we start motion at spindle position 0 (the starting spindle angle)
 */
 
 
@@ -152,36 +155,37 @@ void do_pos_feeding(){
     // Deal with direction changes
     // Encoder decrementing
     if(!encoder.dir){ // dir neg and not pausing for the direction change
-      if(feeding_ccw && z_feeding_dir && zstepper.dir){
-        zstepper.setDir(false);
-      }else if(feeding_ccw && !z_feeding_dir && !zstepper.dir){
-        zstepper.setDir(true);
+      if(feeding_ccw && mc.moveDirection && gs.stepper.dir){
+        gs.stepper.setDir(false);
+      }else if(feeding_ccw && !mc.moveDirection && !gs.stepper.dir){
+        gs.stepper.setDir(true);
       }
       
       // reverse spindle case 
-      else if(!feeding_ccw && !z_feeding_dir && zstepper.dir){
-        zstepper.setDir(false);
-      }else if(!feeding_ccw && z_feeding_dir && !zstepper.dir){
-        zstepper.setDir(true);
+      else if(!feeding_ccw && !mc.moveDirection && gs.stepper.dir){
+        gs.stepper.setDir(false);
+      }else if(!feeding_ccw && mc.moveDirection && !gs.stepper.dir){
+        gs.stepper.setDir(true);
       }
       waitForDir();
     }else {
 
     // encoder incrementing
-      if(feeding_ccw && z_feeding_dir && !zstepper.dir){
-        zstepper.setDir(true);
-      }else if(feeding_ccw && !z_feeding_dir && zstepper.dir){
-        zstepper.setDir(false);
+      if(feeding_ccw && mc.moveDirection && !gs.stepper.dir){
+        gs.stepper.setDir(true);
+      }else if(feeding_ccw && !mc.moveDirection && gs.stepper.dir){
+        gs.stepper.setDir(false);
       }
       
      // reverse spindle case 
-      else if(!feeding_ccw && !z_feeding_dir && !zstepper.dir){
-        zstepper.setDir(true);
-      }else if(!feeding_ccw && z_feeding_dir && zstepper.dir){
-        zstepper.setDir(false);
+      else if(!feeding_ccw && !mc.moveDirection && !gs.stepper.dir){
+        gs.stepper.setDir(true);
+      }else if(!feeding_ccw && mc.moveDirection && gs.stepper.dir){
+        gs.stepper.setDir(false);
       }
       waitForDir();  
-    }
+    } // done with direction changes
+
 
       // calculate jumps and delta
 
@@ -189,7 +193,7 @@ void do_pos_feeding(){
       if((pulse_counter == gs.mygear.jumps.next) || (pulse_counter== gs.mygear.jumps.prev)){
         gs.mygear.calc_jumps(pulse_counter);
 
-        if(zstepper.dir){
+        if(gs.stepper.dir){
           gs.stepPos();
         }else{
           gs.stepNeg();
@@ -198,23 +202,25 @@ void do_pos_feeding(){
 
       // evaluate stops, no motion if motion would exceed stops
 
-      if (useStops && z_feeding_dir == true && gs.currentPosition() >= mc.moveSyncTarget){
+      if (mc.useStops && mc.moveDirection == true && gs.currentPosition() >= mc.moveSyncTarget){
+        ESP_LOGE(TAG,"reached target %d final position was: %d", mc.moveSyncTarget, gs.currentPosition());
         finish_jog();
         return;
       }
-      if(useStops && z_feeding_dir == false && gs.currentPosition() <= mc.moveSyncTarget){
+      if(mc.useStops && mc.moveDirection == false && gs.currentPosition() <= mc.moveSyncTarget){
+        ESP_LOGE(TAG,"reached -target %d final position was: %d", mc.moveSyncTarget, gs.currentPosition());
         finish_jog();
         return;
       }
 
-      if(useStops && (mc.moveSyncTarget < stopNeg)){
+      if(mc.useStops && (mc.moveSyncTarget < mc.stopNeg)){
         el.addMsg("Tool past stopNeg: HALT");
         el.hasError = true;
         finish_jog();
         return;
       }
 
-      if(useStops && mc.moveSyncTarget > stopPos){
+      if(mc.useStops && mc.moveSyncTarget > mc.stopPos){
         el.addMsg("tool past stopPos: HALT");
         el.hasError = true;
 
@@ -251,33 +257,6 @@ void IRAM_ATTR processMotion(){
 }
 
 
-/*  
-This didn't workout for rapids
-
-void do_rapid(void * param){
-  //while(stepper.currentPosition() != rapid_target){
-  //}
-  rapiding = false;
-  vTaskDelete(NULL);
-}
-
-void start_rapid(double distance){
-  rapiding = true; 
-  //rapid_target = stepper.currentPosition() + (stepsPerMM * distance);
-  //stepper.runToNewPosition(stepper.currentPosition()+(stepsPerMM * distance));
-  //stepper
-  xTaskCreatePinnedToCore(
-    do_rapid,    // Function that should be called
-    "rapid step",  // Name of the task (for debugging)
-    2000,            // Stack size (bytes)
-    NULL,            // Parameter to pass
-    1,               // Task priority
-    NULL,             // Task handle
-    0 // pin to core 0, arduino loop runs core 1
-);
-
-}
-*/
 
 void init_motion(){
   esp_timer_init();

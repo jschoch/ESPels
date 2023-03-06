@@ -95,6 +95,12 @@ void initNvConfigDoc(){
   nvConfigDoc["lead_screw_pitch"] = LEADSCREW_LEAD;
   nvConfigDoc["spindle_encoder_resolution"] = ENCODER_RESOLUTION;
   nvConfigDoc["microsteps"] = Z_MICROSTEPPING;
+  nvConfigDoc["EA"] = EA;
+  nvConfigDoc["EB"] = EB;
+  nvConfigDoc["ZP"] = gs.stepper.config.stepPin;
+  nvConfigDoc["ZD"] = gs.stepper.config.dirPin;
+  nvConfigDoc["motor_steps"] = motor_steps;
+
   // the communication version, used to detect UI compatability
   nvConfigDoc["vsn"] = vsn;
 
@@ -167,9 +173,9 @@ void updateStatusDoc(){
   statusDoc["rpm"] = rpm;
 
    // the virtual stop in the Z + direction, used to calculate "distance to go" in the UI
-  statusDoc["sp"] = stopPos;
+  statusDoc["sp"] = mc.stopPos;
   // the stop in the Z - direction
-  statusDoc["sn"] = stopNeg;
+  statusDoc["sn"] = mc.stopNeg;
   sendStatus();
 }
 
@@ -179,7 +185,9 @@ void updateDebugStatusDoc(){
   // intended feeding "handiness" CCW or CW 
   // so if the spindle is rotating CW, and the intension is to feed in the Z- direction this should be false
   // but this somewhat depends on the setup  
-  debugStatusDoc["fd"] = z_feeding_dir;
+
+  // this only seems used for jogABS
+  debugStatusDoc["fd"] = mc.moveDirection;
  
   // This is the number of encoder pulses needed before the next stepper pulse
   // TODO: make this optional and move to a "debug" doc
@@ -196,19 +204,12 @@ void updateDebugStatusDoc(){
 
 void updateStateDoc(){
   stateDoc["t"] = "state"; 
-  // don't appear to be used
-  //stateDoc["absP"] = absolutePosition;
-  //stateDoc["P"] = relativePosition;
+
 
   // the pitch for the sync move calculation in MM
   stateDoc["pitch"] = pitch;
   // the pitch for sync rapid moves
   stateDoc["rapid"] = rapids;
-
-  // TODO: this redundant to nvConfigDoc, remove after testing?
-  //stateDoc["lead"] = lead_screw_pitch;
-  //stateDoc["enc"] = spindle_encoder_resolution;
-  //stateDoc["micro"] = microsteps;
 
   // the run mode 
   stateDoc["m"] = (int)run_mode; 
@@ -216,7 +217,7 @@ void updateStateDoc(){
   stateDoc["js"] = mc.moveDistanceSteps;
   // this is the distance to jog in mm
   // this sets the desired "handedness" CW or CCW
-  stateDoc["f"] = feeding_ccw;
+  stateDoc["f"] = mc.moveDirection;
   // this is the target postion for sync absolute movements
   stateDoc["ja"] = jogAbs;
   // flag to wait for encocer "0" position
@@ -363,20 +364,17 @@ void handleJog(){
   if(run_mode == RunMode::SLAVE_JOG_READY){
     JsonObject config = inDoc["config"];
     mc.moveDistanceSteps = config["moveSteps"].as<int>();
-    feeding_ccw = (bool)config["f"];
+    mc.moveDirection = (bool)config["f"];
     if(!pos_feeding){
-      //setStops();   
       mc.setStops(gs.currentPosition());
       jogging = true;
       init_pos_feed();
       updateStatusDoc();
     }
     else{
-      //Serial.print("already feeding, can't feed");
       el.error("already set feeding, wait till done or cancel");
     }
   }else{
-    //Serial.println("can't jog, failed mode check");
     el.error("can't jog, no jogging mode is set ");
   }
 }
@@ -391,7 +389,7 @@ void handleHobRun(){
       JsonObject config = inDoc["config"];
       pitch = config["pitch"].as<double>();
       Serial.printf("Pitch %f \n",pitch);
-      feeding_ccw = (bool)config["f"];
+      mc.moveDirection = (bool)config["f"];
       //syncStart = (bool)config["s"];
       // TODO: do I need to sync the spindle in this mode?
       syncStart = false;
@@ -419,7 +417,7 @@ void handleBounce(){
   mc.pitch = config["pitch"].as<double>();
   rapids = config["rapid"].as<double>();
   mc.moveDistanceSteps = config["moveSteps"].as<int>();
-  feeding_ccw = (bool)config["f"];
+  mc.moveDirection = (bool)config["f"];
   el.error("warning, TOOD: this only is setup for one spindle direction");
   mc.setStops(gs.currentPosition());
   bouncing = true;
@@ -698,7 +696,7 @@ void sendUpdates(){
     // only send state when it changes
     //updateStateDoc();
     //Serial.printf(" %d ",(int)run_mode);
-    Serial.printf(" %d %d ",(int)run_mode,WiFi.RSSI());
+    Serial.printf(" %d %d %d ",(int)run_mode,gs.currentPosition(),WiFi.RSSI());
     updateStatusDoc();
   }
 }

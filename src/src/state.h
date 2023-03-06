@@ -6,6 +6,8 @@
 //TODO: identify which of these belong to other objects and make those objects "own" these
 #include "Encoder.h"
 #include "Controls.h"
+#include "genStepper.h"
+#include "moveConfig.h"
 
 //common variables used by multipe things
 extern volatile int rpm;
@@ -15,7 +17,9 @@ extern int32_t relativePosition;
 extern int32_t absolutePosition;
 extern bool sendDebug;
 
-extern volatile bool z_feeding_dir;
+
+extern GenStepper::State gs;
+extern MoveConfig::State mc;
 
 //State Machine stuff
 extern bool syncStart;

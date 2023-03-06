@@ -59,7 +59,7 @@ namespace GenStepper {
         }
         inline bool init_gear(int64_t count){
             mygear.is_setting_dir = false;
-            printf("init_gear count was: %d \n",count);
+            printf("init_gear count was: %lld \n",count);
             if(mygear.setRatio(nom,den)){
                 mygear.calc_jumps(count);
                 mygear.jumps.last = mygear.jumps.prev;
