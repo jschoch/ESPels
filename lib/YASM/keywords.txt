@@ -1,0 +1,36 @@
+#######################################
+# Syntax Coloring Map For YASM
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+YASM	KEYWORD1
+BTN	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+next	KEYWORD2
+run	KEYWORD2
+stop	KEYWORD2
+resume	KEYWORD2
+timeOnState	KEYWORD2
+elapsed	KEYWORD2
+periodic	KEYWORD2
+isFirstRun	KEYWORD2
+runCount	KEYWORD2
+isInState	KEYWORD2
+state	KEYWORD2
+update	KEYWORD2
+
+#######################################
+# Instances (KEYWORD2)
+#######################################
+
+
+#######################################
+# Constants (LITERAL1)
+#######################################

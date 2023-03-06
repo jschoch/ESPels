@@ -5,7 +5,6 @@
 
 #include "gear.h"
 // should just be using accel/decel calcs
-#include "AccelStepper.h"
 #include "Encoder.h"
 #include "Stepper.h"
 #include "state.h"

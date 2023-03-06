@@ -1,4 +1,5 @@
 #include "state.h"
+#include "ArduinoJson.h"
 //Initialize the starting memory. 
 //TODO: move this into a class constructor
 
@@ -26,3 +27,23 @@ volatile bool rapiding = false;
 
 
 RunMode run_mode = RunMode::STARTUP;
+
+// json docs
+
+// config stateDoc
+StaticJsonDocument<1000> stateDoc;
+
+//  items to store in NV ram/EEPROM
+StaticJsonDocument<1000> nvConfigDoc;
+
+// Used for msgs from UI
+StaticJsonDocument<1000> inDoc;
+
+// used to send status to UI
+StaticJsonDocument<600> statusDoc;
+
+// Used to log to UI
+StaticJsonDocument<5000> logDoc;
+
+// used for debugging, to slim down status doc 
+StaticJsonDocument<500> debugStatusDoc;
