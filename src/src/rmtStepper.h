@@ -1,5 +1,15 @@
 #pragma once
 
+
+
+// this seems like a horrible hack
+#ifdef UNIT_TEST
+
+// if unit testing....
+// don't include, this will get included from 'mocks.h'
+
+#else
+
 #include "config.h"
 #include <driver/rmt.h>
 
@@ -82,3 +92,4 @@ namespace rmtStepper {
         }
     };
 }
+#endif

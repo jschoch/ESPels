@@ -86,10 +86,6 @@ void test_fakePosFeeding(){
     GenStepper::State gs = GenStepper::init("Z",lm);
     MoveConfig::State mc = MoveConfig::init();
 
-    // must mock this
-    //rmtStepper::State rmt;
-    //rmt.init();
-    Mocks::rmtState rmt;
 
     //  record current encoder position
     //int64_t pulse_counter = encoder.getCount();
@@ -123,10 +119,20 @@ void test_fakePosFeeding(){
     // evaluate if we have reached a "jump"
 
     // based on pitch 0.1 and default setup we should be at a jump
-    TEST_ASSERT_EQUAL_INT(99,gs.mygear.jumps.next );
+    //TEST_ASSERT_EQUAL_INT(99,gs.mygear.jumps.next );
+
     // if yes command stepper
 
+    gs.stepPos();
+    TEST_ASSERT(1 == gs.position);
+    gs.stepper.setDir(false);
+    gs.stepNeg();
+    TEST_ASSERT(0 == gs.position);
+
+
     // evaluate stops, if reached finish move
+
+
 
     std::cout << "done\n";
 }

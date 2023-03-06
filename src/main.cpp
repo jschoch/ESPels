@@ -33,7 +33,8 @@ void setup() {
 
   init_controls();
   
-  setFactor();
+  //setFactor();
+  gs.setELSFactor(pitch);
 
   init_web();
 

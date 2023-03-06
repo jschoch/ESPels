@@ -48,7 +48,8 @@ namespace Gear {
     Jumps jumps = {0,0,0};
     volatile bool is_setting_dir = false;
 
-    void calc_jumps(int encoder_count,bool dir){
+    // TODO: stop using the 2nd arg, it has to be true
+    void calc_jumps(int encoder_count,bool dir = true){
       Jump nx = next_jump_forward(D,N,nerror,encoder_count);
       Jump px = next_jump_reverse(D,N,perror,encoder_count); 
       jumps.next =  nx.count;

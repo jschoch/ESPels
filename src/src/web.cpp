@@ -124,7 +124,8 @@ void loadNvConfigDoc(){
     spindle_encoder_resolution = nvConfigDoc["spindle_encoder_resolution"]; 
     Serial.printf("Loaded Configuration com version %s lead screw pitch: %f\n",vsn,lead_screw_pitch);
     init_machine();
-    setFactor();
+    //setFactor();
+    gs.setELSFactor(pitch);
   }
 }
 
@@ -359,7 +360,8 @@ void handleRapid(){
 }
 void setStops(){
   // TODO:  what happens when the factor changes and the encoder positoin is wrong?
-      setFactor();
+      //setFactor();
+      gs.setELSFactor(pitch);
       targetToolRelPosMM = toolRelPosMM + jog_mm;
       if(jog_mm < 0){
         z_feeding_dir = false;
@@ -487,7 +489,8 @@ void handleSend(){
       Serial.println("new pitch");
       oldPitch = pitch;
       pitch = p;
-      setFactor();
+      //setFactor();
+      gs.setELSFactor(pitch);
     }
     if(config["rapid"] != rapids){
       Serial.println("updating rapids");

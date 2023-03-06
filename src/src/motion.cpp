@@ -12,6 +12,7 @@
 #include "log.h"
 #include "Controls.h"
 #include "Machine.h"
+#include "genStepper.h"
 
 volatile bool feeding = false;
 
@@ -23,16 +24,12 @@ volatile int badTicks = 0;
 char err[200] = "";
 
 int perfCount = 0;
-Gear::State gear;
+GenStepper::State gs = GenStepper::init("Z",el);
 
-void init_gear(){
-    gear.is_setting_dir = false;
-    gear.calc_jumps(encoder.getCount(),true);
-    gear.jumps.last = gear.jumps.prev;
-}
 
 void init_pos_feed(){
-  setFactor();
+  //setFactor();
+  gs.setELSFactor(pitch);
   if(!pos_feeding){
     
     //wait for the start to come around
@@ -45,7 +42,7 @@ void init_pos_feed(){
       // this resets the "start" but i'm not sure if it works correctly
       // TODO:  should warn that turning off sync will  loose the "start"
       Serial.println("jog without spindle sync");
-      init_gear();
+      gs.init_gear(encoder.getCount());
       pos_feeding = true;
     }
   }else{
@@ -53,7 +50,8 @@ void init_pos_feed(){
   }
 }
 void init_hob_feed(){
-  setHobbFactor();
+  el.error("this needs updated to work with genStepper.h");
+  //setHobbFactor();
   if(!pos_feeding){
     
     //wait for the start to come around
@@ -66,7 +64,7 @@ void init_hob_feed(){
       // this resets the "start" but i'm not sure if it works correctly
       // TODO:  should warn that turning off sync will  loose the "start"
       Serial.println("jog without spindle sync");
-      init_gear();
+      gs.init_gear(encoder.getCount());
       pos_feeding = true;
     }
   }else{
@@ -77,23 +75,6 @@ void init_hob_feed(){
 int64_t last_step_time = 0;
 
 
-
-void stepPos(){
-    zstepper.step();
-    toolPos++;
-    toolRelPos++;
-    toolRelPosMM += mmPerStep;
-    last_step_time = esp_timer_get_time();
-}
-
-void stepNeg(){
-  zstepper.step();
-  toolPos--;
-  toolRelPos--;
-  toolRelPosMM -= mmPerStep;
-  last_step_time = esp_timer_get_time();
-}
-
 // ensure we don't send steps after changing dir pin until the proper delay has expired
 void waitForDir(){
   if(zstepper.dir_has_changed){
@@ -101,16 +82,16 @@ void waitForDir(){
         zstepper.dir_has_changed = false;
         if(!zstepper.dir){
           // reset stuff for dir changes guard against swapping when we just moved
-          if(gear.jumps.last < encoder.pulse_counter){
-            gear.jumps.prev = gear.jumps.last;
-            gear.jumps.last = gear.jumps.next;
+          if(gs.mygear.jumps.last < encoder.pulse_counter){
+            gs.mygear.jumps.prev = gs.mygear.jumps.last;
+            gs.mygear.jumps.last = gs.mygear.jumps.next;
           }
 
         }else{
           // reset stuff for dir changes
-          if(gear.jumps.last  > encoder.pulse_counter){
-            gear.jumps.next = gear.jumps.last;
-            gear.jumps.last = gear.jumps.prev;
+          if(gs.mygear.jumps.last  > encoder.pulse_counter){
+            gs.mygear.jumps.next = gs.mygear.jumps.last;
+            gs.mygear.jumps.last = gs.mygear.jumps.prev;
           }
         }
     }
@@ -158,12 +139,12 @@ void do_pos_feeding(){
     //
     int64_t pulse_counter = encoder.getCount();
 
-    if(pulse_counter > gear.jumps.next+1 || pulse_counter < gear.jumps.prev -1){
+    if(pulse_counter > gs.mygear.jumps.next+1 || pulse_counter < gs.mygear.jumps.prev -1){
       sprintf(err,"Tool outside expected range.  encPos: %lld next: %i  pos %i dirChang? %i",
         pulse_counter,
-        gear.jumps.next,
-        gear.jumps.prev,
-        gear.is_setting_dir);
+        gs.mygear.jumps.next,
+        gs.mygear.jumps.prev,
+        gs.mygear.is_setting_dir);
       el.addMsg(err);
       el.hasError = true;
       pos_feeding = false;
@@ -207,13 +188,13 @@ void do_pos_feeding(){
       // calculate jumps and delta
 
       
-      if((pulse_counter == gear.jumps.next) || (pulse_counter== gear.jumps.prev)){
-        gear.calc_jumps(pulse_counter,true);
+      if((pulse_counter == gs.mygear.jumps.next) || (pulse_counter== gs.mygear.jumps.prev)){
+        gs.mygear.calc_jumps(pulse_counter);
 
         if(zstepper.dir){
-          stepPos();
+          gs.stepPos();
         }else{
-          stepNeg();
+          gs.stepNeg();
         }
       }
 
@@ -255,7 +236,7 @@ void IRAM_ATTR processMotion(){
     // faster to pass this count here or store it in do_pos_feeding?
     if(encoder.getCount() % encoder.start == 0){
       syncWaiting = false;
-      init_gear();
+      gs.init_gear(encoder.getCount());
       do_pos_feeding();
     }
   }
@@ -318,5 +299,6 @@ void start_rapid(double distance){
 
 void init_motion(){
   esp_timer_init();
-  setFactor();
+  //setFactor();
+  gs.setELSFactor(pitch);
 }
