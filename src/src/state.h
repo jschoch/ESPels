@@ -8,7 +8,6 @@
 #include "Controls.h"
 
 //common variables used by multipe things
-extern volatile double jog_mm;
 extern volatile int rpm;
 extern double mmPerStep;
 extern int32_t stepsPerMM;
@@ -17,8 +16,6 @@ extern int32_t absolutePosition;
 extern bool sendDebug;
 
 extern volatile bool z_feeding_dir;
-extern volatile double targetToolRelPosMM;
-extern volatile double toolRelPosMM;
 
 //State Machine stuff
 extern bool syncStart;

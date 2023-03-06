@@ -6,10 +6,13 @@
 #include "Machine.h"
 #include "web.h"
 #include "motion.h"
+#include "genStepper.h"
+#include "moveConfig.h"
 
 YASM bounce_yasm;
 volatile bool bouncing = false;
-double old_jog_mm = 0;
+//double old_jog_mm = 0;
+int old_moveDistanceSteps = 0;
 
 Neotimer state_timer(100);
 
@@ -59,20 +62,23 @@ void BounceRapidState(){
     if(bounce_yasm.isFirstRun()){
         Serial.print(toolPos);
         Serial.println(" Entering Rapid Mode");
-        oldPitch = pitch;
-        pitch = rapids;
-        old_jog_mm = jog_mm;
-        jog_mm = -jog_mm;
+        // TODO: yuck refactor this
+        mc.oldPitch = mc.pitch;
+        //pitch = rapids;
+        mc.pitch = rapids;
+        old_moveDistanceSteps = mc.moveDistanceSteps;
+        mc.moveDistanceSteps = -mc.moveDistanceSteps;
         rapiding = true;
-        setStops();
+        mc.setStops(gs.currentPosition());
         start_jog();
         updateStateDoc();
         return;
     }
     else if(!rapiding){
         Serial.println("Rapid Done, going Idle");
-        pitch = oldPitch;
-        jog_mm = old_jog_mm;
+        mc.pitch = mc.oldPitch;
+        //jog_mm = old_jog_mm;
+        mc.moveDistanceSteps = old_moveDistanceSteps;
         bouncing = false;
         // TOOD this ends up undefined in the UI
         bounce_yasm.next(BounceIdleState);

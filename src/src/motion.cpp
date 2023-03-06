@@ -19,12 +19,10 @@ volatile bool feeding = false;
 //TODO there's a direction enum that can be used, maybe do it at the same time the state machine is refactored
 volatile bool feeding_ccw = true;
 
-volatile int64_t thetimes = 0;
-volatile int badTicks = 0;
-char err[200] = "";
+char err[500] = "";
 
-int perfCount = 0;
 GenStepper::State gs = GenStepper::init("Z",el);
+MoveConfig::State mc = MoveConfig::init();
 
 
 void init_pos_feed(){
@@ -200,23 +198,23 @@ void do_pos_feeding(){
 
       // evaluate stops, no motion if motion would exceed stops
 
-      if (useStops && z_feeding_dir == true && toolRelPosMM >= targetToolRelPosMM){
+      if (useStops && z_feeding_dir == true && gs.currentPosition() >= mc.moveSyncTarget){
         finish_jog();
         return;
       }
-      if(useStops && z_feeding_dir == false && toolRelPosMM <= targetToolRelPosMM){
+      if(useStops && z_feeding_dir == false && gs.currentPosition() <= mc.moveSyncTarget){
         finish_jog();
         return;
       }
 
-      if(useStops && (toolRelPosMM < stopNeg)){
+      if(useStops && (mc.moveSyncTarget < stopNeg)){
         el.addMsg("Tool past stopNeg: HALT");
         el.hasError = true;
         finish_jog();
         return;
       }
 
-      if(useStops && toolRelPosMM > stopPos){
+      if(useStops && mc.moveSyncTarget > stopPos){
         el.addMsg("tool past stopPos: HALT");
         el.hasError = true;
 
@@ -244,22 +242,6 @@ void IRAM_ATTR processMotion(){
       do_pos_feeding();
     }
     
-    /*
-    int64_t startTime = esp_timer_get_time();
-    if(perfCount >= 100000){
-      int avgTime = thetimes / 100000;
-      sprintf(err,"Time took %i badTicks was %i\n",avgTime,badTicks);
-      el.addMsg(err);
-      el.hasError = true;
-      perfCount = 0;
-      badTicks = 0;
-      thetimes = 0;
-      startTime = esp_timer_get_time();
-    }
-    perfCount++;
-    */
-
-  //thetimes += esp_timer_get_time() - startTime;
   
   if(el.hasError){
       el.errorTask();

@@ -18,6 +18,7 @@
 #include "Stepper.h"
 #include "motion.h"
 #include "hob.h"
+#include "moveConfig.h"
 
 bool web = true;
 
@@ -30,6 +31,8 @@ const char* vsn = "0.0.3";
 
 // TODO: need a way to tie versions of the firmware to compatable versions of the UI
 // also need to have a compiled UI version linked in firmware releases
+
+
 
 // json docs
 
@@ -136,24 +139,17 @@ void updateStatusDoc(){
   statusDoc["t"] = "status";
   
   // Currently used for the UI DRO display, 
-  //TODO: needs renamed and this is likely better to compute this in the browser!
-  // TODO:  this means that we need to convert any "distance" move to steps befor it gets send to the controller 
-  statusDoc["pmm"] = toolRelPosMM;
   // defined in util.h and helps UI figure out what to display
   statusDoc["m"] = (int)run_mode;
-  // the position in steps, only used in the "debug" screen of the ui
-  // TODO: could just send this and remove "pmm" and calculate position in MM in the browser
-  // TODO: toolPos and toolRelPos should be consolidated as they seem largely redundant
-  statusDoc["p"] = toolRelPos;
-  // tool positoin in stepper steps
-  statusDoc["tp"] = toolPos;
+  // the position in steps
+  statusDoc["p"] = gs.currentPosition();
 
   // encoder postion in cpr pulses
   statusDoc["encoderPos"] = encoder.getCount();
 
   // I think this is used for aboslute movements
   // TODO: We should convert to steps in the UI and not have to do the conversion in the controller
-  statusDoc["targetPosMM"] = targetToolRelPosMM;
+  statusDoc["targetSteps"] = mc.moveDistanceSteps;
   // bool for constant run mode, TODO:  bad name though
   statusDoc["feeding"] = feeding;
   // bools for sync movements, TODO:  bad name
@@ -189,7 +185,7 @@ void updateDebugStatusDoc(){
   // TODO: make this optional and move to a "debug" doc
   debugStatusDoc["delta"] = delta;
   // this doesn't appear to be used now, but...
-  debugStatusDoc["targetPos"] = targetToolRelPos;
+  debugStatusDoc["targetPos"] = mc.moveSyncTarget;
   // for cpu stats
   // TODO: move this to a debug doc
   debugStatusDoc["c0"] = cpu0;
@@ -217,10 +213,8 @@ void updateStateDoc(){
   // the run mode 
   stateDoc["m"] = (int)run_mode; 
   // TODO: not used but this shold be used instead of jog_mm and the UI should do the conversion
-  stateDoc["js"] = jog_steps;
+  stateDoc["js"] = mc.moveDistanceSteps;
   // this is the distance to jog in mm
-  // TODO: depricate and have the UI convert and use steps
-  stateDoc["jm"] = jog_mm;
   // this sets the desired "handedness" CW or CCW
   stateDoc["f"] = feeding_ccw;
   // this is the target postion for sync absolute movements
@@ -289,21 +283,25 @@ void sendNvConfigDoc(){
 
 void handleJogAbs(){
 
+  el.error("handleJogAbs needs full refactor to work with feeding_ccw and steps vs mm");
+  /*
   JsonObject config = inDoc["config"];
   jogAbs = config["ja"];
   syncStart = config["s"];
-  targetToolRelPosMM = jogAbs;
+  // TOOD: pick better name for target in the UI
+  mc.moveSyncTarget = config["ja"];
   // TODO: need to check if we are rapiding also somewhere!
   if(!jogging){
-    Serial.println(jogAbs);
+    printf("handleJogAbs target position: %d\n",mc.moveSyncTarget);
 
     // config["f"] is the feeding_ccw flag from the UI
     // TODO: why not set feeding_ccw like we do for handleJog()?
     if(config["f"]){
-      if((toolRelPosMM - jogAbs) < 0 ){
+      if((mc.moveSyncTarget - jogAbs) < 0 ){
         z_feeding_dir = true;
         stopPos = jogAbs;
-        stopNeg = toolRelPosMM;
+        //stopNeg = toolRelPosMM;
+        stopNeg = gs.currentPosition();
         zstepper.setDir(true);
       }
       else{
@@ -327,6 +325,7 @@ void handleJogAbs(){
     init_pos_feed();
     updateStatusDoc();
   }
+  */
 }
 
 //  Update the virtual encoder
@@ -351,46 +350,23 @@ void handleRapid(){
   // really need the acceleration curve 
   Serial.println("Rapid! ");
   JsonObject config = inDoc["config"];
-  jog_mm = config["jm"].as<double>();
+  mc.moveDistanceSteps = config["moveSteps"].as<int>();
   //start_rapid(jog_mm);
-  oldPitch = pitch;
-  pitch = rapids;
+  mc.oldPitch = pitch;
+  mc.pitch = rapids;
   rapiding = true;
   handleJog();
-}
-void setStops(){
-  // TODO:  what happens when the factor changes and the encoder positoin is wrong?
-      //setFactor();
-      gs.setELSFactor(pitch);
-      targetToolRelPosMM = toolRelPosMM + jog_mm;
-      if(jog_mm < 0){
-        z_feeding_dir = false;
-        stopNeg = toolRelPosMM + jog_mm;
-        stopPos = toolRelPosMM;
-        zstepper.setDir(false);
-      }else{
-        z_feeding_dir = true;
-        stopPos = targetToolRelPosMM;
-        stopNeg = toolRelPosMM;
-        zstepper.setDir(true);
-      }
 }
 
 void handleJog(){
   Serial.println("got jog command");
   if(run_mode == RunMode::SLAVE_JOG_READY){
     JsonObject config = inDoc["config"];
-    jog_mm = config["jm"].as<double>();
+    mc.moveDistanceSteps = config["moveSteps"].as<int>();
     feeding_ccw = (bool)config["f"];
-    /*
-    Serial.println("slaveJog mode ok");
-    Serial.print("Jog steps: ");
-    Serial.println(stepsPerMM * jog_mm);
-    Serial.print("current tool position: ");
-    Serial.println(toolRelPos);
-    */
     if(!pos_feeding){
-      setStops();   
+      //setStops();   
+      mc.setStops(gs.currentPosition());
       jogging = true;
       init_pos_feed();
       updateStatusDoc();
@@ -440,12 +416,12 @@ void handleBounce(){
   JsonObject config = inDoc["config"];
 
   // parse config
-  pitch = config["pitch"].as<double>();
+  mc.pitch = config["pitch"].as<double>();
   rapids = config["rapid"].as<double>();
-  jog_mm = config["jog_mm"].as<double>();
+  mc.moveDistanceSteps = config["moveSteps"].as<int>();
   feeding_ccw = (bool)config["f"];
   el.error("warning, TOOD: this only is setup for one spindle direction");
-  setStops();
+  mc.setStops(gs.currentPosition());
   bouncing = true;
 }
 

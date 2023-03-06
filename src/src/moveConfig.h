@@ -22,7 +22,7 @@ namespace MoveConfig{
         bool isAbs = false;
 
         // returns a bool to be used by stepper.setDir
-        bool setStops(int32_t current_position){
+        inline bool setStops(int32_t current_position){
            if(isAbs){
              moveSyncTarget = moveDistanceSteps;
            }else {
@@ -42,7 +42,7 @@ namespace MoveConfig{
         
 
     };
-    State init(){
+    inline State init(){
         State state;
         return state;
     }
