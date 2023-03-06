@@ -4,7 +4,9 @@
 
 extern volatile bool feeding;
 
-//TODO there's a direction enum that can be used, maybe do it at the same time the state machine is refactored
+
+// i think this reverses everything, usecase is unclear
+// should look at refactoring it out but unclear impact
 extern volatile bool feeding_ccw;
 
 void init_motion(void);

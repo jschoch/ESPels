@@ -364,7 +364,10 @@ void handleJog(){
   if(run_mode == RunMode::SLAVE_JOG_READY){
     JsonObject config = inDoc["config"];
     mc.moveDistanceSteps = config["moveSteps"].as<int>();
-    mc.moveDirection = (bool)config["f"];
+
+    // don't do this direction is handled in setStops
+    //mc.moveDirection = (bool)config["f"];
+
     if(!pos_feeding){
       mc.setStops(gs.currentPosition());
       jogging = true;
