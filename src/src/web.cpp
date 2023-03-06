@@ -369,7 +369,8 @@ void handleJog(){
     //mc.moveDirection = (bool)config["f"];
 
     if(!pos_feeding){
-      mc.setStops(gs.currentPosition());
+      bool dir = mc.setStops(gs.currentPosition());
+      gs.stepper.setDir(dir);
       jogging = true;
       init_pos_feed();
       updateStatusDoc();

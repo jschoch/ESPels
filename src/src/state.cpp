@@ -13,9 +13,6 @@ int32_t absolutePosition = 0;
 bool sendDebug = false;
 
 
-//tool position in steps
-volatile int64_t toolPos = 0;
-
 //State Machine stuff
 bool syncStart = true;
 bool syncWaiting = false;

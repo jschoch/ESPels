@@ -86,6 +86,13 @@ namespace GenStepper {
             position--;
 
         }
+        inline void step(){
+            if( stepper.dir){
+                stepPos();
+            }else{
+                stepNeg();
+            }
+        }
         inline int currentPosition(){
             return position + offset;
         }

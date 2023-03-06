@@ -1,5 +1,8 @@
 #pragma once
 #include <Arduino.h>
+#include <esp_log.h>
+
+static const char* TAGmc = "Mc";
 
 namespace MoveConfig{
 
@@ -26,15 +29,19 @@ namespace MoveConfig{
         inline bool setStops(int32_t current_position){
            if(isAbs){
              moveSyncTarget = moveDistanceSteps;
+             ESP_LOGE(TAGmc,"Absolute move:\n");
            }else {
+            ESP_LOGE(TAGmc,"Relative move: \n");
              moveSyncTarget =  current_position + moveDistanceSteps;
            }
            if( moveDistanceSteps < 0){
+            ESP_LOGE(TAGmc,"Negative move, setting moveDirection and stops:");
              moveDirection = false;
              stopNeg = moveSyncTarget;
              stopPos = current_position;
              return false;
            } else{
+             moveDirection = true;
              stopPos = moveSyncTarget;
              stopNeg = current_position;
              return true;

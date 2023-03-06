@@ -192,12 +192,14 @@ void do_pos_feeding(){
       
       if((pulse_counter == gs.mygear.jumps.next) || (pulse_counter== gs.mygear.jumps.prev)){
         gs.mygear.calc_jumps(pulse_counter);
-
+        gs.step();
+        /*
         if(gs.stepper.dir){
           gs.stepPos();
         }else{
           gs.stepNeg();
         }
+        */
       }
 
       // evaluate stops, no motion if motion would exceed stops

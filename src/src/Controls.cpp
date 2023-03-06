@@ -97,8 +97,4 @@ void setHobbFactor(){
 
 //this defines the parameters for the thread and turning for both metric and imperial threads
 
-void thread_parameters()                                           
-  { 
-    // TODO: add imperial back when you work on thread cycle
-}
 

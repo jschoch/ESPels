@@ -61,7 +61,10 @@ void test_moveConfig(){
     // test abs move from "0" to 1000 steps
     int distance = 1000;
     mc.moveDistanceSteps = distance;
+
+    // TODO:  do we always set the stepper when we set the stops?  If so consider factoring this out
     bool r = mc.setStops(0);
+    gs.stepper.setDir(r)
 
     std::cout << "step dir bool: " << r << " stopPos: " << mc.stopPos << " stopNeg: " << mc.stopNeg << " target: " << mc.moveSyncTarget <<  "\n";
     TEST_ASSERT(r);
@@ -136,12 +139,48 @@ void test_fakePosFeeding(){
 
     std::cout << "done\n";
 }
+void test_venc_moveSync(){
+    Log::Msg lm;
+
+    GenStepper::State gs = GenStepper::init("Z",lm);
+    MoveConfig::State mc = MoveConfig::init();
+    gs.c.spindle_encoder_resolution = 1000;
+    gs.c.lead_screw_pitch = 1.0;
+    gs.c.motor_steps = 1000;
+
+    
+    bool t = gs.setELSFactor(1,true);
+    TEST_ASSERT(t == true);
+    std::cout << "nom: " << gs.nom << " den: " << gs.den << "\n";
+
+    int64_t pulse_counter = 0;
+    t = gs.init_gear(pulse_counter);
+    gs.mygear.calc_jumps(pulse_counter,true);
+    for(int i = 0;i <= 10;i++){
+       if(i == gs.mygear.jumps.next || i == gs.mygear.jumps.prev){
+            gs.mygear.calc_jumps(i);
+            gs.step();
+       } 
+    }
+    TEST_ASSERT_EQUAL_INT(10,gs.position );
+    
+
+
+}
+
+void test_venc_moveAbsSync(){
+    TEST_ASSERT(false);
+
+}
 
 int main( int argc, char **argv) {
     UNITY_BEGIN();
     std::cout << "stepper test\n";
     RUN_TEST(test_genstepper);
     RUN_TEST(test_moveConfig);
+    RUN_TEST(test_venc_moveSync);
+    // TODO: get abs working
+    //RUN_TEST(test_venc_moveAbsSync);
     RUN_TEST(test_fakePosFeeding);
     return UNITY_END();
 }

@@ -23,19 +23,11 @@ volatile int delay_ticks = 3;
 volatile int previous_delay_ticks = 0;
 volatile int min_delay_ticks = 5;
 
-// jog delay based on accel table
-volatile int jog_delay_ticks = 0;
-volatile bool z_dir = true; //CW
-volatile bool z_prev_dir = true;
-volatile bool z_moving = false;
-
 
 int use_limit = false;
 volatile int64_t calculated_stepper_pulses=0;
 
-volatile int32_t jog_steps = 0;
-volatile double jog_scaler = 0.2;
-volatile uint16_t vel = 1;
+
 volatile bool pos_feeding = false;
 
 
@@ -63,7 +55,6 @@ void init_stepper(){
   pinMode(Z_DIR_PIN, OUTPUT);
   pinMode(Z_STEP_PIN, OUTPUT);
 
-  toolPos = 0;
   stepsPerMM = motor_steps / lead_screw_pitch;
 
 

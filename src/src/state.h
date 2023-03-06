@@ -30,14 +30,4 @@ extern volatile bool rapiding;
 extern RunMode run_mode;
 
 extern double lead_screw_pitch;
-// extern int microsteps;
-// extern int native_steps;
-// extern int motor_steps;
 
-//these 3 probably belong in a thread class or struct
-extern int tpi;
-extern double pitch; //  the thread pitch
-extern double depth;                                       // a parameter to define the thread depth in mm on the compound slide. This is set at 75% of the pitch which seems to work
-
-// tracks the current tool position based on delivered steps
-extern volatile int64_t toolPos;
