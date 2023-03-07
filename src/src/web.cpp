@@ -17,37 +17,9 @@
 #include "motion.h"
 #include "hob.h"
 
+#include "web.h"
+
 bool web = true;
-
-// TODO: can this be automagical somehow?
-const char* vsn = "0.0.2";
-
-// This defines ssid and password for the wifi configuration
-//TODO move the location of this into a platformio variable or something? Maybe the location of the file as a constant in config.h
-#include "../../wifisecret.h"
-
-// TODO: need a way to tie versions of the firmware to compatable versions of the UI
-// also need to have a compiled UI version linked in firmware releases
-
-// json docs
-
-// config stateDoc
-StaticJsonDocument<1000> stateDoc;
-
-//  items to store in NV ram/EEPROM
-StaticJsonDocument<1000> nvConfigDoc;
-
-// Used for msgs from UI
-StaticJsonDocument<1000> inDoc;
-
-// used to send status to UI
-StaticJsonDocument<600> statusDoc;
-
-// Used to log to UI
-StaticJsonDocument<5000> logDoc;
-
-// used for debugging, to slim down status doc 
-StaticJsonDocument<500> debugStatusDoc;
 
 // buffer for msgpack
 char outBuffer[6000];
@@ -635,7 +607,7 @@ void init_web(){
   Serial.println("Setting up WiFi");
   WiFi.setHostname(HOSTNAME);
   WiFi.mode(WIFI_MODE_STA);
-  WiFi.begin(ssid, password);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   WiFi.setTxPower(WIFI_POWER_19_5dBm);
   //WiFi.setOut
   while (WiFi.status() != WL_CONNECTED) {

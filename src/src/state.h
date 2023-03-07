@@ -7,6 +7,11 @@
 #include "Encoder.h"
 #include "Controls.h"
 
+// TODO: can this be automagical somehow?
+extern const char* vsn;
+
+#include "ArduinoJson.h"
+
 //common variables used by multipe things
 extern volatile double jog_mm;
 extern volatile int rpm;
@@ -40,3 +45,21 @@ extern double depth;                                       // a parameter to def
 
 // tracks the current tool position based on delivered steps
 extern volatile int64_t toolPos;
+
+// config stateDoc
+extern StaticJsonDocument<1000> stateDoc;
+
+//  items to store in NV ram/EEPROM
+extern StaticJsonDocument<1000> nvConfigDoc;
+
+// Used for msgs from UI
+extern StaticJsonDocument<1000> inDoc;
+
+// used to send status to UI
+extern StaticJsonDocument<600> statusDoc;
+
+// Used to log to UI
+extern StaticJsonDocument<5000> logDoc;
+
+// used for debugging, to slim down status doc 
+extern StaticJsonDocument<500> debugStatusDoc;
