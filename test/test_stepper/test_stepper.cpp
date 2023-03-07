@@ -11,12 +11,10 @@ using namespace fakeit;
 // run using `pio test -e ESPelsTest -v`
 // debug `pio debug -e ESPelsTest --interface gdb -x .pioinit`
 
-
-
-
-void tearDown(void) {
+void tearDown(void)
+{
     // clean stuff up here
-    //TEST_ASSERT_TRUE(false);
+    // TEST_ASSERT_TRUE(false);
 }
 
 void setUp(void)
@@ -24,39 +22,40 @@ void setUp(void)
     ArduinoFakeReset();
 }
 
-void setup(){
-
+void setup()
+{
 }
-void loop(){
-
+void loop()
+{
 }
 
-void test_genstepper(){
+void test_genstepper()
+{
     Log::Msg lm;
-    //GenStepper::State gs;
-    GenStepper::State gs = GenStepper::init("Z",lm);
+    // GenStepper::State gs;
+    GenStepper::State gs = GenStepper::init("Z", lm);
 
     TEST_ASSERT(gs.c.dir == 0);
-    std::cout << "name: " << gs.c.name << " pitch: " <<  gs.mygear.pitch << "\n";
-    
-    gs.mygear.calc_jumps(100,true);
+    std::cout << "name: " << gs.c.name << " pitch: " << gs.mygear.pitch << "\n";
+
+    gs.mygear.calc_jumps(100, true);
     std::cout << "gear nom: " << gs.mygear.N << " den: " << gs.mygear.D << " \n";
     std::cout << "gs nom: " << gs.nom << " den: " << gs.den << " \n";
 
     // should be 1:1 max and jumps should happen every encoder tick
-    std::cout << "jumps: " << gs.mygear.jumps.last << " - " << gs.mygear.jumps.prev <<  "\n";
+    std::cout << "jumps: " << gs.mygear.jumps.last << " - " << gs.mygear.jumps.prev << "\n";
     gs.setELSFactor(2.0);
     std::cout << "gear nom: " << gs.mygear.N << " den: " << gs.mygear.D << " \n";
-    gs.mygear.calc_jumps(100,true);
-    std::cout << "jumps: " << gs.mygear.jumps.last << " - " << gs.mygear.jumps.prev <<  "\n";
+    gs.mygear.calc_jumps(100, true);
+    std::cout << "jumps: " << gs.mygear.jumps.last << " - " << gs.mygear.jumps.prev << "\n";
 
-    bool fails_zero_pitch = gs.setELSFactor(0,false);
+    bool fails_zero_pitch = gs.setELSFactor(0, false);
     TEST_ASSERT(fails_zero_pitch == false);
 }
-void test_moveConfig(){
+void test_moveConfig()
+{
     Log::Msg lm;
     MoveConfig::State mc = MoveConfig::init();
-
 
     // test abs move from "0" to 1000 steps
     int distance = 1000;
@@ -66,14 +65,14 @@ void test_moveConfig(){
     bool r = mc.setStops(0);
     gs.stepper.setDir(r)
 
-    std::cout << "step dir bool: " << r << " stopPos: " << mc.stopPos << " stopNeg: " << mc.stopNeg << " target: " << mc.moveSyncTarget <<  "\n";
+            std::cout
+        << "step dir bool: " << r << " stopPos: " << mc.stopPos << " stopNeg: " << mc.stopNeg << " target: " << mc.moveSyncTarget << "\n";
     TEST_ASSERT(r);
     TEST_ASSERT(mc.stopPos == distance);
-    
 }
 
-
-void test_fakePosFeeding(){
+void test_fakePosFeeding()
+{
     Log::Msg lm;
     //      How it works
     // 1.record current encoder position
@@ -86,33 +85,33 @@ void test_fakePosFeeding(){
 
     //      Impl
 
-    GenStepper::State gs = GenStepper::init("Z",lm);
+    GenStepper::State gs = GenStepper::init("Z", lm);
     MoveConfig::State mc = MoveConfig::init();
 
-
     //  record current encoder position
-    //int64_t pulse_counter = encoder.getCount();
-    
+    // int64_t pulse_counter = encoder.getCount();
+
     // setup
-    //bool t = true;
+    // bool t = true;
     int64_t pulse_counter = 100;
     bool t = gs.setELSFactor(0.1);
     TEST_ASSERT(t == true);
-    gs.mygear.calc_jumps(pulse_counter,true);
-    
+    gs.mygear.calc_jumps(pulse_counter, true);
 
     // sanity check to make sure jumps are sane
-    
 
-    if(pulse_counter > gs.mygear.jumps.next+1 || pulse_counter < gs.mygear.jumps.prev -1){
+    if (pulse_counter > gs.mygear.jumps.next + 1 || pulse_counter < gs.mygear.jumps.prev - 1)
+    {
         std::cout << "doh! sanity check fail\n";
-        std::cout <<  gs.mygear.jumps.next+1 << " prev: " << gs.mygear.jumps.prev-1 << "\n";
-    }else{
+        std::cout << gs.mygear.jumps.next + 1 << " prev: " << gs.mygear.jumps.prev - 1 << "\n";
+    }
+    else
+    {
         std::cout << "sanity check passed\n";
     }
 
     // deal with spindle direction changes
-    
+
     // skipping, need to test in encoder tests
 
     // deal with dir change pauses for stepper
@@ -122,7 +121,7 @@ void test_fakePosFeeding(){
     // evaluate if we have reached a "jump"
 
     // based on pitch 0.1 and default setup we should be at a jump
-    //TEST_ASSERT_EQUAL_INT(99,gs.mygear.jumps.next );
+    // TEST_ASSERT_EQUAL_INT(99,gs.mygear.jumps.next );
 
     // if yes command stepper
 
@@ -132,55 +131,52 @@ void test_fakePosFeeding(){
     gs.stepNeg();
     TEST_ASSERT(0 == gs.position);
 
-
     // evaluate stops, if reached finish move
-
-
 
     std::cout << "done\n";
 }
-void test_venc_moveSync(){
+void test_venc_moveSync()
+{
     Log::Msg lm;
 
-    GenStepper::State gs = GenStepper::init("Z",lm);
+    GenStepper::State gs = GenStepper::init("Z", lm);
     MoveConfig::State mc = MoveConfig::init();
     gs.c.spindle_encoder_resolution = 1000;
     gs.c.lead_screw_pitch = 1.0;
     gs.c.motor_steps = 1000;
 
-    
-    bool t = gs.setELSFactor(1,true);
+    bool t = gs.setELSFactor(1, true);
     TEST_ASSERT(t == true);
     std::cout << "nom: " << gs.nom << " den: " << gs.den << "\n";
 
     int64_t pulse_counter = 0;
     t = gs.init_gear(pulse_counter);
-    gs.mygear.calc_jumps(pulse_counter,true);
-    for(int i = 0;i <= 10;i++){
-       if(i == gs.mygear.jumps.next || i == gs.mygear.jumps.prev){
+    gs.mygear.calc_jumps(pulse_counter, true);
+    for (int i = 0; i <= 10; i++)
+    {
+        if (i == gs.mygear.jumps.next || i == gs.mygear.jumps.prev)
+        {
             gs.mygear.calc_jumps(i);
             gs.step();
-       } 
+        }
     }
-    TEST_ASSERT_EQUAL_INT(10,gs.position );
-    
-
-
+    TEST_ASSERT_EQUAL_INT(10, gs.position);
 }
 
-void test_venc_moveAbsSync(){
+void test_venc_moveAbsSync()
+{
     TEST_ASSERT(false);
-
 }
 
-int main( int argc, char **argv) {
+int main(int argc, char **argv)
+{
     UNITY_BEGIN();
     std::cout << "stepper test\n";
     RUN_TEST(test_genstepper);
     RUN_TEST(test_moveConfig);
     RUN_TEST(test_venc_moveSync);
     // TODO: get abs working
-    //RUN_TEST(test_venc_moveAbsSync);
+    // RUN_TEST(test_venc_moveAbsSync);
     RUN_TEST(test_fakePosFeeding);
     return UNITY_END();
 }

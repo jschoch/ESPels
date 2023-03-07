@@ -23,16 +23,14 @@
 bool web = true;
 
 // TODO: can this be automagical somehow?
-const char* vsn = "0.0.3";
+const char *vsn = "0.0.3";
 
 // This defines ssid and password for the wifi configuration
-//TODO move the location of this into a platformio variable or something? Maybe the location of the file as a constant in config.h
+// TODO move the location of this into a platformio variable or something? Maybe the location of the file as a constant in config.h
 #include "../../wifisecret.h"
 
 // TODO: need a way to tie versions of the firmware to compatable versions of the UI
 // also need to have a compiled UI version linked in firmware releases
-
-
 
 // json docs
 
@@ -51,13 +49,11 @@ StaticJsonDocument<600> statusDoc;
 // Used to log to UI
 StaticJsonDocument<5000> logDoc;
 
-// used for debugging, to slim down status doc 
+// used for debugging, to slim down status doc
 StaticJsonDocument<500> debugStatusDoc;
 
 // buffer for msgpack
 char outBuffer[6000];
-
-
 
 size_t serialize_len = 0;
 
@@ -70,8 +66,7 @@ Neotimer update_timer = Neotimer(1000);
 // TOOD: consider configs from config.h to update this stuff
 AsyncWebServer server(80);
 AsyncWebSocket ws("/els");
-AsyncWebSocketClient * globalClient = NULL;
-
+AsyncWebSocketClient *globalClient = NULL;
 
 // This is a bit like a ping counter, increments each time a new status is sent to the UI
 uint8_t statusCounter = 0;
@@ -79,14 +74,16 @@ uint8_t statusCounter = 0;
 // I htink this is sent from the UI and used to set the absolute target postion, in the Doc it is "ja"
 double jogAbs = 0;
 
-void saveNvConfigDoc(){
+void saveNvConfigDoc()
+{
   EepromStream eepromStream(0, 512);
   serializeJson(nvConfigDoc, eepromStream);
   eepromStream.flush();
   loadNvConfigDoc();
 }
 
-void initNvConfigDoc(){
+void initNvConfigDoc()
+{
   nvConfigDoc.clear();
   // this flag says we've updated from the default
   nvConfigDoc["i"] = 1;
@@ -113,38 +110,41 @@ void initNvConfigDoc(){
   motor max_speed
 
   */
-  //nvConfigDoc[""] = ;
+  // nvConfigDoc[""] = ;
 
   saveNvConfigDoc();
 }
 
-void loadNvConfigDoc(){
+void loadNvConfigDoc()
+{
   EepromStream eepromStream(0, 512);
   deserializeJson(nvConfigDoc, eepromStream);
-  if(!nvConfigDoc["i"]){
+  if (!nvConfigDoc["i"])
+  {
     Serial.print("Doc!?  ");
     Serial.println((int)nvConfigDoc["i"]);
     el.error("no config found this is bad");
-  }else{
+  }
+  else
+  {
 
     lead_screw_pitch = nvConfigDoc["lead_screw_pitch"];
     motor_steps = nvConfigDoc["motor_steps"];
     microsteps = nvConfigDoc["microsteps"];
-    spindle_encoder_resolution = nvConfigDoc["spindle_encoder_resolution"]; 
-    Serial.printf("Loaded Configuration com version %s lead screw pitch: %f\n",vsn,lead_screw_pitch);
+    spindle_encoder_resolution = nvConfigDoc["spindle_encoder_resolution"];
+    Serial.printf("Loaded Configuration com version %s lead screw pitch: %f\n", vsn, lead_screw_pitch);
     init_machine();
-    //setFactor();
+    // setFactor();
     gs.setELSFactor(pitch);
   }
 }
 
-
-
-void updateStatusDoc(){
+void updateStatusDoc()
+{
   // types the message as a status update for the UI
   statusDoc["t"] = "status";
-  
-  // Currently used for the UI DRO display, 
+
+  // Currently used for the UI DRO display,
   // defined in util.h and helps UI figure out what to display
   statusDoc["m"] = (int)run_mode;
   // the position in steps
@@ -164,7 +164,7 @@ void updateStatusDoc(){
   statusDoc["rap"] = rapiding;
   // main bool to turn movement on/off
   statusDoc["pos_feed"] = pos_feeding;
-  
+
   // Wait for the spindle/ncoder "0" position
   // this acts like a thread dial
   statusDoc["sw"] = syncWaiting;
@@ -172,23 +172,24 @@ void updateStatusDoc(){
   // TODO: consider making the smoothing configurable or done in the browser
   statusDoc["rpm"] = rpm;
 
-   // the virtual stop in the Z + direction, used to calculate "distance to go" in the UI
+  // the virtual stop in the Z + direction, used to calculate "distance to go" in the UI
   statusDoc["sp"] = mc.stopPos;
   // the stop in the Z - direction
   statusDoc["sn"] = mc.stopNeg;
   sendStatus();
 }
 
-void updateDebugStatusDoc(){
+void updateDebugStatusDoc()
+{
   // types as a debug status msg
   debugStatusDoc["t"] = "dbg_st";
-  // intended feeding "handiness" CCW or CW 
+  // intended feeding "handiness" CCW or CW
   // so if the spindle is rotating CW, and the intension is to feed in the Z- direction this should be false
-  // but this somewhat depends on the setup  
+  // but this somewhat depends on the setup
 
   // this only seems used for jogABS
   debugStatusDoc["fd"] = mc.moveDirection;
- 
+
   // This is the number of encoder pulses needed before the next stepper pulse
   // TODO: make this optional and move to a "debug" doc
   debugStatusDoc["delta"] = delta;
@@ -202,17 +203,17 @@ void updateDebugStatusDoc(){
   debugStatusDoc["c"] = statusCounter++;
 }
 
-void updateStateDoc(){
-  stateDoc["t"] = "state"; 
-
+void updateStateDoc()
+{
+  stateDoc["t"] = "state";
 
   // the pitch for the sync move calculation in MM
   stateDoc["pitch"] = pitch;
   // the pitch for sync rapid moves
   stateDoc["rapid"] = rapids;
 
-  // the run mode 
-  stateDoc["m"] = (int)run_mode; 
+  // the run mode
+  stateDoc["m"] = (int)run_mode;
   // TODO: not used but this shold be used instead of jog_mm and the UI should do the conversion
   stateDoc["js"] = mc.moveDistanceSteps;
   // this is the distance to jog in mm
@@ -225,64 +226,69 @@ void updateStateDoc(){
   // TODO: add angle for angle readout in UI
 
   sendState();
-  
 }
 
-void setRunMode(int mode){
-    switch(mode){
-      case (int)RunMode::DEBUG_READY :
-        // NEed to be able to stop what is currently running 
-        btn_yasm.next(debugState);
-        break;
-      case (int)RunMode::SLAVE_JOG_READY :
-        btn_yasm.next(slaveJogReadyState);
-        break;
-      case (int)RunMode::SLAVE_READY :
-        btn_yasm.next(SlaveModeReadyState);
-        break;
-      case (int)RunMode::HOB_READY :
-        //hob_yasm.next(HobReadyState);
-        HobReadyState();
-        break;
-      default: 
-        btn_yasm.next(startupState);
-        break;
-    }
+void setRunMode(int mode)
+{
+  switch (mode)
+  {
+  case (int)RunMode::DEBUG_READY:
+    // NEed to be able to stop what is currently running
+    btn_yasm.next(debugState);
+    break;
+  case (int)RunMode::SLAVE_JOG_READY:
+    btn_yasm.next(slaveJogReadyState);
+    break;
+  case (int)RunMode::SLAVE_READY:
+    btn_yasm.next(SlaveModeReadyState);
+    break;
+  case (int)RunMode::HOB_READY:
+    // hob_yasm.next(HobReadyState);
+    HobReadyState();
+    break;
+  default:
+    btn_yasm.next(startupState);
+    break;
+  }
 }
 
-void sendDoc(const JsonDocument & doc){
-  serialize_len = serializeMsgPack(doc, outBuffer);  
+void sendDoc(const JsonDocument &doc)
+{
+  serialize_len = serializeMsgPack(doc, outBuffer);
   // TODO: debug flag?
-  ws.binaryAll(outBuffer,serialize_len);
+  ws.binaryAll(outBuffer, serialize_len);
 }
 
-void sendState(){
+void sendState()
+{
   sendDoc(stateDoc);
 }
 
-void sendLogP(Log::Msg *msg){
+void sendLogP(Log::Msg *msg)
+{
   logDoc["msg"] = msg->buf;
   logDoc["level"] = (int)msg->level;
   logDoc["t"] = "log";
   sendDoc(logDoc);
 }
 
-void sendStatus(){
+void sendStatus()
+{
   sendDoc(statusDoc);
-  if(sendDebug){
+  if (sendDebug)
+  {
     sendDoc(debugStatusDoc);
   }
-
 }
 
-
-void sendNvConfigDoc(){
+void sendNvConfigDoc()
+{
   nvConfigDoc["t"] = "nvConfig";
   sendDoc(nvConfigDoc);
 }
 
-
-void handleJogAbs(){
+void handleJogAbs()
+{
 
   el.error("handleJogAbs needs full refactor to work with feeding_ccw and steps vs mm");
   /*
@@ -330,90 +336,108 @@ void handleJogAbs(){
 }
 
 //  Update the virtual encoder
-void handleVencSpeed(){
-  
+void handleVencSpeed()
+{
+
   JsonObject config = inDoc["config"];
   vEncSpeed = config["encSpeed"];
   Serial.print(vEncSpeed);
   Serial.println("Changing Virtual Encoder! ");
-  if(vEncSpeed == 0){
+  if (vEncSpeed == 0)
+  {
     stopVenc();
   }
-  if(vEncSpeed > 0 && vEncStopped){
+  if (vEncSpeed > 0 && vEncStopped)
+  {
     startVenc();
   }
 }
 
-void handleRapid(){
+void handleRapid()
+{
   //  This just sets the pitch to "rapids" and runs as a normal jog with a faster pitch
 
   // TODO: calculate speed from current RPM and perhaps warn if accel is a problem?
-  // really need the acceleration curve 
+  // really need the acceleration curve
   Serial.println("Rapid! ");
   JsonObject config = inDoc["config"];
   mc.moveDistanceSteps = config["moveSteps"].as<int>();
-  //start_rapid(jog_mm);
+  // start_rapid(jog_mm);
   mc.oldPitch = pitch;
   mc.pitch = rapids;
   rapiding = true;
   handleJog();
 }
 
-void handleJog(){
+void handleJog()
+{
   Serial.println("got jog command");
-  if(run_mode == RunMode::SLAVE_JOG_READY){
+  if (run_mode == RunMode::SLAVE_JOG_READY)
+  {
     JsonObject config = inDoc["config"];
     mc.moveDistanceSteps = config["moveSteps"].as<int>();
 
     // don't do this direction is handled in setStops
-    //mc.moveDirection = (bool)config["f"];
+    // mc.moveDirection = (bool)config["f"];
 
-    if(!pos_feeding){
+    if (!pos_feeding)
+    {
       bool dir = mc.setStops(gs.currentPosition());
       gs.stepper.setDir(dir);
       jogging = true;
       init_pos_feed();
       updateStatusDoc();
     }
-    else{
+    else
+    {
       el.error("already set feeding, wait till done or cancel");
     }
-  }else{
+  }
+  else
+  {
     el.error("can't jog, no jogging mode is set ");
   }
 }
 
-void handleHobRun(){
-  if(run_mode == RunMode::HOB_READY){
+void handleHobRun()
+{
+  if (run_mode == RunMode::HOB_READY)
+  {
     Serial.println("You should send log msgs to the webapp using the el.xxx thingy.");
     Serial.println("got Hob Run");
     // check that we are not already running
-    if(!pos_feeding){
+    if (!pos_feeding)
+    {
       // initialize hob run state?
       JsonObject config = inDoc["config"];
       pitch = config["pitch"].as<double>();
-      Serial.printf("Pitch %f \n",pitch);
+      Serial.printf("Pitch %f \n", pitch);
       mc.moveDirection = (bool)config["f"];
-      //syncStart = (bool)config["s"];
-      // TODO: do I need to sync the spindle in this mode?
+      // syncStart = (bool)config["s"];
+      //  TODO: do I need to sync the spindle in this mode?
       syncStart = false;
-      //hob_yasm.next(HobRunState,true);
+      // hob_yasm.next(HobRunState,true);
       HobRunState();
-
-    }else{
+    }
+    else
+    {
       el.error("already feeding, can't set mode to HobRunState");
     }
-  }else{
+  }
+  else
+  {
     el.error("previous state wrong, problem!!!");
   }
 }
 
-void handleHobStop(){
+void handleHobStop()
+{
   Serial.println("got hob stop");
   HobStopState();
 }
 
-void handleBounce(){
+void handleBounce()
+{
   Serial.println("Bounce! ");
   JsonObject config = inDoc["config"];
 
@@ -427,153 +451,200 @@ void handleBounce(){
   bouncing = true;
 }
 
-void handleDebug(){
-  if(inDoc["basic"]){
+void handleDebug()
+{
+  if (inDoc["basic"])
+  {
 
     auto t1 = inDoc["basic"];
     auto t = t1.as<int>();
-    if(t ==1){
-      encoder.setCount(encoder.getCount()+ 2400);
-    }else if (t == 0){
+    if (t == 1)
+    {
+      encoder.setCount(encoder.getCount() + 2400);
+    }
+    else if (t == 0)
+    {
       encoder.setCount(encoder.getCount() - 2400);
-    }else if( t==2){
+    }
+    else if (t == 2)
+    {
       encoder.dir = true;
       encoder.setCount((encoder.getCount() + 1));
-    }else if (t == 3){
+    }
+    else if (t == 3)
+    {
       encoder.dir = false;
       encoder.setCount((encoder.getCount() - 1));
     }
   }
 
-  if(inDoc["ticks"]){
+  if (inDoc["ticks"])
+  {
     auto ticks = inDoc["ticks"];
     encoder.setCount(encoder.getCount() + ticks.as<int>());
   }
 
-    //Serial.printf("fccw: %d  fz: %d sd: %d encDir: %i \n",feeding_ccw,z_feeding_dir,zstepper.dir, encoder.dir);
-
+  // Serial.printf("fccw: %d  fz: %d sd: %d encDir: %i \n",feeding_ccw,z_feeding_dir,zstepper.dir, encoder.dir);
 }
 
-void handleSend(){
+void handleSend()
+{
   // TODO: i dont' think I use this really
 
   // This seems redundant, why not just access inDoc?
   JsonObject config = inDoc["config"];
-    Serial.println("getting config");
-    Serial.print("got pitch: ");
-    double p = config["pitch"];
-    Serial.println(p);
-    if(p != pitch){
-      Serial.println("new pitch");
-      oldPitch = pitch;
-      pitch = p;
-      //setFactor();
-      gs.setELSFactor(pitch);
-    }
-    if(config["rapid"] != rapids){
-      Serial.println("updating rapids");
-      rapids = config["rapid"];
-      //stateDoc["rapid"] = rapids;
-    }
-    if(config["m"] != (int)run_mode){
-      Serial.print("setting new mode from webUI: ");
-      int got_run_mode = config["m"];
-      run_mode = RunMode(got_run_mode);
-      Serial.println((int)run_mode);
-      setRunMode(got_run_mode);
-    }
-    updateStateDoc();
+  Serial.println("getting config");
+  Serial.print("got pitch: ");
+  double p = config["pitch"];
+  Serial.println(p);
+  if (p != pitch)
+  {
+    Serial.println("new pitch");
+    oldPitch = pitch;
+    pitch = p;
+    // setFactor();
+    gs.setELSFactor(pitch);
+  }
+  if (config["rapid"] != rapids)
+  {
+    Serial.println("updating rapids");
+    rapids = config["rapid"];
+    // stateDoc["rapid"] = rapids;
+  }
+  if (config["m"] != (int)run_mode)
+  {
+    Serial.print("setting new mode from webUI: ");
+    int got_run_mode = config["m"];
+    run_mode = RunMode(got_run_mode);
+    Serial.println((int)run_mode);
+    setRunMode(got_run_mode);
+  }
+  updateStateDoc();
 }
-void handleNvConfig(){
+void handleNvConfig()
+{
   Serial.println("saving configuration");
-    inDoc.remove("t");
-    // TODO better checks than this~
-    if(inDoc["lead_screw_pitch"]){
-      // Save 
-      inDoc["i"] = 1;
-      EepromStream eepromStream(0, 512);
-      serializeJson(inDoc, eepromStream);
-      eepromStream.flush();
-      loadNvConfigDoc();
-      sendNvConfigDoc();
-    
-    }else{
-      el.error("error format of NV config bad");
-    }
+  inDoc.remove("t");
+  // TODO better checks than this~
+  if (inDoc["lead_screw_pitch"])
+  {
+    // Save
+    inDoc["i"] = 1;
+    EepromStream eepromStream(0, 512);
+    serializeJson(inDoc, eepromStream);
+    eepromStream.flush();
+    loadNvConfigDoc();
+    sendNvConfigDoc();
+  }
+  else
+  {
+    el.error("error format of NV config bad");
+  }
 }
 
-
-//void parseObj(String msg){
-// This handles deserializing UI msgs and handling commands
-//void parseObj(void * param){
-void parseObj(AsyncWebSocketClient * client){
-  DeserializationError error = deserializeJson(inDoc,wsData);
-  if (error) {
+// void parseObj(String msg){
+//  This handles deserializing UI msgs and handling commands
+// void parseObj(void * param){
+void parseObj(AsyncWebSocketClient *client)
+{
+  DeserializationError error = deserializeJson(inDoc, wsData);
+  if (error)
+  {
     Serial.print(F("deserializeJson() failed: "));
     Serial.println(error.f_str());
     return;
   }
-  
-  const char * cmd = inDoc["cmd"];
-  if(strcmp(cmd,"helo") == 0){
+
+  const char *cmd = inDoc["cmd"];
+  if (strcmp(cmd, "helo") == 0)
+  {
     Serial.println("helo received, sending nvconfig");
-    const char * uiVsn = inDoc["vsn"];
-    if(strcmp(uiVsn, vsn)== 0){
+    const char *uiVsn = inDoc["vsn"];
+    if (strcmp(uiVsn, vsn) == 0)
+    {
       sendNvConfigDoc();
       updateStateDoc();
-    }else{
+    }
+    else
+    {
       el.halt("bad version");
       client->close();
     }
-    
   }
-  else if(strcmp(cmd,"fetch") == 0){
+  else if (strcmp(cmd, "fetch") == 0)
+  {
     // regenerate config and send it along
     // TODO: compare version here
     Serial.println("fetch received: sending config");
 
     updateStateDoc();
-  }else if(strcmp(cmd,"debug") ==0){
+  }
+  else if (strcmp(cmd, "debug") == 0)
+  {
     // Debugging tools
-    handleDebug(); 
-  //  JOG COMMANDS
-  }else if(strcmp(cmd,"moveCancel") == 0){
+    handleDebug();
+    //  JOG COMMANDS
+  }
+  else if (strcmp(cmd, "moveCancel") == 0)
+  {
     // TODO wheat cleanup needs to be done?
     Serial.println("Move Canceled");
     syncWaiting = false;
-    pos_feeding = false;  
+    pos_feeding = false;
     // TODO: need rapid cancel
-  }else if(strcmp(cmd,"moveSyncAbs") == 0){
-    handleJogAbs();  
-  }else if(strcmp(cmd,"jog") == 0){
+  }
+  else if (strcmp(cmd, "moveSyncAbs") == 0)
+  {
+    handleJogAbs();
+  }
+  else if (strcmp(cmd, "jog") == 0)
+  {
     handleJog();
-  }else if(strcmp(cmd,"sendConfig") == 0){
-    handleSend(); 
-  }else if(strcmp(cmd,"hobrun") ==0){
+  }
+  else if (strcmp(cmd, "sendConfig") == 0)
+  {
+    handleSend();
+  }
+  else if (strcmp(cmd, "hobrun") == 0)
+  {
     handleHobRun();
-  }else if(strcmp(cmd,"hobstop") == 0){
+  }
+  else if (strcmp(cmd, "hobstop") == 0)
+  {
     handleHobStop();
-  }else if(strcmp(cmd,"setNvConfig") == 0){
+  }
+  else if (strcmp(cmd, "setNvConfig") == 0)
+  {
     handleNvConfig();
-  }else if(strcmp(cmd,"getNvConfig") == 0){
+  }
+  else if (strcmp(cmd, "getNvConfig") == 0)
+  {
     sendNvConfigDoc();
-
-  }else if(strcmp(cmd,"resetNvConfig") == 0){
-      Serial.println("resetting nv config to defaults");
-      initNvConfigDoc(); 
-      sendNvConfigDoc();
-  }else if(strcmp(cmd,"rapid") == 0){
+  }
+  else if (strcmp(cmd, "resetNvConfig") == 0)
+  {
+    Serial.println("resetting nv config to defaults");
+    initNvConfigDoc();
+    sendNvConfigDoc();
+  }
+  else if (strcmp(cmd, "rapid") == 0)
+  {
     handleRapid();
-      
-  }else if(strcmp(cmd,"updateEncSpeed") == 0){
+  }
+  else if (strcmp(cmd, "updateEncSpeed") == 0)
+  {
     handleVencSpeed();
-  }else if(strcmp(cmd,"bounce")== 0){
+  }
+  else if (strcmp(cmd, "bounce") == 0)
+  {
     handleBounce();
-  }else{
+  }
+  else
+  {
     Serial.println("unknown command");
     Serial.println(cmd);
   }
-  //vTaskDelete(NULL);
+  // vTaskDelete(NULL);
 }
 
 /*
@@ -591,58 +662,66 @@ void pinned_parseObj(){
 }
 */
 
-void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len){
-  //Serial.println("ws event");
-  if(type == WS_EVT_CONNECT){
+void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len)
+{
+  // Serial.println("ws event");
+  if (type == WS_EVT_CONNECT)
+  {
     Serial.println("Websocket client connection received");
     globalClient = client;
-  } else if(type == WS_EVT_DISCONNECT){
+  }
+  else if (type == WS_EVT_DISCONNECT)
+  {
     Serial.println("Client disconnected");
     Serial.println("-----------------------");
-  } else if(type == WS_EVT_DATA){
-    AwsFrameInfo * info = (AwsFrameInfo*)arg;
-    if(info->final && info->index == 0 && info->len == len){
-      if(info->opcode == WS_TEXT){
+  }
+  else if (type == WS_EVT_DATA)
+  {
+    AwsFrameInfo *info = (AwsFrameInfo *)arg;
+    if (info->final && info->index == 0 && info->len == len)
+    {
+      if (info->opcode == WS_TEXT)
+      {
         data[len] = 0;
-        //parseObj(String((char*) data));
-        wsData = String((char*) data);
+        // parseObj(String((char*) data));
+        wsData = String((char *)data);
         parseObj(client);
-        //pinned_parseObj();
+        // pinned_parseObj();
       }
     }
- 
   }
 }
 
-
-
-void init_web(){
+void init_web()
+{
   // Connect to WiFi
   Serial.println("Setting up WiFi");
   WiFi.setHostname(HOSTNAME);
   WiFi.mode(WIFI_MODE_STA);
   WiFi.begin(ssid, password);
   WiFi.setTxPower(WIFI_POWER_19_5dBm);
-  //WiFi.setOut
-  while (WiFi.status() != WL_CONNECTED) {
+  // WiFi.setOut
+  while (WiFi.status() != WL_CONNECTED)
+  {
     Serial.print(".");
     delay(100);
   }
   Serial.print("Connected. IP=");
   Serial.println(WiFi.localIP());
 
-  
   //  MDNS hostname must be lowercase
-  if (!MDNS.begin(HOSTNAME)) {
-        Serial.println("Error setting up MDNS responder!");
-        while(1) {
-          Serial.print("*");
-            delay(100);
-        }
+  if (!MDNS.begin(HOSTNAME))
+  {
+    Serial.println("Error setting up MDNS responder!");
+    while (1)
+    {
+      Serial.print("*");
+      delay(100);
     }
+  }
   MDNS.setInstanceName(HOSTNAME);
   MDNS.addService("http", "tcp", 80);
-  
+
   ws.onEvent(onWsEvent);
   server.addHandler(&ws);
   server.begin();
@@ -655,18 +734,22 @@ void init_web(){
   deserializeJson(nvConfigDoc, eepromStream);
   Serial.println("NV Config? ");
   Serial.println((int)nvConfigDoc["i"]);
-  if(!nvConfigDoc["i"]){
+  if (!nvConfigDoc["i"])
+  {
     Serial.println("creating default nvConfig");
     initNvConfigDoc();
-  }else{
+  }
+  else
+  {
     loadNvConfigDoc();
   }
-
 }
 
-void init_ota(){
+void init_ota()
+{
   ArduinoOTA
-    .onStart([]() {
+      .onStart([]()
+               {
       String type;
       if (ArduinoOTA.getCommand() == U_FLASH)
         type = "sketch";
@@ -674,42 +757,39 @@ void init_ota(){
         type = "filesystem";
 
       // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
-      Serial.println("Start updating " + type);
-    })
-    .onEnd([]() {
-      Serial.println("\nEnd");
-    })
-    .onProgress([](unsigned int progress, unsigned int total) {
-      Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-    })
-    .onError([](ota_error_t error) {
+      Serial.println("Start updating " + type); })
+      .onEnd([]()
+             { Serial.println("\nEnd"); })
+      .onProgress([](unsigned int progress, unsigned int total)
+                  { Serial.printf("Progress: %u%%\r", (progress / (total / 100))); })
+      .onError([](ota_error_t error)
+               {
       Serial.printf("Error[%u]: ", error);
       if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
       else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
       else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
       else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-      else if (error == OTA_END_ERROR) Serial.println("End Failed");
-    });
+      else if (error == OTA_END_ERROR) Serial.println("End Failed"); });
 
   ArduinoOTA.begin();
-
 }
-void sendUpdates(){
+void sendUpdates()
+{
   // called in main loop
-  if(update_timer.repeat()){
+  if (update_timer.repeat())
+  {
     // only send state when it changes
-    //updateStateDoc();
-    //Serial.printf(" %d ",(int)run_mode);
-    Serial.printf(" %d %d %d ",(int)run_mode,gs.currentPosition(),WiFi.RSSI());
+    // updateStateDoc();
+    // Serial.printf(" %d ",(int)run_mode);
+    Serial.printf(" %d %d %d ", (int)run_mode, gs.currentPosition(), WiFi.RSSI());
     updateStatusDoc();
   }
 }
-void do_web(){
-  if(web){
-    
+void do_web()
+{
+  if (web)
+  {
+
     ArduinoOTA.handle();
   }
-  
 }
-
-
