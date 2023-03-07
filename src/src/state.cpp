@@ -1,8 +1,14 @@
 #include "state.h"
+
 #include "genStepper.h"
 #include "moveConfig.h"
 //Initialize the starting memory. 
 //TODO: move this into a class constructor
+#include "ArduinoJson.h"
+//Initialize the starting memory.
+
+// TODO: can this be automagical somehow?
+const char* vsn = VSN;
 
 //common variables used by multipe things
 volatile int rpm = 0;
@@ -22,5 +28,26 @@ volatile bool rapiding = false;
 
 RunMode run_mode = RunMode::STARTUP;
 
+
 GenStepper::State gs = GenStepper::init("Z",el);
 MoveConfig::State mc = MoveConfig::init();
+// json docs
+
+// config stateDoc
+StaticJsonDocument<1000> stateDoc;
+
+//  items to store in NV ram/EEPROM
+StaticJsonDocument<1000> nvConfigDoc;
+
+// Used for msgs from UI
+StaticJsonDocument<1000> inDoc;
+
+// used to send status to UI
+StaticJsonDocument<600> statusDoc;
+
+// Used to log to UI
+StaticJsonDocument<5000> logDoc;
+
+// used for debugging, to slim down status doc 
+StaticJsonDocument<500> debugStatusDoc;
+
