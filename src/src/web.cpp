@@ -677,11 +677,12 @@ Ticker reconnectTimer;
 
 void connectToWifi() {
   Serial.println("reConnecting to Wi-Fi...");
-  WiFi.begin(ssid, password);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print(".");
     delay(100);
   }
+  WiFi.setTxPower(WIFI_POWER_19_5dBm);
   WiFi.setAutoReconnect(true);
   WiFi.persistent(true);
   Serial.print("Connected. IP=");
@@ -724,8 +725,7 @@ void init_web()
   Serial.println("Setting up WiFi");
   WiFi.setHostname(HOSTNAME);
   WiFi.mode(WIFI_MODE_STA);
-  WiFi.setTxPower(WIFI_POWER_19_5dBm);
-
+  
   //wifiConnectHandler = WiFi.onStationModeGotIP(onWifiConnect);
   
   WiFi.onEvent(onWifiConnect, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
