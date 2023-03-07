@@ -1,5 +1,7 @@
 #pragma once
+#ifdef HAS_BUTTONS
 #include <Bounce2.h>
+#endif
 
 namespace Log{
     class Msg;
@@ -42,6 +44,7 @@ enum feed_mode_t {
 #define zPos  1
 #define zNeg  0
 
+#ifdef HAS_BUTTONS
 // button data definition
 
 struct Bd{
@@ -53,3 +56,5 @@ struct Bd{
   Bounce *deb;
   uint8_t idx;
 };
+
+#endif

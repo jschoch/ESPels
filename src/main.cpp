@@ -1,4 +1,8 @@
-#include <Arduino.h>
+#ifdef UNIT_TEST
+    #include "ArduinoFake.h"
+#else
+    #include "Arduino.h"
+#endif
 
 #define ARDUINOJSON_USE_LONG_LONG 1
 #define ARDUINOJSON_USE_DOUBLE 1
@@ -16,6 +20,7 @@
 #include "src/BounceMode.h"
 #include "src/myperfmon.h"
 #include "src/Machine.h"
+#include "src/state.h"
 
 void setup() {
  
@@ -29,7 +34,8 @@ void setup() {
 
   init_controls();
   
-  setFactor();
+  //setFactor();
+  gs.setELSFactor(pitch);
 
   init_web();
 

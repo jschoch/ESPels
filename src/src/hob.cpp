@@ -18,7 +18,7 @@ void HobRunState(){
         Serial.println("Enter HobRunState");
         
         // Turn off stops, we just slave to the spindle
-        useStops = false;
+        mc.useStops = false;
         // flag processor and encoder to start
         jogging = true;
         init_hob_feed();
@@ -26,7 +26,7 @@ void HobRunState(){
 }
 
 void HobStopState(){
-        useStops = true;
+        mc.useStops = true;
         jogging = false;
         feeding = false;
         pos_feeding = false;

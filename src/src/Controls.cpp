@@ -14,6 +14,9 @@
 #include "state.h"
 #include "Stepper.h"
 #include "display.h"
+#include "web.h"
+#include "genStepper.h"
+#include "motion.h"
 
 Neotimer button_print_timer = Neotimer(2000);
 Neotimer dro_timer = Neotimer(600);
@@ -57,7 +60,8 @@ void startupState(){
 void slaveJogReadyState(){
   if(btn_yasm.isFirstRun()){
     updateMode(RunMode::SLAVE_JOG_READY);
-    setFactor();
+    //setFactor();
+    gs.setELSFactor(pitch);
     web = true;
   }
 }
@@ -72,37 +76,8 @@ void slaveJogStatusState(){
 }
 
 
-extern struct Gear::State gear;
 
-void setFactor(){
-  if(pitch == 0){
-    el.error("pitch was zero");
-    btn_yasm.next(startupState);
-    updateMode(RunMode::STARTUP);
-    // TODO: need a halt functions for bad things like this case
-    //halt();
-    return;
-  }
-  
-  //recommended refactor for a leadscrew or feed class, den = feed.GetEncoderStepsPerSpindleRotation();
-  //feed being initialized internally with the leadscrew pitch and encoder PPR
-  int den = lead_screw_pitch * spindle_encoder_resolution;
-
-  //recommended refactor using a stepper class: nom = stepper.GetStepsForDistance(Units::Metric, pitch);
-  int nom = motor_steps * pitch;
-
-  //
-  Serial.printf("SF: nom: %d den: %d\n",nom,den);
-
-  // check ratio to be sure it can be done
-  if (!gear.setRatio(nom,den)){
-    sprintf(el.buf,"Bad Ratio: Den: %d Nom: %d\n",nom,den);
-    el.error();
-    pitch = oldPitch;
-    return;
-  }
-} 
-
+/* replace with genStepper impl
 void setHobbFactor(){
   int den = lead_screw_pitch * motor_steps;
   int nom = spindle_encoder_resolution * pitch;
@@ -118,11 +93,8 @@ void setHobbFactor(){
     return;
   }
 }
+*/
 
 //this defines the parameters for the thread and turning for both metric and imperial threads
 
-void thread_parameters()                                           
-  { 
-    // TODO: add imperial back when you work on thread cycle
-}
 

@@ -128,29 +128,7 @@ Cleanup:
 
 
 
-** TODO
 
-- [ ] fix rapid stepper rtos crashes
-- [ ] lock UI on rapid move
-- [ ] add rapid cancel
-- [. ] Add rapid jog when Mod btn is pressed
-- [ ] Add optional encoder wheel input
-- [ ] Add virtual stops
-- [ ] Add feed to stop mode
-- [ ] Add feed to distance (mm) mode
-- [ ] Display distance to go
-- [ ] Add physical stops (adjustable hall sensors for example)
-- [ ] Add backlash compensation
-- [ ] turn on task monitoring and display via web ui
-- [ ] smooth filter EMA RPM for display
-- [ ] store position after disengaging slave so you can re-index if you re-engage
-- [ ] Add angle measure mode like a manual turned indexing plate.
-- [] bug with startup when spindle spinning it may have a hard time booting
-- [x] Add mm position to display
-- [x ] Add some js for frontend
-- [x ] Add HTML parameter updates
-- [x ] Turn web off when in feed modes
-- [x ] Add EEPROM saving of params
 
 
 Misc:

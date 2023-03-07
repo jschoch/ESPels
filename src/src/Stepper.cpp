@@ -3,6 +3,7 @@
 #include "gear.h"
 #include "rmtStepper.h"
 #include "state.h"
+#include "genStepper.h"
 
 int microsteps = Z_MICROSTEPPING;
 
@@ -22,29 +23,13 @@ volatile int delay_ticks = 3;
 volatile int previous_delay_ticks = 0;
 volatile int min_delay_ticks = 5;
 
-// jog delay based on accel table
-volatile int jog_delay_ticks = 0;
-volatile bool z_dir = true; //CW
-volatile bool z_prev_dir = true;
-volatile bool z_moving = false;
-volatile int32_t jogs = 0;
-volatile double toolRelPos = 0;
-double oldToolRelPosMM = 0;
-volatile double targetToolRelPos = 0;
-
 
 int use_limit = false;
 volatile int64_t calculated_stepper_pulses=0;
 
-volatile int32_t jog_steps = 0;
-volatile double jog_scaler = 0.2;
-volatile uint16_t vel = 1;
-volatile double stopPos = 0;
-volatile double stopNeg = 0;
-volatile bool useStops = true;
+
 volatile bool pos_feeding = false;
 
-rmtStepper::State zstepper;
 
 /*
 
@@ -64,57 +49,20 @@ consider moving display code into state functions
 */
 
 
-/////////////  naive acceleration
-
-// This table defines the acceleration curve as a list of (steps, delay) pairs.
-// 1st value is the cumulative step count since starting from rest, 2nd value is delay in microseconds.
-// 1st value in each subsequent row must be > 1st value in previous row
-// The delay in the last row determines the maximum angular velocity.
-
-// borrowed from Guy Carpente clearwater SwitecX25
-// the 2nd value is the delay in timer ticks.  Step pulses are currently 10micros 
-static uint16_t defaultAccelTable[][2] = {
-  {   20, 3000},
-  {   35, 2005},
-  {  80, 1000},
-  {  130,  800},
-  {  250,  600},
-  {   450, 405},
-  {  600, 350},
-  {  700,  330},
-  {  800,  310},
-  {  900,   290},
-  {  1000,   280},
-  {  1100,   270},
-  {  1200,   260},
-  {  1400,   250},
-  {  1500,   240},
-  {  1600,   230},
-  {  1700,   220},
-  {  1800,   210},
-  {  1900,   200},
-  
-};
-#define DEFAULT_ACCEL_TABLE_SIZE (sizeof(defaultAccelTable)/sizeof(*defaultAccelTable))
-int maxVel = defaultAccelTable[DEFAULT_ACCEL_TABLE_SIZE-1][0]; // last value in table.
-
-volatile bool z_pause = false;
-
 
 void init_stepper(){
 
   pinMode(Z_DIR_PIN, OUTPUT);
   pinMode(Z_STEP_PIN, OUTPUT);
 
-  toolPos = 0;
   stepsPerMM = motor_steps / lead_screw_pitch;
 
 
-  zstepper.config.channel = RMT_CHANNEL_0;
-  zstepper.config.stepPin = (gpio_num_t) Z_STEP_PIN;
-  zstepper.config.dirPin = (gpio_num_t) Z_DIR_PIN;
+  gs.stepper.config.channel = RMT_CHANNEL_0;
+  gs.stepper.config.stepPin = (gpio_num_t) Z_STEP_PIN;
+  gs.stepper.config.dirPin = (gpio_num_t) Z_DIR_PIN;
 
-  zstepper.init();
+  gs.stepper.init();
 
 
 }
