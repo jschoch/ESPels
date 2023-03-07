@@ -619,6 +619,10 @@ void parseObj(AsyncWebSocketClient *client)
   {
     handleBounce();
   }
+  else if(strcmp(cmd,"ping") == 0){
+    //sprintf(outBuffer,"{'cmd':'pong'}");
+    ws.binaryAll(pongBuf, pong_len);
+  }
   else
   {
     Serial.println("unknown command");

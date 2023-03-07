@@ -55,3 +55,8 @@ extern StaticJsonDocument<5000> logDoc;
 // used for debugging, to slim down status doc 
 extern StaticJsonDocument<500> debugStatusDoc;
 
+// for pong
+extern StaticJsonDocument<100> pingDoc;
+extern char pongBuf[100];
+extern int pong_len;
+
