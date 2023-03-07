@@ -45,7 +45,8 @@ void BounceIdleState(){
 
 void BounceJogState(){
     if(bounce_yasm.isFirstRun()){
-        Serial.println("Entering Bounce Jog Mode");
+        printf("Entering Bounce Jog Mode pitch: %f\n",mc.pitch);
+        gs.setELSFactor(mc.pitch);
         updateMode(RunMode::BounceJog);
         start_jog();
         return;
@@ -59,14 +60,15 @@ void BounceJogState(){
 
 void BounceRapidState(){
     if(bounce_yasm.isFirstRun()){
-        Serial.println(" Entering Rapid Mode");
+        printf(" Entering Rapid Mode pitch: %f",mc.rapidPitch);
         // TODO: yuck refactor this
         mc.oldPitch = mc.pitch;
         //pitch = rapids;
-        mc.pitch = rapids;
+        mc.pitch = mc.rapidPitch;
         old_moveDistanceSteps = mc.moveDistanceSteps;
         mc.moveDistanceSteps = -mc.moveDistanceSteps;
         rapiding = true;
+        gs.setELSFactor(mc.pitch);
         mc.setStops(gs.currentPosition());
         start_jog();
         updateStateDoc();

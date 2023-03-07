@@ -35,15 +35,17 @@ namespace MoveConfig{
              moveSyncTarget =  current_position + moveDistanceSteps;
            }
            if( moveDistanceSteps < 0){
-            ESP_LOGE(TAGmc,"Negative move, setting moveDirection and stops:");
+            
              moveDirection = false;
              stopNeg = moveSyncTarget;
              stopPos = current_position;
+             ESP_LOGE(TAGmc,"Bounce - stops:\n\t Distance: %ld stopNeg: %ld stopPos: %ld, moveDirection: %d\n",moveDistanceSteps, stopNeg, stopPos, moveDirection);
              return false;
            } else{
              moveDirection = true;
              stopPos = moveSyncTarget;
              stopNeg = current_position;
+             ESP_LOGE(TAGmc,"Bounce + stops:\n\t Distance: %ld stopNeg: %ld stopPos: %ld, moveDirection: %d\n", moveDistanceSteps, stopNeg, stopPos, moveDirection);
              return true;
            }
         }

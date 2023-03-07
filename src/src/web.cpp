@@ -19,6 +19,7 @@
 #include "motion.h"
 #include "hob.h"
 #include "moveConfig.h"
+#include <Ticker.h>
 
 bool web = true;
 
@@ -443,11 +444,13 @@ void handleBounce()
 
   // parse config
   mc.pitch = config["pitch"].as<double>();
-  rapids = config["rapid"].as<double>();
+  pitch = mc.pitch;
+  mc.rapidPitch = config["rapid"].as<double>();
   mc.moveDistanceSteps = config["moveSteps"].as<int>();
-  mc.moveDirection = (bool)config["f"];
-  el.error("warning, TOOD: this only is setup for one spindle direction");
-  mc.setStops(gs.currentPosition());
+  feeding_ccw = (bool)config["f"];
+  //el.error("warning, TOOD: this only is setup for one spindle direction");
+  bool d = mc.setStops(gs.currentPosition());
+  gs.stepper.setDir(d);
   bouncing = true;
 }
 
@@ -535,6 +538,9 @@ void handleNvConfig()
     eepromStream.flush();
     loadNvConfigDoc();
     sendNvConfigDoc();
+    // reset the den in case a param changed
+
+    gs.setELSFactor(mc.pitch,true);
   }
   else
   {
@@ -692,23 +698,19 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
   }
 }
 
-void init_web()
-{
-  // Connect to WiFi
-  Serial.println("Setting up WiFi");
-  WiFi.setHostname(HOSTNAME);
-  WiFi.mode(WIFI_MODE_STA);
+Ticker reconnectTimer;
+
+void connectToWifi() {
+  Serial.println("reConnecting to Wi-Fi...");
   WiFi.begin(ssid, password);
-  WiFi.setTxPower(WIFI_POWER_19_5dBm);
-  // WiFi.setOut
-  while (WiFi.status() != WL_CONNECTED)
-  {
+  while (WiFi.status() != WL_CONNECTED) {
     Serial.print(".");
     delay(100);
   }
+  WiFi.setAutoReconnect(true);
+  WiFi.persistent(true);
   Serial.print("Connected. IP=");
   Serial.println(WiFi.localIP());
-
   //  MDNS hostname must be lowercase
   if (!MDNS.begin(HOSTNAME))
   {
@@ -726,6 +728,35 @@ void init_web()
   server.addHandler(&ws);
   server.begin();
   Serial.println("HTTP websocket server started");
+
+}
+
+void onWifiConnect(WiFiEvent_t event, WiFiEventInfo_t info){
+  Serial.println("Connected to Wi-Fi.");
+}
+
+void onWifiDisconnect(WiFiEvent_t event, WiFiEventInfo_t info){
+  Serial.println("Disconnected from Wi-Fi. ");
+  Serial.println(info.wifi_sta_disconnected.reason);
+  //reconnectTimer.detach(); // ensure we don't reconnect to MQTT while reconnecting to Wi-Fi
+  //reconnectTimer.once(5, connectToWifi);
+}
+
+
+void init_web()
+{
+  // Connect to WiFi
+  Serial.println("Setting up WiFi");
+  WiFi.setHostname(HOSTNAME);
+  WiFi.mode(WIFI_MODE_STA);
+  WiFi.setTxPower(WIFI_POWER_19_5dBm);
+
+  //wifiConnectHandler = WiFi.onStationModeGotIP(onWifiConnect);
+  
+  WiFi.onEvent(onWifiConnect, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
+  WiFiEventId_t eventID = WiFi.onEvent(onWifiDisconnect, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+
+  connectToWifi();
 
   updateStateDoc();
   init_ota();
