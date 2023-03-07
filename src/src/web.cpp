@@ -25,6 +25,7 @@
 #include "web.h"
 
 bool web = true;
+static const char* TAGweb = "Mc";
 
 
 // buffer for msgpack
@@ -37,6 +38,7 @@ String wsData;
 
 // sends updates (statusDoc) to UI every interval
 Neotimer update_timer = Neotimer(1000);
+Neotimer ota_timer = Neotimer(200);
 
 // TOOD: consider configs from config.h to update this stuff
 AsyncWebServer server(80);
@@ -231,7 +233,12 @@ void sendDoc(const JsonDocument &doc)
 {
   serialize_len = serializeMsgPack(doc, outBuffer);
   // TODO: debug flag?
-  ws.binaryAll(outBuffer, serialize_len);
+  //if(globalClient->canSend()){
+    ws.binaryAll(outBuffer, serialize_len);
+  //}else{
+    //ESP_LOGE(TAGweb,"can't send doc");
+  //}
+  
 }
 
 void sendState()
@@ -620,8 +627,13 @@ void parseObj(AsyncWebSocketClient *client)
     handleBounce();
   }
   else if(strcmp(cmd,"ping") == 0){
-    //sprintf(outBuffer,"{'cmd':'pong'}");
-    ws.binaryAll(pongBuf, pong_len);
+    Serial.print("^");
+    // need to pong to keep alive?
+    if(client->canSend()){
+      ws.binary(client->id(),pongBuf,pong_len);
+    }else{
+      Serial.print("#");
+    }
   }
   else
   {
@@ -793,13 +805,15 @@ void sendUpdates()
     // Serial.printf(" %d ",(int)run_mode);
     Serial.printf(" %d %d %d ", (int)run_mode, gs.currentPosition(), WiFi.RSSI());
     updateStatusDoc();
+    ws.cleanupClients();
   }
 }
 void do_web()
 {
   if (web)
   {
-
-    ArduinoOTA.handle();
+    if(ota_timer.repeat()){
+      ArduinoOTA.handle();
+    }
   }
 }

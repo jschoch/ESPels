@@ -14,7 +14,7 @@ volatile bool bouncing = false;
 //double old_jog_mm = 0;
 int old_moveDistanceSteps = 0;
 
-Neotimer state_timer(100);
+Neotimer state_timer(200);
 
 void do_state(){
     if(state_timer.repeat()){
