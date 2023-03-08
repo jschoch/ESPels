@@ -18,7 +18,8 @@
 
 static const char* TAG = "Mo";
 
-volatile bool feeding = false;
+// not sure this is needed
+//volatile bool feeding = false;
 
 //TODO there's a direction enum that can be used, maybe do it at the same time the state machine is refactored
 volatile bool feeding_ccw = true;

@@ -134,7 +134,7 @@ void updateStatusDoc()
   // TODO: We should convert to steps in the UI and not have to do the conversion in the controller
   statusDoc["targetSteps"] = mc.moveDistanceSteps;
   // bool for constant run mode, TODO:  bad name though
-  statusDoc["feeding"] = feeding;
+  //statusDoc["feeding"] = feeding;
   // bools for sync movements, TODO:  bad name
   statusDoc["jogging"] = jogging;
   // bool for rapid sync movement TODO: bad name
@@ -448,12 +448,17 @@ void handleBounce()
 
 void handleFeed(){
   JsonObject config = inDoc["config"];
-  mc.pitch = config["pitch"].as<double>();
+  mc.pitch = config["pitch"].as<float>();
   feeding_ccw = (bool)config["f"]; 
   pitch = mc.pitch;
-  Serial.printf("\nFeed ccw: %d pitch: %ld config pitch %f\n",feeding_ccw,pitch,config["pitch"]);
+  Serial.printf("\nFeed ccw: %d pitch: %f config pitch %f\n",feeding_ccw,pitch,config["pitch"]);
   //bool d = mc.setStops(gs.currentPosition());
-  //gs.stepper.setDir(d);
+  gs.stepper.setDir(feeding_ccw);
+  gs.setELSFactor(mc.pitch);
+  gs.init_gear(encoder.getCount());
+  mc.useStops = false;
+  syncWaiting = false;
+  pos_feeding = true;
 
 }
 

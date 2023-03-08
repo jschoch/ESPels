@@ -28,7 +28,7 @@ void HobRunState(){
 void HobStopState(){
         mc.useStops = true;
         jogging = false;
-        feeding = false;
+        //feeding = false;
         pos_feeding = false;
         updateMode(RunMode::HOB_STOP);
         HobReadyState();

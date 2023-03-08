@@ -27,6 +27,7 @@ namespace MoveConfig{
 
         // returns a bool to be used by stepper.setDir
         inline bool setStops(int32_t current_position){
+           useStops = true;
            if(isAbs){
              moveSyncTarget = moveDistanceSteps;
              ESP_LOGE(TAGmc,"Absolute move:\n");

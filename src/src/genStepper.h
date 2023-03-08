@@ -52,6 +52,7 @@ namespace GenStepper {
                 mygear.pitch = oldPitch;
                 return false;
             }
+            Serial.printf("Set ELS Factor pitch: %f nom: %d den: %d\n",pitch,nom,den);
             return true;
         }
         inline void setHobFactor(){
