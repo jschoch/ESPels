@@ -37,7 +37,7 @@ size_t serialize_len = 0;
 String wsData;
 
 // sends updates (statusDoc) to UI every interval
-Neotimer update_timer = Neotimer(1000);
+Neotimer update_timer = Neotimer(800);
 Neotimer ota_timer = Neotimer(200);
 
 // TOOD: consider configs from config.h to update this stuff
@@ -178,6 +178,14 @@ void updateDebugStatusDoc()
   debugStatusDoc["c1"] = cpu1;
   // this is incremented every status update
   debugStatusDoc["c"] = statusCounter++;
+  debugStatusDoc["h"] = ESP.getFreeHeap();
+  debugStatusDoc["ha"] = ESP.getHeapSize();
+
+  /*
+  esp_chip_info_t* out_info = ESP.get_chip_info();
+  make object .... parse this struct 
+  debugStatusDoc["chip"] = chipInfo; 
+  */
 }
 
 void updateStateDoc()
@@ -218,6 +226,9 @@ void setRunMode(int mode)
     break;
   case (int)RunMode::SLAVE_READY:
     btn_yasm.next(SlaveModeReadyState);
+    break;
+  case (int)RunMode::FEED_READY:
+    btn_yasm.next(FeedModeReadyState);
     break;
   case (int)RunMode::HOB_READY:
     // hob_yasm.next(HobReadyState);
@@ -435,6 +446,17 @@ void handleBounce()
   bouncing = true;
 }
 
+void handleFeed(){
+  JsonObject config = inDoc["config"];
+  mc.pitch = config["pitch"].as<double>();
+  feeding_ccw = (bool)config["f"]; 
+  pitch = mc.pitch;
+  Serial.printf("\nFeed ccw: %d pitch: %ld config pitch %f\n",feeding_ccw,pitch,config["pitch"]);
+  //bool d = mc.setStops(gs.currentPosition());
+  //gs.stepper.setDir(d);
+
+}
+
 void handleDebug()
 {
   if (inDoc["basic"])
@@ -626,6 +648,10 @@ void parseObj(AsyncWebSocketClient *client)
   {
     handleBounce();
   }
+  else if(strcmp(cmd,"feed") ==  0)
+  {
+    handleFeed();
+  }
   else if(strcmp(cmd,"ping") == 0){
     Serial.print("^");
     // need to pong to keep alive?
@@ -634,6 +660,10 @@ void parseObj(AsyncWebSocketClient *client)
     }else{
       Serial.print("#");
     }
+  }
+  else if(strcmp(cmd,"sendDebug") == 0){
+    Serial.println("toggle send debug");
+    sendDebug = !sendDebug;
   }
   else
   {
@@ -804,7 +834,9 @@ void sendUpdates()
     // updateStateDoc();
     // Serial.printf(" %d ",(int)run_mode);
     Serial.printf(" %d %d %d ", (int)run_mode, gs.currentPosition(), WiFi.RSSI());
+    updateDebugStatusDoc();
     updateStatusDoc();
+
     ws.cleanupClients();
   }
 }

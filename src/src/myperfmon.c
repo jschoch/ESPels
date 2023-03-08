@@ -10,7 +10,7 @@
 #include "esp_timer.h"
 #include "esp_log.h"
 #include "esp_sleep.h"
-//#include "perfmon.h"
+#include <perfmon.h>
 
 static const char *TAG = "perfmon";
 
@@ -29,7 +29,7 @@ static const uint64_t MaxIdleCalls = 1233100;
 #endif
 
 // Table with dedicated performance counters
-/*  TODO: figure out how to use perfmon
+//  TODO: figure out how to use perfmon
 static uint32_t pm_check_table[] = {
     XTPERF_CNT_CYCLES, XTPERF_MASK_CYCLES, // total cycles
     XTPERF_CNT_INSN, XTPERF_MASK_INSN_ALL, // total instructions
@@ -39,13 +39,18 @@ static uint32_t pm_check_table[] = {
     XTPERF_CNT_BUBBLES, XTPERF_MASK_BUBBLES_R_HOLD_REG_DEP,           // Wait for register dependency
     XTPERF_CNT_OVERFLOW, XTPERF_MASK_OVERFLOW,               // Last test cycle
 };
-*/
+//
 
 #define TOTAL_CALL_AMOUNT 200
 #define PERFMON_TRACELEVEL -1 // -1 - will ignore trace level
 
+bool exec_test_function(){
+    int i = 1+1;
+    return true;
+}
+
 void pukeStats(){
-    /*
+    //
     ESP_LOGI(TAG, "Start");
     ESP_LOGI(TAG, "Start test with printing all available statistic");
     xtensa_perfmon_config_t pm_config = {};
@@ -59,6 +64,7 @@ void pukeStats(){
     pm_config.tracelevel = PERFMON_TRACELEVEL;
     xtensa_perfmon_exec(&pm_config);
 
+    /*
     ESP_LOGI(TAG, "Start test with user defined statistic");
     pm_config.counters_size = sizeof(pm_check_table) / sizeof(uint32_t) / 2;
     pm_config.select_mask = pm_check_table;
@@ -70,9 +76,10 @@ void pukeStats(){
     pm_config.tracelevel = PERFMON_TRACELEVEL;
 
     xtensa_perfmon_exec(&pm_config);
+    */
 
     ESP_LOGI(TAG, "The End");
-    */
+    //
 }
 
 static bool idle_task_0()
@@ -102,10 +109,10 @@ static void perfmon_task(void *args)
         /*
 		ESP_LOGI(TAG, "Core 0 at %d%%", cpu0);
 		ESP_LOGI(TAG, "Core 1 at %d%%", cpu1);
-        pukeStats();
         */
+        //pukeStats();
 		// TODO configurable delay
-		vTaskDelay(5000 / portTICK_PERIOD_MS);
+		vTaskDelay(2000 / portTICK_PERIOD_MS);
 	}
 	vTaskDelete(NULL);
 }
@@ -115,5 +122,6 @@ esp_err_t perfmon_start()
 	ESP_ERROR_CHECK(esp_register_freertos_idle_hook_for_cpu(idle_task_0, 0));
 	ESP_ERROR_CHECK(esp_register_freertos_idle_hook_for_cpu(idle_task_1, 1));
 	// TODO calculate optimal stack size
-	return xTaskCreate(perfmon_task, "perfmon", 2048, NULL, 1, NULL);
+	xTaskCreate(perfmon_task, "perfmon", 2048, NULL, 1, NULL);
+    return ESP_OK;
 }

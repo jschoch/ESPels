@@ -21,6 +21,13 @@ void slaveStatusState(){
     }
 }
 
+void FeedModeReadyState(){
+    if(btn_yasm.isFirstRun()){
+        updateMode(RunMode::FEED_READY);
+
+    }
+}
+
 void slaveFeedingState(){
     if(btn_yasm.isFirstRun()){
 

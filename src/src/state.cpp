@@ -16,7 +16,7 @@ double mmPerStep = 0;
 int32_t stepsPerMM = 0;
 int32_t relativePosition = 0;
 int32_t absolutePosition = 0;
-bool sendDebug = false;
+bool sendDebug = true;
 
 
 //State Machine stuff
@@ -54,3 +54,4 @@ StaticJsonDocument<500> debugStatusDoc;
 StaticJsonDocument<100> pongDoc;
 char pongBuf[100];
 int pong_len = serializeMsgPack(pongDoc,pongBuf);
+

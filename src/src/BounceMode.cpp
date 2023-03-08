@@ -77,11 +77,9 @@ void BounceRapidState(){
     else if(!rapiding){
         Serial.println("Rapid Done, going Idle");
         mc.pitch = mc.oldPitch;
-        //jog_mm = old_jog_mm;
         mc.moveDistanceSteps = old_moveDistanceSteps;
         bouncing = false;
-        // TOOD this ends up undefined in the UI
-        bounce_yasm.next(BounceIdleState);
+        bounce_yasm.next(slaveJogReadyState);
     }
 
 }

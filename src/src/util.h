@@ -31,7 +31,9 @@ enum class RunMode{
   HOB_RUN, // 10
   HOB_STOP, // 11
   DIVIDER_READY, //12
-  DIVIDER_RUN //13
+  DIVIDER_RUN, //13
+  FEED_READY, // 14
+  THREAD_READY // 15
 };
 
 enum feed_mode_t {
