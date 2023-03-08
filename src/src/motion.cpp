@@ -21,7 +21,8 @@ static const char* TAG = "Mo";
 // not sure this is needed
 //volatile bool feeding = false;
 
-//TODO there's a direction enum that can be used, maybe do it at the same time the state machine is refactored
+// this is used mostly for feed mode to flip the behaviors, spindle moving ccw moves carriage Z+ or Z- depending on 
+// how this is set
 volatile bool feeding_ccw = true;
 
 char err[500] = "";

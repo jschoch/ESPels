@@ -7,6 +7,6 @@ extern volatile bool bouncing;
 extern double old_jog_mm;
 
 void do_state();
-void BounceJogState();
+void BounceMoveState();
 void BounceIdleState();
 void BounceRapidState();

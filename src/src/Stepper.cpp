@@ -8,7 +8,7 @@
 int microsteps = Z_MICROSTEPPING;
 
 int native_steps = Z_NATIVE_STEPS_PER_REV;
-int motor_steps = 0;
+int motor_steps = Z_MICROSTEPPING * Z_NATIVE_STEPS_PER_REV;
 
 
 // number of ticks to wait between timer events

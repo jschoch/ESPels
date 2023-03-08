@@ -13,9 +13,11 @@ namespace GenStepper {
     struct Config{
         int dir = 0;
         const char* name;
-        float lead_screw_pitch = 2;
-        int spindle_encoder_resolution = 2400;
-        int motor_steps = 800;
+        float lead_screw_pitch = lead_screw_pitch;
+        int spindle_encoder_resolution = spindle_encoder_resolution;
+        int native_steps = Z_NATIVE_STEPS_PER_REV;
+        int microsteps = Z_MICROSTEPPING;
+        int motor_steps = native_steps * microsteps;
     };
 
     struct State{

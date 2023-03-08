@@ -11,7 +11,6 @@
 
 YASM bounce_yasm;
 volatile bool bouncing = false;
-//double old_jog_mm = 0;
 int old_moveDistanceSteps = 0;
 
 Neotimer state_timer(200);
@@ -23,8 +22,8 @@ void do_state(){
     
 }
 
-void start_jog(){
-    Serial.println("Start Jog Called");
+void start_move(){
+    Serial.println("Bounce Start Move Called");
     jogging = true;
     init_pos_feed();
 }
@@ -38,22 +37,21 @@ void BounceIdleState(){
   }
   else if(bouncing){
       Serial.println("Bounce Init");
-      bounce_yasm.next(BounceJogState);
   }
 
 }
 
-void BounceJogState(){
+void BounceMoveState(){
     if(bounce_yasm.isFirstRun()){
-        printf("Entering Bounce Jog Mode pitch: %f\n",mc.pitch);
+        printf("Entering Bounce Move Mode pitch: %f\n",mc.pitch);
         gs.setELSFactor(mc.pitch);
-        updateMode(RunMode::BounceJog);
-        start_jog();
+        updateMode(RunMode::BounceMove);
+        start_move();
         return;
     }
     else if(!jogging){
         updateStateDoc();
-        Serial.println("Jog Done, starting rapid");
+        Serial.println("Move Done, starting rapid");
         bounce_yasm.next(BounceRapidState);
     }
 }
@@ -70,7 +68,7 @@ void BounceRapidState(){
         rapiding = true;
         gs.setELSFactor(mc.pitch);
         mc.setStops(gs.currentPosition());
-        start_jog();
+        start_move();
         updateStateDoc();
         return;
     }
@@ -79,7 +77,8 @@ void BounceRapidState(){
         mc.pitch = mc.oldPitch;
         mc.moveDistanceSteps = old_moveDistanceSteps;
         bouncing = false;
-        bounce_yasm.next(slaveJogReadyState);
+        jogging = false;
+        bounce_yasm.next(BounceIdleState);
     }
 
 }

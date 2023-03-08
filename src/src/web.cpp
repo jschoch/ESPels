@@ -24,6 +24,9 @@
 
 #include "web.h"
 
+// To force delete the nvconfig
+#define  KILLNV 0
+
 bool web = true;
 static const char* TAGweb = "Mc";
 
@@ -56,7 +59,10 @@ void saveNvConfigDoc()
   EepromStream eepromStream(0, 512);
   serializeJson(nvConfigDoc, eepromStream);
   eepromStream.flush();
+  Serial.print(" Saving Doc: ");
+  serializeJson(nvConfigDoc,Serial);
   loadNvConfigDoc();
+  sendDoc(nvConfigDoc);
 }
 
 void initNvConfigDoc()
@@ -73,7 +79,8 @@ void initNvConfigDoc()
   nvConfigDoc["EB"] = EB;
   nvConfigDoc["ZP"] = gs.stepper.config.stepPin;
   nvConfigDoc["ZD"] = gs.stepper.config.dirPin;
-  nvConfigDoc["motor_steps"] = motor_steps;
+  nvConfigDoc["motor_steps"] = Z_MICROSTEPPING * Z_NATIVE_STEPS_PER_REV;
+  nvConfigDoc["native_steps"] = Z_NATIVE_STEPS_PER_REV;
 
   // the communication version, used to detect UI compatability
   nvConfigDoc["vsn"] = vsn;
@@ -92,27 +99,69 @@ void initNvConfigDoc()
   saveNvConfigDoc();
 }
 
+
+
 void loadNvConfigDoc()
 {
   EepromStream eepromStream(0, 512);
   deserializeJson(nvConfigDoc, eepromStream);
-  if (!nvConfigDoc["i"])
-  {
+  if (KILLNV == 1|| !nvConfigDoc["i"] ){
     Serial.print("Doc!?  ");
     Serial.println((int)nvConfigDoc["i"]);
     el.error("no config found this is bad");
+    serializeJsonPretty(nvConfigDoc, Serial);
   }
   else
   {
 
-    lead_screw_pitch = nvConfigDoc["lead_screw_pitch"];
+    if(nvConfigDoc.containsKey("lead_screw_pitch")){
+      lead_screw_pitch = nvConfigDoc["lead_screw_pitch"].as<float>();
+    }else{
+      Serial.println("key missing: lead");
+    }
+
+    if(nvConfigDoc.containsKey("motor_steps")){
+      lead_screw_pitch = nvConfigDoc["motor_steps"].as<int>();
+    }else{
+      Serial.println("key missing: motor steps");
+    }
+
+    if(nvConfigDoc.containsKey("native_steps")){
+      lead_screw_pitch = nvConfigDoc["native_steps"].as<int>();
+    }else{
+      Serial.println("key missing: nat step");
+    }
+
+    if(nvConfigDoc.containsKey("microsteps")){
+      lead_screw_pitch = nvConfigDoc["microsteps"].as<int>();
+    }else{
+      Serial.println("key missing: microstesp");
+    }
+
+    if(nvConfigDoc.containsKey("spindle_encoder_resolution")){
+      lead_screw_pitch = nvConfigDoc["spindle_encoder_resolution"].as<int>();
+    }else{
+      Serial.println("key missing: enc");
+    }
+
+     /* 
     motor_steps = nvConfigDoc["motor_steps"];
+    native_steps = nvConfigDoc["native_steps"];
     microsteps = nvConfigDoc["microsteps"];
     spindle_encoder_resolution = nvConfigDoc["spindle_encoder_resolution"];
+    */
     Serial.printf("Loaded Configuration com version %s lead screw pitch: %f\n", vsn, lead_screw_pitch);
     init_machine();
     // setFactor();
-    gs.setELSFactor(pitch);
+    gs.c.lead_screw_pitch = lead_screw_pitch;
+    gs.c.motor_steps = motor_steps;
+    gs.c.microsteps = microsteps;
+    gs.c.spindle_encoder_resolution = spindle_encoder_resolution;
+    Serial.print("Loaded this NvConfig doc");
+    serializeJsonPretty(nvConfigDoc, Serial);
+    if(!gs.setELSFactor(pitch,true)){
+      Serial.println("Something wrong with this NvConfig!!!!!");
+    }
   }
 }
 
@@ -153,6 +202,7 @@ void updateStatusDoc()
   statusDoc["sp"] = mc.stopPos;
   // the stop in the Z - direction
   statusDoc["sn"] = mc.stopNeg;
+  statusDoc["r"] = WiFi.RSSI();
   sendStatus();
 }
 
@@ -209,6 +259,7 @@ void updateStateDoc()
   // flag to wait for encocer "0" position
   stateDoc["s"] = syncStart;
   // TODO: add angle for angle readout in UI
+  
 
   sendState();
 }
@@ -443,7 +494,9 @@ void handleBounce()
   //el.error("warning, TOOD: this only is setup for one spindle direction");
   bool d = mc.setStops(gs.currentPosition());
   gs.stepper.setDir(d);
+  gs.setELSFactor(mc.pitch);
   bouncing = true;
+  bounce_yasm.next(BounceMoveState);
 }
 
 void handleFeed(){
@@ -535,14 +588,14 @@ void handleSend()
 void handleNvConfig()
 {
   Serial.println("saving configuration");
-  inDoc.remove("t");
+  JsonObject config = inDoc["config"];
   // TODO better checks than this~
-  if (inDoc["lead_screw_pitch"])
+  if (config["lead_screw_pitch"])
   {
     // Save
-    inDoc["i"] = 1;
+    config["i"] = 1;
     EepromStream eepromStream(0, 512);
-    serializeJson(inDoc, eepromStream);
+    serializeJson(config, eepromStream);
     eepromStream.flush();
     loadNvConfigDoc();
     sendNvConfigDoc();
@@ -605,6 +658,9 @@ void parseObj(AsyncWebSocketClient *client)
     Serial.println("Move Canceled");
     syncWaiting = false;
     pos_feeding = false;
+    jogging = false;
+    rapiding = false;
+    bouncing = false;
     // TODO: need rapid cancel
   }
   else if (strcmp(cmd, "moveSyncAbs") == 0)
@@ -791,7 +847,7 @@ void init_web()
   deserializeJson(nvConfigDoc, eepromStream);
   Serial.println("NV Config? ");
   Serial.println((int)nvConfigDoc["i"]);
-  if (!nvConfigDoc["i"])
+  if (!nvConfigDoc["i"] || KILLNV == 1)
   {
     Serial.println("creating default nvConfig");
     initNvConfigDoc();

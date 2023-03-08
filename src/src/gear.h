@@ -1,4 +1,5 @@
 #pragma once
+#include <assert.h>
 
 
 
@@ -26,6 +27,8 @@ namespace Gear {
   // k, the encoder count delta for the next step pulse, should fit within a short integer
 
   inline Jump next_jump_forward(int d, int n, int e, int64_t count) {
+    assert(d != 0);
+    assert(n != 0);
     // k = encoder_pulses per step
     int32_t k = (d - 2 * e + 2 * n - 1) / (2 * n);
     return {count + k, k, e + k * n - d};
@@ -50,6 +53,10 @@ namespace Gear {
 
     // TODO: stop using the 2nd arg, it has to be true
     void calc_jumps(int encoder_count,bool dir = true){
+      if(D == 0 || N == 0){
+        Serial.printf("D: %d N: %d calc_jumps exiting",N,D);
+        return;
+      }
       Jump nx = next_jump_forward(D,N,nerror,encoder_count);
       Jump px = next_jump_reverse(D,N,perror,encoder_count); 
       jumps.next =  nx.count;

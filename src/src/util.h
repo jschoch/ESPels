@@ -24,7 +24,7 @@ enum class RunMode{
   DEBUG_READY, //3 
   RUNNING, //  4 Any mode where we are actually moving.  
   BounceIdle, // 5
-  BounceJog, // 6
+  BounceMove, // 6
   BounceRapid, //7
   BounceFinish, //8
   HOB_READY, // 9
