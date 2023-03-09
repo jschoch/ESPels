@@ -21,9 +21,11 @@
 #include "src/myperfmon.h"
 #include "src/Machine.h"
 #include "src/state.h"
+#include "src/led.h"
 
 void setup() {
  
+  led_init();
   Serial.begin(115200);
 
   init_encoder();  

@@ -90,7 +90,11 @@ For most common quadrature encoders, choose Extern and apply 3.3v to your encode
 #endif
 
 #ifndef error_led
-#define error_led 21
+#define error_led 33
+#endif
+
+#ifndef wifi_led
+#define wifi_led 32
 #endif
 
 // read the cpu usage via the web server, only use for testing as it comes with bloat

@@ -20,6 +20,7 @@
 #include "hob.h"
 #include "moveConfig.h"
 #include <Ticker.h>
+#include "led.h"
 
 
 #include "web.h"
@@ -753,7 +754,7 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
   // Serial.println("ws event");
   if (type == WS_EVT_CONNECT)
   {
-    Serial.println("Websocket client connection received");
+    Serial.printf("Websocket client connection received id: %d\n",client->id());
     globalClient = client;
   }
   else if (type == WS_EVT_DISCONNECT)
@@ -815,11 +816,13 @@ void connectToWifi() {
 
 void onWifiConnect(WiFiEvent_t event, WiFiEventInfo_t info){
   Serial.println("Connected to Wi-Fi.");
+  set_error_led_blink(5);
 }
 
 void onWifiDisconnect(WiFiEvent_t event, WiFiEventInfo_t info){
   Serial.println("Disconnected from Wi-Fi. ");
   Serial.println(info.wifi_sta_disconnected.reason);
+  set_error_led_blink(1000);
   //reconnectTimer.detach(); // ensure we don't reconnect to MQTT while reconnecting to Wi-Fi
   //reconnectTimer.once(5, connectToWifi);
 }
