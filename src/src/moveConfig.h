@@ -40,13 +40,13 @@ namespace MoveConfig{
              moveDirection = false;
              stopNeg = moveSyncTarget;
              stopPos = current_position;
-             ESP_LOGE(TAGmc,"Bounce - stops:\n\t Distance: %ld stopNeg: %ld stopPos: %ld, moveDirection: %d\n",moveDistanceSteps, stopNeg, stopPos, moveDirection);
+             ESP_LOGE(TAGmc,"Stops:\n\t Distance: %ld stopNeg: %ld stopPos: %ld, moveDirection: %d\n",moveDistanceSteps, stopNeg, stopPos, moveDirection);
              return false;
            } else{
              moveDirection = true;
              stopPos = moveSyncTarget;
              stopNeg = current_position;
-             ESP_LOGE(TAGmc,"Bounce + stops:\n\t Distance: %ld stopNeg: %ld stopPos: %ld, moveDirection: %d\n", moveDistanceSteps, stopNeg, stopPos, moveDirection);
+             ESP_LOGE(TAGmc,"Stops:\n\t Distance: %ld stopNeg: %ld stopPos: %ld, moveDirection: %d\n", moveDistanceSteps, stopNeg, stopPos, moveDirection);
              return true;
            }
         }

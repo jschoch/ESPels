@@ -38,7 +38,7 @@ void init_pos_feed(){
     //wait for the start to come around
     if(mc.syncMoveStart){
       Serial.printf("Move: waiting for spindle sync stopNeg: %d stopPos: %d nom: %d den: %d\n",mc.stopPos, mc.stopNeg,gs.nom, gs.den);
-      gs.init_gear(encoder.getCount());
+      //gs.init_gear(encoder.getCount());
       syncWaiting = true;
       pos_feeding = true;
     }
@@ -46,7 +46,7 @@ void init_pos_feed(){
       // this resets the "start" but i'm not sure if it works correctly
       // TODO:  should warn that turning off sync will  loose the "start"
       Serial.println("jog without spindle sync");
-      gs.init_gear(encoder.getCount());
+      //gs.init_gear(encoder.getCount());
       pos_feeding = true;
     }
   }else{
@@ -76,7 +76,6 @@ void init_hob_feed(){
   }
 }
 
-int64_t last_step_time = 0;
 
 
 // ensure we don't send steps after changing dir pin until the proper delay has expired
@@ -133,6 +132,7 @@ to calculate the next set of jumps (positions to step based on ratio/factor)
   mc.syncMoveStart: if true this will ensure we start motion at spindle position 0 (the starting spindle angle)
 */
 
+static int64_t pulse_counter = 0;
 
 void do_pos_feeding(){
 
@@ -141,14 +141,14 @@ void do_pos_feeding(){
 
     // only read this once for the whole loop
     //
-    int64_t pulse_counter = encoder.getCount();
+    //int64_t pulse_counter = encoder.getCount();
+    pulse_counter = encoder.pulse_counter;
 
     if(pulse_counter > gs.mygear.jumps.next+1 || pulse_counter < gs.mygear.jumps.prev -1){
-      sprintf(err,"Tool outside expected range.  encPos: %lld next: %i  pos %i dirChang? %i",
+      sprintf(err,"Tool outside expected range.  encPos: %lld next: %i  pos %i ",
         pulse_counter,
         gs.mygear.jumps.next,
-        gs.mygear.jumps.prev,
-        gs.mygear.is_setting_dir);
+        gs.mygear.jumps.prev);
       el.addMsg(err);
       el.hasError = true;
       pos_feeding = false;
@@ -196,16 +196,20 @@ void do_pos_feeding(){
       if((pulse_counter == gs.mygear.jumps.next) || (pulse_counter== gs.mygear.jumps.prev)){
         gs.mygear.calc_jumps(pulse_counter);
         gs.step();
+
+
+        //zstepper.step();
         /*
         if(gs.stepper.dir){
           gs.stepPos();
-        }else{
+        }else
           gs.stepNeg();
         }
         */
       }
 
       // evaluate stops, no motion if motion would exceed stops
+      /*
 
       if (mc.useStops && mc.moveDirection == true && gs.currentPosition() >= mc.moveSyncTarget){
         ESP_LOGE(TAG,"reached target %d final position was: %d", mc.moveSyncTarget, gs.currentPosition());
@@ -233,6 +237,7 @@ void do_pos_feeding(){
         finish_jog();
         return;
       }
+      */
 }
 
 
@@ -245,7 +250,8 @@ void IRAM_ATTR processMotion(){
     // faster to pass this count here or store it in do_pos_feeding?
     if(encoder.getCount() % encoder.start == 0){
       syncWaiting = false;
-      gs.init_gear(encoder.getCount());
+      //gs.init_gear(encoder.getCount());
+      gs.mygear.calc_jumps(encoder.pulse_counter);
       do_pos_feeding();
     }
   }

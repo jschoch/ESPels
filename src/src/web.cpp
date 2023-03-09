@@ -428,7 +428,10 @@ void handleJog()
     {
       bool dir = mc.setStops(gs.currentPosition());
       gs.stepper.setDir(dir);
-      jogging = true;
+      gs.setELSFactor(mc.pitch);
+      Serial.printf("handleJog pitch: %f\n",mc.pitch);
+      //gs.init_gear(encoder.getCount());
+      //mc.useStops = true;
       init_pos_feed();
       updateStatusDoc();
     }

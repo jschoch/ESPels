@@ -9,6 +9,7 @@
 #include "rmtStepper.h"
 #endif
 
+
 namespace GenStepper {
     struct Config{
         int dir = 0;
@@ -60,8 +61,7 @@ namespace GenStepper {
 
         }
         inline bool init_gear(int64_t count){
-            mygear.is_setting_dir = false;
-            printf("init_gear count was: %lld \n",count);
+            //printf("init_gear count was: %lld \n",count);
             if(mygear.setRatio(nom,den)){
                 mygear.calc_jumps(count);
                 mygear.jumps.last = mygear.jumps.prev;
@@ -79,13 +79,11 @@ namespace GenStepper {
 
         inline void stepPos(){
             stepper.step();
-            position++;
-
-
+            //position++;
         }
         inline void stepNeg(){
             stepper.step();
-            position--;
+            //position--;
 
         }
         inline void step(){
@@ -96,7 +94,8 @@ namespace GenStepper {
             }
         }
         inline int currentPosition(){
-            return position + offset;
+            //return position + offset;
+            return stepper.pos;
         }
 
     };

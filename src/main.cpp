@@ -9,6 +9,7 @@
 
 #include "src/config.h"
 #include "src/Encoder.h"
+#include "src/state.h"
 #include "Bounce2.h"
 #include "esp_err.h"
 #include "esp_log.h"
@@ -20,7 +21,6 @@
 #include "src/BounceMode.h"
 #include "src/myperfmon.h"
 #include "src/Machine.h"
-#include "src/state.h"
 #include "src/led.h"
 
 void setup() {
