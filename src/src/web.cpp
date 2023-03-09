@@ -57,6 +57,7 @@ double jogAbs = 0;
 void saveNvConfigDoc()
 {
   EepromStream eepromStream(0, 512);
+  nvConfigDoc["motor_steps"] = nvConfigDoc["native_steps"].as<int>() * nvConfigDoc["microsteps"].as<int>();
   serializeJson(nvConfigDoc, eepromStream);
   eepromStream.flush();
   Serial.print(" Saving Doc: ");
@@ -120,31 +121,29 @@ void loadNvConfigDoc()
       Serial.println("key missing: lead");
     }
 
-    if(nvConfigDoc.containsKey("motor_steps")){
-      lead_screw_pitch = nvConfigDoc["motor_steps"].as<int>();
-    }else{
-      Serial.println("key missing: motor steps");
-    }
 
     if(nvConfigDoc.containsKey("native_steps")){
-      lead_screw_pitch = nvConfigDoc["native_steps"].as<int>();
+      native_steps = nvConfigDoc["native_steps"].as<int>();
     }else{
       Serial.println("key missing: nat step");
     }
 
     if(nvConfigDoc.containsKey("microsteps")){
-      lead_screw_pitch = nvConfigDoc["microsteps"].as<int>();
+      microsteps = nvConfigDoc["microsteps"].as<int>();
     }else{
       Serial.println("key missing: microstesp");
     }
 
     if(nvConfigDoc.containsKey("spindle_encoder_resolution")){
-      lead_screw_pitch = nvConfigDoc["spindle_encoder_resolution"].as<int>();
+      spindle_encoder_resolution = nvConfigDoc["spindle_encoder_resolution"].as<int>();
     }else{
       Serial.println("key missing: enc");
     }
 
-     /* 
+    motor_steps = native_steps * microsteps;
+    nvConfigDoc["motor_steps"] = motor_steps;
+
+     /* TODO: all of these shouldn't be global and need to switch to gs.c
     motor_steps = nvConfigDoc["motor_steps"];
     native_steps = nvConfigDoc["native_steps"];
     microsteps = nvConfigDoc["microsteps"];
