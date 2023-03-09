@@ -429,7 +429,7 @@ void handleJog()
       bool dir = mc.setStops(gs.currentPosition());
       gs.stepper.setDir(dir);
       gs.setELSFactor(mc.pitch);
-      Serial.printf("handleJog pitch: %f\n",mc.pitch);
+      Serial.printf("handleJog pitch: %f target: %i\n",mc.pitch,mc.moveSyncTarget);
       //gs.init_gear(encoder.getCount());
       //mc.useStops = true;
       init_pos_feed();

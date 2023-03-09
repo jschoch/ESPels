@@ -209,7 +209,6 @@ void do_pos_feeding(){
       }
 
       // evaluate stops, no motion if motion would exceed stops
-      /*
 
       if (mc.useStops && mc.moveDirection == true && gs.currentPosition() >= mc.moveSyncTarget){
         ESP_LOGE(TAG,"reached target %d final position was: %d", mc.moveSyncTarget, gs.currentPosition());
@@ -237,7 +236,6 @@ void do_pos_feeding(){
         finish_jog();
         return;
       }
-      */
 }
 
 
