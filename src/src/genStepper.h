@@ -21,8 +21,7 @@ namespace GenStepper {
     };
 
     struct State{
-        int position = 0;
-        int32_t stepPosition = 1;
+        volatile int position = 0;
         float factor = 0;
         float offset = 0; //add to stepPosition
 

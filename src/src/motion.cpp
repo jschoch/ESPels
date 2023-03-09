@@ -37,7 +37,8 @@ void init_pos_feed(){
     
     //wait for the start to come around
     if(mc.syncMoveStart){
-      Serial.println("Move: waiting for spindle sync");
+      Serial.printf("Move: waiting for spindle sync stopNeg: %d stopPos: %d nom: %d den: %d\n",mc.stopPos, mc.stopNeg,gs.nom, gs.den);
+      gs.init_gear(encoder.getCount());
       syncWaiting = true;
       pos_feeding = true;
     }
