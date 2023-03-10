@@ -22,17 +22,17 @@ namespace GenStepper {
     };
 
     struct State{
-        volatile int position = 0;
+        static int position;
         float factor = 0;
         float offset = 0; //add to stepPosition
 
-        int32_t den; // should rarely change leadscrew or encoder resolution
-        int32_t nom;
+        static int32_t den; // should rarely change leadscrew or encoder resolution
+        static int32_t nom;
 
         Config c;
-        Gear::State mygear;
+        static Gear::State mygear;
         Log::Msg lm;
-        rmtStepper::State stepper;
+        static rmtStepper::State zstepper;
         
 
         inline bool setELSFactor(float pitch, bool recalculate_den = false){
@@ -78,29 +78,26 @@ namespace GenStepper {
         }
 
         inline void stepPos(){
-            stepper.step();
-            //position++;
+            zstepper.step();
+            position++;
         }
         inline void stepNeg(){
-            stepper.step();
-            //position--;
+            zstepper.step();
+            position--;
 
         }
         inline void step(){
-            if( stepper.dir){
+            if( zstepper.dir){
                 stepPos();
             }else{
                 stepNeg();
             }
         }
-        inline int currentPosition(){
-            //return position + offset;
-            return stepper.pos;
-        }
 
     };
     inline State init(const char * name,Log::Msg lm){
         State state;
+        state.position = 0;
         state.c.name = name;
         state.lm = lm;
         state.nom = state.c.spindle_encoder_resolution * 0.1;

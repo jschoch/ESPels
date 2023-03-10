@@ -80,10 +80,10 @@ void init_hob_feed(){
 
 // ensure we don't send steps after changing dir pin until the proper delay has expired
 void waitForDir(){
-  if(gs.stepper.dir_has_changed){
-    while(gs.stepper.dir_has_changed && ((gs.stepper.dir_change_timer + 5) - esp_timer_get_time() > 0)){
-        gs.stepper.dir_has_changed = false;
-        if(!gs.stepper.dir){
+  if(gs.zstepper.dir_has_changed){
+    while(gs.zstepper.dir_has_changed && ((gs.zstepper.dir_change_timer + 5) - esp_timer_get_time() > 0)){
+        gs.zstepper.dir_has_changed = false;
+        if(!gs.zstepper.dir){
           // reset stuff for dir changes guard against swapping when we just moved
           if(gs.mygear.jumps.last < encoder.pulse_counter){
             gs.mygear.jumps.prev = gs.mygear.jumps.last;
@@ -158,33 +158,33 @@ void do_pos_feeding(){
     // Deal with direction changes
     // Encoder decrementing
     if(!encoder.dir){ // dir neg and not pausing for the direction change
-      if(feeding_ccw && mc.moveDirection && gs.stepper.dir){
-        gs.stepper.setDir(false);
-      }else if(feeding_ccw && !mc.moveDirection && !gs.stepper.dir){
-        gs.stepper.setDir(true);
+      if(feeding_ccw && mc.moveDirection && gs.zstepper.dir){
+        gs.zstepper.setDir(false);
+      }else if(feeding_ccw && !mc.moveDirection && !gs.zstepper.dir){
+        gs.zstepper.setDir(true);
       }
       
       // reverse spindle case 
-      else if(!feeding_ccw && !mc.moveDirection && gs.stepper.dir){
-        gs.stepper.setDir(false);
-      }else if(!feeding_ccw && mc.moveDirection && !gs.stepper.dir){
-        gs.stepper.setDir(true);
+      else if(!feeding_ccw && !mc.moveDirection && gs.zstepper.dir){
+        gs.zstepper.setDir(false);
+      }else if(!feeding_ccw && mc.moveDirection && !gs.zstepper.dir){
+        gs.zstepper.setDir(true);
       }
       waitForDir();
     }else {
 
     // encoder incrementing
-      if(feeding_ccw && mc.moveDirection && !gs.stepper.dir){
-        gs.stepper.setDir(true);
-      }else if(feeding_ccw && !mc.moveDirection && gs.stepper.dir){
-        gs.stepper.setDir(false);
+      if(feeding_ccw && mc.moveDirection && !gs.zstepper.dir){
+        gs.zstepper.setDir(true);
+      }else if(feeding_ccw && !mc.moveDirection && gs.zstepper.dir){
+        gs.zstepper.setDir(false);
       }
       
      // reverse spindle case 
-      else if(!feeding_ccw && !mc.moveDirection && !gs.stepper.dir){
-        gs.stepper.setDir(true);
-      }else if(!feeding_ccw && mc.moveDirection && gs.stepper.dir){
-        gs.stepper.setDir(false);
+      else if(!feeding_ccw && !mc.moveDirection && !gs.zstepper.dir){
+        gs.zstepper.setDir(true);
+      }else if(!feeding_ccw && mc.moveDirection && gs.zstepper.dir){
+        gs.zstepper.setDir(false);
       }
       waitForDir();  
     } // done with direction changes
@@ -210,13 +210,13 @@ void do_pos_feeding(){
 
       // evaluate stops, no motion if motion would exceed stops
 
-      if (mc.useStops && mc.moveDirection == true && gs.currentPosition() >= mc.moveSyncTarget){
-        ESP_LOGE(TAG,"reached target %d final position was: %d", mc.moveSyncTarget, gs.currentPosition());
+      if (mc.useStops && mc.moveDirection == true && gs.position >= mc.moveSyncTarget){
+        ESP_LOGE(TAG,"reached target %d final position was: %d", mc.moveSyncTarget, gs.position);
         finish_jog();
         return;
       }
-      if(mc.useStops && mc.moveDirection == false && gs.currentPosition() <= mc.moveSyncTarget){
-        ESP_LOGE(TAG,"reached -target %d final position was: %d", mc.moveSyncTarget, gs.currentPosition());
+      if(mc.useStops && mc.moveDirection == false && gs.position <= mc.moveSyncTarget){
+        ESP_LOGE(TAG,"reached -target %d final position was: %d", mc.moveSyncTarget, gs.position);
         finish_jog();
         return;
       }

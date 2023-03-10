@@ -44,9 +44,12 @@ void BounceIdleState(){
 void BounceMoveState(){
     if(bounce_yasm.isFirstRun()){
         printf("Entering Bounce Move Mode pitch: %f\n",mc.pitch);
+        bool d = mc.setStops(gs.position);
+        gs.zstepper.setDir(d);
         gs.setELSFactor(mc.pitch);
-        updateMode(RunMode::BounceMove);
+        gs.setELSFactor(mc.pitch);
         start_move();
+        updateMode(RunMode::BounceMove);
         return;
     }
     else if(!jogging){
@@ -67,7 +70,7 @@ void BounceRapidState(){
         mc.moveDistanceSteps = -mc.moveDistanceSteps;
         rapiding = true;
         gs.setELSFactor(mc.pitch);
-        mc.setStops(gs.currentPosition());
+        mc.setStops(gs.position);
         start_move();
         updateStateDoc();
         return;

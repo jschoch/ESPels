@@ -3,7 +3,6 @@
 
 #include <Arduino.h>
 #include "config.h"
-#include "rmtStepper.h"
 
 
 
@@ -33,7 +32,6 @@ extern int microsteps;
 extern int native_steps;
 extern int motor_steps;
 
-extern rmtStepper::State zstepper;
 
 
 void init_stepper(void);

@@ -8,8 +8,11 @@
 #define ARDUINOJSON_USE_DOUBLE 1
 
 #include "src/config.h"
-#include "src/Encoder.h"
+#include "src/moveConfig.h"
+#include "src/rmtStepper.h"
+#include "src/genStepper.h"
 #include "src/state.h"
+#include "src/Encoder.h"
 #include "Bounce2.h"
 #include "esp_err.h"
 #include "esp_log.h"
@@ -22,6 +25,28 @@
 #include "src/myperfmon.h"
 #include "src/Machine.h"
 #include "src/led.h"
+
+// init static members
+
+Gear::State GenStepper::State::mygear;
+rmtStepper::State GenStepper::State::zstepper;
+int GenStepper::State::nom;
+int GenStepper::State::den;
+int GenStepper::State::position;
+
+int32_t MoveConfig::State::moveDistanceSteps ;
+bool MoveConfig::State::waitForSync ;
+bool MoveConfig::State::moveDirection ;
+int32_t MoveConfig::State::moveSyncTarget ;
+int MoveConfig::State::stopPos ;
+int MoveConfig::State::stopNeg ;
+bool MoveConfig::State::spindle_handedness ;
+float MoveConfig::State::pitch ;
+float MoveConfig::State::rapidPitch ;
+float MoveConfig::State::oldPitch ;
+bool MoveConfig::State::syncMoveStart ;
+bool MoveConfig::State::isAbs  ;
+bool MoveConfig::State::useStops ;
 
 void setup() {
  

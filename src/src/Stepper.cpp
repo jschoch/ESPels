@@ -2,8 +2,8 @@
 #include <cmath>
 #include "gear.h"
 #include "rmtStepper.h"
-#include "state.h"
 #include "genStepper.h"
+#include "state.h"
 
 int microsteps = Z_MICROSTEPPING;
 
@@ -58,11 +58,11 @@ void init_stepper(){
   stepsPerMM = motor_steps / lead_screw_pitch;
 
 
-  gs.stepper.config.channel = RMT_CHANNEL_0;
-  gs.stepper.config.stepPin = (gpio_num_t) Z_STEP_PIN;
-  gs.stepper.config.dirPin = (gpio_num_t) Z_DIR_PIN;
+  gs.zstepper.config.channel = RMT_CHANNEL_0;
+  gs.zstepper.config.stepPin = (gpio_num_t) Z_STEP_PIN;
+  gs.zstepper.config.dirPin = (gpio_num_t) Z_DIR_PIN;
 
-  gs.stepper.init();
+  gs.zstepper.init();
 
 
 }

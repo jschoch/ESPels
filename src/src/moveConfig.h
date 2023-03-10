@@ -8,22 +8,22 @@ namespace MoveConfig{
 
     struct State{
         // was jog_mm
-        int32_t moveDistanceSteps = 0;
-        bool waitForSync = true;
+        static int32_t moveDistanceSteps ;
+        static bool waitForSync ;
         // was z_feeding_direction
-        bool moveDirection = true;
+        static bool moveDirection ;
         // was targetToolRelPosMM
-        int32_t moveSyncTarget = 0;
-        int stopPos = 0;
-        int stopNeg = 0;
+        static int32_t moveSyncTarget ;
+        static int stopPos ;
+        static int stopNeg ;
         // spindle spinning CW or CCW
-        bool spindle_handedness = true;
-        float pitch = 0;
-        float rapidPitch = 0;
-        float oldPitch = 0;
-        bool syncMoveStart = true;
-        bool isAbs = false;
-        bool useStops = true;
+        static bool spindle_handedness ;
+        static float pitch ;
+        static float rapidPitch ;
+        static float oldPitch ;
+        static bool syncMoveStart ;
+        static bool isAbs  ;
+        static bool useStops ;
 
         // returns a bool to be used by stepper.setDir
         inline bool setStops(int32_t current_position){
@@ -40,13 +40,13 @@ namespace MoveConfig{
              moveDirection = false;
              stopNeg = moveSyncTarget;
              stopPos = current_position;
-             ESP_LOGE(TAGmc,"Stops:\n\t Distance: %ld stopNeg: %ld stopPos: %ld, moveDirection: %d\n",moveDistanceSteps, stopNeg, stopPos, moveDirection);
+             //ESP_LOGE(TAGmc,"Stops:\n\t Distance: %ld stopNeg: %ld stopPos: %ld, moveDirection: %d\n",moveDistanceSteps, stopNeg, stopPos, moveDirection);
              return false;
            } else{
              moveDirection = true;
              stopPos = moveSyncTarget;
              stopNeg = current_position;
-             ESP_LOGE(TAGmc,"Stops:\n\t Distance: %ld stopNeg: %ld stopPos: %ld, moveDirection: %d\n", moveDistanceSteps, stopNeg, stopPos, moveDirection);
+             //ESP_LOGE(TAGmc,"Stops:\n\t Distance: %ld stopNeg: %ld stopPos: %ld, moveDirection: %d\n", moveDistanceSteps, stopNeg, stopPos, moveDirection);
              return true;
            }
         }
@@ -55,6 +55,12 @@ namespace MoveConfig{
     };
     inline State init(){
         State state;
+        state.waitForSync = true;
+        state.moveDirection = true;
+        state.spindle_handedness = true;
+        state.syncMoveStart = true;
+        state.isAbs = false;
+        state.useStops = true;
         return state;
     }
 }

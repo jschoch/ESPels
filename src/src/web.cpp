@@ -79,8 +79,8 @@ void initNvConfigDoc()
   nvConfigDoc["microsteps"] = Z_MICROSTEPPING;
   nvConfigDoc["EA"] = EA;
   nvConfigDoc["EB"] = EB;
-  nvConfigDoc["ZP"] = gs.stepper.config.stepPin;
-  nvConfigDoc["ZD"] = gs.stepper.config.dirPin;
+  nvConfigDoc["ZP"] = gs.zstepper.config.stepPin;
+  nvConfigDoc["ZD"] = gs.zstepper.config.dirPin;
   nvConfigDoc["motor_steps"] = Z_MICROSTEPPING * Z_NATIVE_STEPS_PER_REV;
   nvConfigDoc["native_steps"] = Z_NATIVE_STEPS_PER_REV;
 
@@ -174,7 +174,7 @@ void updateStatusDoc()
   // defined in util.h and helps UI figure out what to display
   statusDoc["m"] = (int)run_mode;
   // the position in steps
-  statusDoc["p"] = gs.currentPosition();
+  statusDoc["p"] = gs.position;
 
   // encoder postion in cpr pulses
   statusDoc["encoderPos"] = encoder.getCount();
@@ -426,8 +426,8 @@ void handleJog()
 
     if (!pos_feeding)
     {
-      bool dir = mc.setStops(gs.currentPosition());
-      gs.stepper.setDir(dir);
+      bool dir = mc.setStops(gs.position);
+      gs.zstepper.setDir(dir);
       gs.setELSFactor(mc.pitch);
       Serial.printf("handleJog pitch: %f target: %i\n",mc.pitch,mc.moveSyncTarget);
       //gs.init_gear(encoder.getCount());
@@ -495,9 +495,7 @@ void handleBounce()
   mc.moveDistanceSteps = config["moveSteps"].as<int>();
   feeding_ccw = (bool)config["f"];
   //el.error("warning, TOOD: this only is setup for one spindle direction");
-  bool d = mc.setStops(gs.currentPosition());
-  gs.stepper.setDir(d);
-  gs.setELSFactor(mc.pitch);
+  
   bouncing = true;
   bounce_yasm.next(BounceMoveState);
 }
@@ -509,7 +507,7 @@ void handleFeed(){
   pitch = mc.pitch;
   Serial.printf("\nFeed ccw: %d pitch: %f config pitch %f\n",feeding_ccw,pitch,config["pitch"]);
   //bool d = mc.setStops(gs.currentPosition());
-  gs.stepper.setDir(feeding_ccw);
+  gs.zstepper.setDir(feeding_ccw);
   gs.setELSFactor(mc.pitch);
   gs.init_gear(encoder.getCount());
   mc.useStops = false;
@@ -899,7 +897,7 @@ void sendUpdates()
     // only send state when it changes
     // updateStateDoc();
     // Serial.printf(" %d ",(int)run_mode);
-    Serial.printf(" %d %d %d ", (int)run_mode, gs.currentPosition(), WiFi.RSSI());
+    Serial.printf(" %d %d %d ", (int)run_mode, gs.position, WiFi.RSSI());
     updateDebugStatusDoc();
     updateStatusDoc();
 
