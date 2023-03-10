@@ -7,22 +7,26 @@ extern volatile int vEncSpeed;
 extern volatile bool vEncStopped;
 extern int spindle_encoder_resolution;
 extern Neotimer rpm_timer;
+extern double avg_times;
 
-enum Quadrature{
-  ON, //!<  Enable quadrature mode CPR = 4xPPR
-  OFF //!<  Disable quadrature mode / CPR = PPR
+enum Quadrature
+{
+    ON, //!<  Enable quadrature mode CPR = 4xPPR
+    OFF //!<  Disable quadrature mode / CPR = PPR
 };
 
-enum Direction{
-    CW      = 1,  //clockwise
-    CCW     = -1, // counter clockwise
-    UNKNOWN = 0   //not yet known or invalid state
+enum Direction
+{
+    CW = 1,     // clockwise
+    CCW = -1,   // counter clockwise
+    UNKNOWN = 0 // not yet known or invalid state
 };
 
 /**
  *  Pullup configuration structure
  */
-enum Pullup{
+enum Pullup
+{
     INTERN_PULLUP, //!< Use internal pullups
     INTERN_PULLDOWN,
     EXTERN //!< Use external pullups
@@ -32,11 +36,13 @@ void init_encoder(void);
 void do_rpm(void);
 void stopVenc();
 void startVenc();
+void startStatTask(void);
+void startPrintTask(void);
 
 // sign function
-#define _sign(a) ( ( (a) < 0 )  ?  -1   : ( (a) > 0 ) )
-#define _round(x) ((x)>=0?(long)((x)+0.5):(long)((x)-0.5))
-#define _constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
+#define _sign(a) (((a) < 0) ? -1 : ((a) > 0))
+#define _round(x) ((x) >= 0 ? (long)((x) + 0.5) : (long)((x)-0.5))
+#define _constrain(amt, low, high) ((amt) < (low) ? (low) : ((amt) > (high) ? (high) : (amt)))
 
 // utility defines
 #define _2_SQRT3 1.15470053838
@@ -51,14 +57,15 @@ void startVenc();
 #define _2PI 6.28318530718
 #define _3PI_2 4.71238898038
 
-class Encoder {
- public:
- Encoder(int encA, int encB , double ppr);
+class Encoder
+{
+public:
+    Encoder(int encA, int encB, double ppr);
 
- /** encoder initialise pins */
- void init();
- void enableInterrupts(void (*doA)() = nullptr, void(*doB)() = nullptr);
-    
+    /** encoder initialise pins */
+    void init();
+    void enableInterrupts(void (*doA)() = nullptr, void (*doB)() = nullptr);
+
     //  Encoder interrupt callback functions
     /** A channel callback function */
     void handleA();
@@ -66,7 +73,7 @@ class Encoder {
     void handleB();
     double getAngle();
     double initRelativeZero();
-    double initAbsoluteZero() ;
+    double initAbsoluteZero();
     int pinA; //!< encoder hardware pin A
     int pinB; //!< encoder hardware pin B
     int cpr;
@@ -82,13 +89,12 @@ class Encoder {
 
 private:
     //!< current pulse counter
-    volatile long pulse_timestamp;//!< last impulse timestamp in us
-    volatile int A_active; //!< current active states of A channel
-    volatile int B_active; //!< current active states of B channel
+    volatile long pulse_timestamp; //!< last impulse timestamp in us
+    volatile int A_active;         //!< current active states of A channel
+    volatile int B_active;         //!< current active states of B channel
     double prev_Th, pulse_per_second;
 
     volatile long prev_timestamp_us;
-
 };
 
 // encoder instance

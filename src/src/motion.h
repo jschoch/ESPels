@@ -15,6 +15,7 @@ void IRAM_ATTR processMotion(void);
 void start_rapid(double distance);
 void init_hob_feed(void);
 //void calcDelta(void *pvParaeters);
+void startCalcTask(void);
 
 void init_pos_feed();
 

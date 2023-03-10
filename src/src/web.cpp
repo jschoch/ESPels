@@ -41,7 +41,7 @@ size_t serialize_len = 0;
 String wsData;
 
 // sends updates (statusDoc) to UI every interval
-Neotimer update_timer = Neotimer(800);
+Neotimer update_timer = Neotimer(500);
 Neotimer ota_timer = Neotimer(200);
 
 // TOOD: consider configs from config.h to update this stuff
@@ -230,6 +230,9 @@ void updateDebugStatusDoc()
   debugStatusDoc["c"] = statusCounter++;
   debugStatusDoc["h"] = ESP.getFreeHeap();
   debugStatusDoc["ha"] = ESP.getHeapSize();
+  debugStatusDoc["cc"] = ws.count();
+  // average time of encoder ISR
+  debugStatusDoc["at"] = avg_times;
 
   /*
   esp_chip_info_t* out_info = ESP.get_chip_info();
@@ -296,7 +299,12 @@ void sendDoc(const JsonDocument &doc)
   serialize_len = serializeMsgPack(doc, outBuffer);
   // TODO: debug flag?
   //if(globalClient->canSend()){
-    ws.binaryAll(outBuffer, serialize_len);
+    //ws.queueisFull();
+    if(ws.availableForWriteAll()){
+      ws.binaryAll(outBuffer, serialize_len);
+    }else{
+      Serial.println("\n\tWS not available");
+    }
   //}else{
     //ESP_LOGE(TAGweb,"can't send doc");
   //}
@@ -505,7 +513,7 @@ void handleFeed(){
   mc.pitch = config["pitch"].as<float>();
   feeding_ccw = (bool)config["f"]; 
   pitch = mc.pitch;
-  Serial.printf("\nFeed ccw: %d pitch: %f config pitch %f\n",feeding_ccw,pitch,config["pitch"]);
+  Serial.printf("\nFeed ccw: %d pitch: %f config pitch %f\n",feeding_ccw,pitch,mc.pitch);
   //bool d = mc.setStops(gs.currentPosition());
   gs.zstepper.setDir(feeding_ccw);
   gs.setELSFactor(mc.pitch);
@@ -793,6 +801,7 @@ void connectToWifi() {
   WiFi.setTxPower(WIFI_POWER_19_5dBm);
   WiFi.setAutoReconnect(true);
   WiFi.persistent(true);
+  WiFi.setSleep(false);
   Serial.print("Connected. IP=");
   Serial.println(WiFi.localIP());
   //  MDNS hostname must be lowercase

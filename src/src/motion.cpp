@@ -18,6 +18,10 @@
 
 static const char* TAG = "Mo";
 
+
+// actual error is max_error * 2 since this is a range around the tool potion + and -
+static int max_error = 20;
+
 // not sure this is needed
 //volatile bool feeding = false;
 
@@ -144,7 +148,7 @@ void do_pos_feeding(){
     //int64_t pulse_counter = encoder.getCount();
     pulse_counter = encoder.pulse_counter;
 
-    if(pulse_counter > gs.mygear.jumps.next+1 || pulse_counter < gs.mygear.jumps.prev -1){
+    if(pulse_counter > gs.mygear.jumps.next+max_error || pulse_counter < gs.mygear.jumps.prev -max_error){
       sprintf(err,"Tool outside expected range.  encPos: %lld next: %i  pos %i ",
         pulse_counter,
         gs.mygear.jumps.next,
@@ -194,29 +198,20 @@ void do_pos_feeding(){
 
       
       if((pulse_counter == gs.mygear.jumps.next) || (pulse_counter== gs.mygear.jumps.prev)){
-        gs.mygear.calc_jumps(pulse_counter);
         gs.step();
-
-
-        //zstepper.step();
-        /*
-        if(gs.stepper.dir){
-          gs.stepPos();
-        }else
-          gs.stepNeg();
-        }
-        */
+        startCalcTask();
+        
       }
 
       // evaluate stops, no motion if motion would exceed stops
 
       if (mc.useStops && mc.moveDirection == true && gs.position >= mc.moveSyncTarget){
-        ESP_LOGE(TAG,"reached target %d final position was: %d", mc.moveSyncTarget, gs.position);
+        //ESP_LOGE(TAG,"reached target %d final position was: %d", mc.moveSyncTarget, gs.position);
         finish_jog();
         return;
       }
       if(mc.useStops && mc.moveDirection == false && gs.position <= mc.moveSyncTarget){
-        ESP_LOGE(TAG,"reached -target %d final position was: %d", mc.moveSyncTarget, gs.position);
+        //ESP_LOGE(TAG,"reached -target %d final position was: %d", mc.moveSyncTarget, gs.position);
         finish_jog();
         return;
       }
@@ -265,7 +260,33 @@ void IRAM_ATTR processMotion(){
 
 }
 
+void calcTask(void *ptr){
+  gs.mygear.calc_jumps(pulse_counter);
+  
+  vTaskDelete(NULL);
+}
 
+void startPinnedCalcTask(){
+  xTaskCreatePinnedToCore(
+                    calcTask,             /* Task function. */
+                    "calcTask",           /* String with name of task. */
+                    10000,                     /* Stack size in words. */
+                    NULL,      /* Parameter passed as input of the task */
+                    (configMAX_PRIORITIES -1 ),                         /* Priority of the task. */
+                    NULL,
+                    1); 
+}
+
+void startCalcTask(){
+  xTaskCreate(
+                    calcTask,             /* Task function. */
+                    "calcTask",           /* String with name of task. */
+                    10000,                     /* Stack size in words. */
+                    NULL,      /* Parameter passed as input of the task */
+                    (configMAX_PRIORITIES -1 ),                         /* Priority of the task. */
+                    NULL
+                    ); 
+}
 
 void init_motion(){
   esp_timer_init();
