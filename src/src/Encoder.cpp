@@ -93,7 +93,7 @@ void startVenc(){
 
 // B channel
 void IRAM_ATTR Encoder::handleB() {
-  pulse_start = esp_timer_get_time();
+  //pulse_start = esp_timer_get_time();
   int B = digitalRead(pinB);
   switch (quadrature){
     case Quadrature::ON:
@@ -116,8 +116,8 @@ void IRAM_ATTR Encoder::handleB() {
       }
       break;
   }
-  pulse_stop = esp_timer_get_time();
-  startStatTask();
+  //pulse_stop = esp_timer_get_time();
+  //startStatTask();
 }
 
 //  Encoder interrupt callback functions

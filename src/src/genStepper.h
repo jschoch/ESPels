@@ -35,14 +35,12 @@ namespace GenStepper {
         static rmtStepper::State zstepper;
         
 
-        inline bool setELSFactor(float pitch, bool recalculate_den = false){
+        inline bool setELSFactor(double pitch, bool recalculate_den = false){
             if(pitch == 0){
                 sprintf(lm.buf,"Pitch 0, no good");
                 //lm.error();
                 return false;
             }
-            float oldPitch = mygear.pitch;
-            mygear.pitch = pitch;
             
             if(recalculate_den){
                 den = c.lead_screw_pitch * c.spindle_encoder_resolution;
@@ -51,7 +49,6 @@ namespace GenStepper {
             if(!mygear.setRatio(nom,den)){
                 sprintf(lm.buf,"Bad Ratio: Den: %d Nom: %d\n",nom,den);
                 //lm.error();
-                mygear.pitch = oldPitch;
                 return false;
             }
             Serial.printf("Set ELS Factor pitch: %f nom: %d den: %d\n",pitch,nom,den);
@@ -64,7 +61,7 @@ namespace GenStepper {
             //printf("init_gear count was: %lld \n",count);
             if(mygear.setRatio(nom,den)){
                 mygear.calc_jumps(count);
-                mygear.jumps.last = mygear.jumps.prev;
+                mygear.last = mygear.prev;
                 if(!mygear.setRatio(nom,den)){
                     printf("disaster\n");
                     throw "holy shit";
@@ -101,7 +98,7 @@ namespace GenStepper {
         state.c.name = name;
         state.lm = lm;
         state.nom = state.c.spindle_encoder_resolution * 0.1;
-        state.den = (int)(state.c.lead_screw_pitch * state.c.motor_steps);
+        state.den = (int)(state.c.lead_screw_pitch / state.c.motor_steps);
         state.init_gear(0); 
         return state;
         

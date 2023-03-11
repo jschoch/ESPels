@@ -41,7 +41,7 @@ size_t serialize_len = 0;
 String wsData;
 
 // sends updates (statusDoc) to UI every interval
-Neotimer update_timer = Neotimer(500);
+Neotimer update_timer = Neotimer(1000);
 Neotimer ota_timer = Neotimer(200);
 
 // TOOD: consider configs from config.h to update this stuff

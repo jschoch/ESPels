@@ -47,13 +47,16 @@ float MoveConfig::State::oldPitch ;
 bool MoveConfig::State::syncMoveStart ;
 bool MoveConfig::State::isAbs  ;
 bool MoveConfig::State::useStops ;
+int Gear::State::next;
+int Gear::State::prev;
+int Gear::State::last;
 
 void setup() {
  
   led_init();
   Serial.begin(115200);
 
-  init_encoder();  
+   
 
   init_motion();
 
@@ -74,6 +77,8 @@ void setup() {
     Serial.println(e);
   }
   bounce_yasm.next(BounceIdleState);
+
+  init_encoder(); 
 
 
   Serial.println("setup done");

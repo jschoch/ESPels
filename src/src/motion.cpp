@@ -89,16 +89,16 @@ void waitForDir(){
         gs.zstepper.dir_has_changed = false;
         if(!gs.zstepper.dir){
           // reset stuff for dir changes guard against swapping when we just moved
-          if(gs.mygear.jumps.last < encoder.pulse_counter){
-            gs.mygear.jumps.prev = gs.mygear.jumps.last;
-            gs.mygear.jumps.last = gs.mygear.jumps.next;
+          if(gs.mygear.last < encoder.pulse_counter){
+            gs.mygear.prev = gs.mygear.last;
+            gs.mygear.last = gs.mygear.next;
           }
 
         }else{
           // reset stuff for dir changes
-          if(gs.mygear.jumps.last  > encoder.pulse_counter){
-            gs.mygear.jumps.next = gs.mygear.jumps.last;
-            gs.mygear.jumps.last = gs.mygear.jumps.prev;
+          if(gs.mygear.last  > encoder.pulse_counter){
+            gs.mygear.next = gs.mygear.last;
+            gs.mygear.last = gs.mygear.prev;
           }
         }
     }
@@ -148,11 +148,11 @@ void do_pos_feeding(){
     //int64_t pulse_counter = encoder.getCount();
     pulse_counter = encoder.pulse_counter;
 
-    if(pulse_counter > gs.mygear.jumps.next+max_error || pulse_counter < gs.mygear.jumps.prev -max_error){
+    if(pulse_counter > gs.mygear.next+max_error || pulse_counter < gs.mygear.prev -max_error){
       sprintf(err,"Tool outside expected range.  encPos: %lld next: %i  pos %i ",
         pulse_counter,
-        gs.mygear.jumps.next,
-        gs.mygear.jumps.prev);
+        gs.mygear.next,
+        gs.mygear.prev);
       el.addMsg(err);
       el.hasError = true;
       pos_feeding = false;
@@ -197,9 +197,10 @@ void do_pos_feeding(){
       // calculate jumps and delta
 
       
-      if((pulse_counter == gs.mygear.jumps.next) || (pulse_counter== gs.mygear.jumps.prev)){
+      if((pulse_counter == gs.mygear.next) || (pulse_counter== gs.mygear.prev)){
         gs.step();
-        startCalcTask();
+        gs.mygear.calc_jumps(pulse_counter);
+        //startCalcTask();
         
       }
 
@@ -260,7 +261,11 @@ void IRAM_ATTR processMotion(){
 
 }
 
+
+// gs.mygear.calc_jumps(pulse_counter);
+// this is not producing smooth motion above 400 RPM spindle speed
 void calcTask(void *ptr){
+
   gs.mygear.calc_jumps(pulse_counter);
   
   vTaskDelete(NULL);
