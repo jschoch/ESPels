@@ -147,7 +147,7 @@ void IRAM_ATTR Encoder::handleA() {
       break;
   }
   pulse_stop = esp_timer_get_time();
-  startStatTask();
+  //startStatTask();
 }
 
 Encoder::Encoder(int _encA, int _encB , double _ppr){
@@ -260,8 +260,6 @@ void IRAM_ATTR statTask(void *ptr){
 }
 
 void IRAM_ATTR printTask(void *ptr){
-  //ESP_LOGE("T","avg: %lf, " PRId64 "\n",avg_times,total_times);
-  //ESP_LOGE(TAG_a,"\n\t avg: %lf  start: " PRId64 " : stop " PRId64 "\n",avg_times,pulse_start,pulse_stop);
   ESP_LOGE(TAG_a,"\n\t avg: %lf  start: %lld : stop %lld\n",avg_times,pulse_start,pulse_stop);
   vTaskDelete( NULL);
 }
