@@ -56,7 +56,8 @@ namespace Gear {
     // TODO: stop using the 2nd arg, it has to be true
     void calc_jumps(int encoder_count,bool dir = true){
       if(D == 0 || N == 0){
-        Serial.printf("D: %d N: %d calc_jumps exiting",N,D);
+        //printf("D: %d N: %d calc_jumps exiting",N,D);
+        // TODO: how to prevent this condition?
         return;
       }
       Jump nx = next_jump_forward(D,N,nerror,encoder_count);

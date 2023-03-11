@@ -1,6 +1,8 @@
 #pragma once
 #include <Arduino.h>
-#include <esp_log.h>
+
+// breaks tests
+//#include <esp_log.h>
 
 static const char* TAGmc = "Mc";
 
@@ -30,9 +32,9 @@ namespace MoveConfig{
            useStops = true;
            if(isAbs){
              moveSyncTarget = moveDistanceSteps;
-             ESP_LOGE(TAGmc,"Absolute move:\n");
+             //ESP_LOGE(TAGmc,"Absolute move:\n");
            }else {
-            ESP_LOGE(TAGmc,"Relative move: \n");
+            //ESP_LOGE(TAGmc,"Relative move: \n");
              moveSyncTarget =  current_position + moveDistanceSteps;
            }
            if( moveDistanceSteps < 0){

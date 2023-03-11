@@ -2,11 +2,53 @@
 #include <unity.h>
 #include <iostream>
 #include "src/log.h"
+
+
+#define Z_NATIVE_STEPS_PER_REV 200
+#define Z_MICROSTEPPING 8
+
 #include "src/genStepper.h"
 #include "src/moveConfig.h"
 #include "src/mocks.h"
 
 using namespace fakeit;
+
+
+// static init
+Gear::State GenStepper::State::mygear;
+rmtStepper::State GenStepper::State::zstepper;
+int GenStepper::State::nom;
+int GenStepper::State::den;
+int GenStepper::State::position;
+
+int32_t MoveConfig::State::moveDistanceSteps ;
+bool MoveConfig::State::waitForSync ;
+bool MoveConfig::State::moveDirection ;
+int32_t MoveConfig::State::moveSyncTarget ;
+int MoveConfig::State::stopPos ;
+int MoveConfig::State::stopNeg ;
+bool MoveConfig::State::spindle_handedness ;
+float MoveConfig::State::pitch ;
+float MoveConfig::State::rapidPitch ;
+float MoveConfig::State::oldPitch ;
+bool MoveConfig::State::syncMoveStart ;
+bool MoveConfig::State::isAbs  ;
+bool MoveConfig::State::useStops ;
+int Gear::State::next;
+int Gear::State::prev;
+int Gear::State::last;
+
+Log::Msg lm;
+GenStepper::Config gconf = {
+        0,
+        "Z",
+        2.0, // lead screw pitch
+        2400, // spindle enc resolution
+        200, // native steps
+        8 // microsteps
+    };
+GenStepper::State gs = GenStepper::init("z",lm,gconf);
+MoveConfig::State mc = MoveConfig::init();
 
 // run using `pio test -e ESPelsTest -v`
 // debug `pio debug -e ESPelsTest --interface gdb -x .pioinit`
@@ -33,15 +75,28 @@ void test_genstepper()
 {
     Log::Msg lm;
     // GenStepper::State gs;
-    GenStepper::State gs = GenStepper::init("Z", lm);
+    GenStepper::Config gconf = {
+        0,
+        "Z",
+        2.0, // lead screw pitch
+        2400, // spindle enc resolution
+        200, // native steps
+        8 // microsteps
+    };
+    GenStepper::State gs = GenStepper::init("Z", lm,gconf);
 
     TEST_ASSERT(gs.c.dir == 0);
-    std::cout << "name: " << gs.c.name << " pitch: " << gs.mygear.pitch << "\n";
+
+    std::cout << "name: " << gs.c.name << " pitch: " << mc.pitch << "\n";
+
+    // init should set an initial setting
+    //gs.setELSFactor(0.1,true);
 
     gs.mygear.calc_jumps(100, true);
     std::cout << "gear nom: " << gs.mygear.N << " den: " << gs.mygear.D << " \n";
     std::cout << "gs nom: " << gs.nom << " den: " << gs.den << " \n";
-
+    TEST_ASSERT(gs.nom != 0);
+    TEST_ASSERT(gs.den != 0);
     // should be 1:1 max and jumps should happen every encoder tick
     std::cout << "jumps: " << gs.mygear.jumps.last << " - " << gs.mygear.jumps.prev << "\n";
     gs.setELSFactor(2.0);
@@ -63,7 +118,7 @@ void test_moveConfig()
 
     // TODO:  do we always set the stepper when we set the stops?  If so consider factoring this out
     bool r = mc.setStops(0);
-    gs.stepper.setDir(r)
+    gs.zstepper.setDir(r);
 
             std::cout
         << "step dir bool: " << r << " stopPos: " << mc.stopPos << " stopNeg: " << mc.stopNeg << " target: " << mc.moveSyncTarget << "\n";
@@ -85,7 +140,15 @@ void test_fakePosFeeding()
 
     //      Impl
 
-    GenStepper::State gs = GenStepper::init("Z", lm);
+    GenStepper::Config gconf = {
+        0,
+        "Z",
+        2.0, // lead screw pitch
+        2400, // spindle enc resolution
+        200, // native steps
+        8 // microsteps
+    };
+    GenStepper::State gs = GenStepper::init("Z", lm,gconf);
     MoveConfig::State mc = MoveConfig::init();
 
     //  record current encoder position
@@ -95,15 +158,18 @@ void test_fakePosFeeding()
     // bool t = true;
     int64_t pulse_counter = 100;
     bool t = gs.setELSFactor(0.1);
+
     TEST_ASSERT(t == true);
+
+
     gs.mygear.calc_jumps(pulse_counter, true);
 
     // sanity check to make sure jumps are sane
 
-    if (pulse_counter > gs.mygear.jumps.next + 1 || pulse_counter < gs.mygear.jumps.prev - 1)
+    if (pulse_counter > gs.mygear.next + 1 || pulse_counter < gs.mygear.prev - 1)
     {
         std::cout << "doh! sanity check fail\n";
-        std::cout << gs.mygear.jumps.next + 1 << " prev: " << gs.mygear.jumps.prev - 1 << "\n";
+        std::cout << gs.mygear.next + 1 << " prev: " << gs.mygear.prev - 1 << "\n";
     }
     else
     {
@@ -127,7 +193,7 @@ void test_fakePosFeeding()
 
     gs.stepPos();
     TEST_ASSERT(1 == gs.position);
-    gs.stepper.setDir(false);
+    gs.zstepper.setDir(false);
     gs.stepNeg();
     TEST_ASSERT(0 == gs.position);
 
@@ -139,7 +205,15 @@ void test_venc_moveSync()
 {
     Log::Msg lm;
 
-    GenStepper::State gs = GenStepper::init("Z", lm);
+    GenStepper::Config gconf = {
+        0,
+        "Z",
+        2.0, // lead screw pitch
+        2400, // spindle enc resolution
+        200, // native steps
+        8 // microsteps
+    };
+    GenStepper::State gs = GenStepper::init("Z", lm,gconf);
     MoveConfig::State mc = MoveConfig::init();
     gs.c.spindle_encoder_resolution = 1000;
     gs.c.lead_screw_pitch = 1.0;
@@ -154,7 +228,7 @@ void test_venc_moveSync()
     gs.mygear.calc_jumps(pulse_counter, true);
     for (int i = 0; i <= 10; i++)
     {
-        if (i == gs.mygear.jumps.next || i == gs.mygear.jumps.prev)
+        if (i == gs.mygear.next || i == gs.mygear.prev)
         {
             gs.mygear.calc_jumps(i);
             gs.step();
@@ -171,6 +245,7 @@ void test_venc_moveAbsSync()
 int main(int argc, char **argv)
 {
     UNITY_BEGIN();
+     //When(Method(ArduinoFake(), Serial)).AlwaysReturn();
     std::cout << "stepper test\n";
     RUN_TEST(test_genstepper);
     RUN_TEST(test_moveConfig);

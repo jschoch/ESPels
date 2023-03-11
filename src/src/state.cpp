@@ -29,7 +29,16 @@ volatile bool rapiding = false;
 RunMode run_mode = RunMode::STARTUP;
 
 
-GenStepper::State gs = GenStepper::init("Z",el);
+GenStepper::Config gconf = {
+        0,
+        "Z",
+        LEADSCREW_LEAD, // lead screw pitch
+        ENCODER_RESOLUTION, // spindle enc resolution
+        Z_NATIVE_STEPS_PER_REV, // native steps
+        Z_MICROSTEPPING, // microsteps
+        (Z_NATIVE_STEPS_PER_REV * Z_MICROSTEPPING)
+    };
+GenStepper::State gs = GenStepper::init("Z",el,gconf);
 MoveConfig::State mc = MoveConfig::init();
 // json docs
 

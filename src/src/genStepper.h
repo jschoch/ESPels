@@ -12,13 +12,13 @@
 
 namespace GenStepper {
     struct Config{
-        int dir = 0;
+        int dir ;
         const char* name;
-        float lead_screw_pitch = lead_screw_pitch;
-        int spindle_encoder_resolution = spindle_encoder_resolution;
-        int native_steps = Z_NATIVE_STEPS_PER_REV;
-        int microsteps = Z_MICROSTEPPING;
-        int motor_steps = native_steps * microsteps;
+        float lead_screw_pitch ;
+        int spindle_encoder_resolution ;
+        int native_steps ;
+        int microsteps ;
+        int motor_steps ;
     };
 
     struct State{
@@ -51,7 +51,7 @@ namespace GenStepper {
                 //lm.error();
                 return false;
             }
-            Serial.printf("Set ELS Factor pitch: %f nom: %d den: %d\n",pitch,nom,den);
+            printf("Set ELS Factor pitch: %f nom: %d den: %d\n",pitch,nom,den);
             return true;
         }
         inline void setHobFactor(){
@@ -62,13 +62,9 @@ namespace GenStepper {
             if(mygear.setRatio(nom,den)){
                 mygear.calc_jumps(count);
                 mygear.last = mygear.prev;
-                if(!mygear.setRatio(nom,den)){
-                    printf("disaster\n");
-                    throw "holy shit";
-                }
                 return true;
             }else{
-                printf("init_gear setRatio failed");
+                printf("init_gear setRatio failed: count: %lld nom: %i den: %i",count,nom,den);
                 return false;
             }
             
@@ -92,14 +88,18 @@ namespace GenStepper {
         }
 
     };
-    inline State init(const char * name,Log::Msg lm){
+    inline State init(const char * name,Log::Msg lm,Config c){
+        double init_pitch = 0.1;
         State state;
         state.position = 0;
+        state.c = c;
         state.c.name = name;
         state.lm = lm;
-        state.nom = state.c.spindle_encoder_resolution * 0.1;
+        state.nom = state.c.spindle_encoder_resolution * init_pitch;
         state.den = (int)(state.c.lead_screw_pitch / state.c.motor_steps);
-        state.init_gear(0); 
+         
+        state.setELSFactor(init_pitch,true);
+        state.init_gear(0);
         return state;
         
     }

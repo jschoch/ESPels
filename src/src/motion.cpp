@@ -13,7 +13,7 @@
 #include "Controls.h"
 #include "Machine.h"
 #include "genStepper.h"
-#define LOG_LOCAL_LEVEL ESP_LOG_INFO
+//#define LOG_LOCAL_LEVEL ESP_LOG_INFO
 #include <esp_log.h>
 
 static const char* TAG = "Mo";
