@@ -2,22 +2,16 @@
 
 A simple electronic lead screw for the esp32
 
-this is currently in test mode and pre-alpha
+* DANGER *
+There is no estop right now, not 100% safe.  Ensure you can quickly stop the spindle and disengage the half nut.  It shouldn't but bugs....
 
-[b] DANGER 
-There is no estop right now, not safe.  Use at your own risk and hover over the lathe e-stop.  The thing could go crazy and crash the carriage into the spindle at any moment.  It shouldn't but bugs....
+[depricated: demo](https://www.youtube.com/watch?v=uXhqEe8Kw6M&list=PLvpLfzys-jPumkXZj8ZZn11zyY3UYtSkn&index=6)
 
-[demo](https://www.youtube.com/watch?v=uXhqEe8Kw6M&list=PLvpLfzys-jPumkXZj8ZZn11zyY3UYtSkn&index=6)
+## Basics
 
-Disclaimer out of the way: i've been using it for a week and it has not freaked out yet.
+The basic architecture is the firmware does the motion control and the frontend does user interaction and configuration.  The frontend is a react SPA (single page application) which uses websockets to connect to the firmware.  The Frontend can live where ever you like, you can use the S3 link or you can host it in your own network.  Once the files are loaded to your browser it only uses local networking.  No silly firwall transitions or anything like that.  You might ask why I don't serve the web content directly from the esp32 and the answer is simply development speed.  This could be done with littlefs and an esp32 with enough storage.
 
-## Frontend
-
-![sample](https://user-images.githubusercontent.com/20271/104212553-33b6c200-53ea-11eb-899b-3ec2c22e56c2.png)
-
-the webfrontend can be found here [https://github.com/jschoch/espELSfrontend]
-
-
+This repo contains the firmware.  The frontend can be found here: [https://github.com/jschoch/espELSfrontend]
 
 ## Configuration
 
@@ -39,6 +33,19 @@ in config.h update Z_STEP_PIN, Z_DIR_PIN for your stepper.
 Update  EA, and EB for your encoder signals.  Let me know if you want to have an index pulse defined as my encoder does not have one.
 
 See (Install.md) for more info on installation
+
+
+
+
+## Frontend
+
+![sample](https://user-images.githubusercontent.com/20271/104212553-33b6c200-53ea-11eb-899b-3ec2c22e56c2.png)
+
+the webfrontend can be found here [https://github.com/jschoch/espELSfrontend]
+
+
+
+
 
 
 ## HOW
