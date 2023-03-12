@@ -205,6 +205,9 @@ void updateStatusDoc()
   // the stop in the Z - direction
   statusDoc["sn"] = mc.stopNeg;
   statusDoc["r"] = WiFi.RSSI();
+
+  // this is used by "Distance to Go" in the UI to figure out the direction 
+  statusDoc["fd"] = mc.moveDirection;
   sendStatus();
 }
 
@@ -216,8 +219,6 @@ void updateDebugStatusDoc()
   // so if the spindle is rotating CW, and the intension is to feed in the Z- direction this should be false
   // but this somewhat depends on the setup
 
-  // this only seems used for jogABS
-  //debugStatusDoc["fd"] = mc.moveDirection;
 
   // This is the number of encoder pulses needed before the next stepper pulse
   // TODO: make this optional and move to a "debug" doc
