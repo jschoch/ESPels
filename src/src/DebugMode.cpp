@@ -4,10 +4,11 @@
 #include "web.h"
 #include "controls.h"
 #include "stepper.h"
+#include "BounceMode.h"
 
 
 void debugState(){
-    if(btn_yasm.isFirstRun()){
+    if(bounce_yasm.isFirstRun()){
         updateMode(RunMode::DEBUG_READY);
         web = true;
     }

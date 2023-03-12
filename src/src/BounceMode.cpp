@@ -45,11 +45,12 @@ void BounceMoveState(){
     if(bounce_yasm.isFirstRun()){
         printf("Entering Bounce Move Mode pitch: %f\n",mc.pitch);
         bool d = mc.setStops(gs.position);
-        gs.zstepper.setDir(d);
-        gs.setELSFactor(mc.pitch);
+        bool z_dir = gs.zstepper.setDir(d);
+        printf("z_dir was: %d\n",z_dir);
         gs.setELSFactor(mc.pitch);
         start_move();
         updateMode(RunMode::BounceMove);
+        //bounce_yasm.next(BounceMoveState);
         return;
     }
     else if(!jogging){
@@ -65,11 +66,11 @@ void BounceRapidState(){
         // TODO: yuck refactor this
         mc.oldPitch = mc.pitch;
         //pitch = rapids;
-        mc.pitch = mc.rapidPitch;
+        //mc.pitch = mc.rapidPitch;
         old_moveDistanceSteps = mc.moveDistanceSteps;
         mc.moveDistanceSteps = -mc.moveDistanceSteps;
         rapiding = true;
-        gs.setELSFactor(mc.pitch);
+        gs.setELSFactor(mc.rapidPitch);
         mc.setStops(gs.position);
         start_move();
         updateStateDoc();
@@ -81,7 +82,16 @@ void BounceRapidState(){
         mc.moveDistanceSteps = old_moveDistanceSteps;
         bouncing = false;
         jogging = false;
-        bounce_yasm.next(BounceIdleState);
+        
+        // not sure how isFirstRun works !?
+        //bounce_yasm.next(BounceIdleState);
+        //bounce_yasm.next(slaveJogReadyState);
+        //RunMode(SLAVE_JOG_READY);
+        //updateStateDoc();
+        //bounce_yasm.next(slaveJogReadyState,true);
+        setRunMode((int)RunMode::SLAVE_JOG_READY);
+        Serial.println("Bounce Mode done");
+        return;
     }
 
 }

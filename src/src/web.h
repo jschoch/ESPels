@@ -24,3 +24,4 @@ void handleJog();
 void sendUpdates();
 void sendDoc(const JsonDocument& doc);
 void sendLogP(Log::Msg *msg);
+void setRunMode(int mode);

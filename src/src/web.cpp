@@ -159,7 +159,7 @@ void loadNvConfigDoc()
     gs.c.spindle_encoder_resolution = spindle_encoder_resolution;
     Serial.print("Loaded this NvConfig doc");
     serializeJsonPretty(nvConfigDoc, Serial);
-    if(!gs.setELSFactor(pitch,true)){
+    if(!gs.setELSFactor(mc.pitch,true)){
       Serial.println("Something wrong with this NvConfig!!!!!");
     }
   }
@@ -188,6 +188,8 @@ void updateStatusDoc()
   statusDoc["jogging"] = jogging;
   // bool for rapid sync movement TODO: bad name
   statusDoc["rap"] = rapiding;
+  // flag for bouncing mode
+  statusDoc["bf"] = bouncing;
   // main bool to turn movement on/off
   statusDoc["pos_feed"] = pos_feeding;
 
@@ -215,13 +217,13 @@ void updateDebugStatusDoc()
   // but this somewhat depends on the setup
 
   // this only seems used for jogABS
-  debugStatusDoc["fd"] = mc.moveDirection;
+  //debugStatusDoc["fd"] = mc.moveDirection;
 
   // This is the number of encoder pulses needed before the next stepper pulse
   // TODO: make this optional and move to a "debug" doc
   debugStatusDoc["delta"] = delta;
   // this doesn't appear to be used now, but...
-  debugStatusDoc["targetPos"] = mc.moveSyncTarget;
+  debugStatusDoc["targetPos"] = mc.moveTargetSteps;
   // for cpu stats
   // TODO: move this to a debug doc
   debugStatusDoc["c0"] = cpu0;
@@ -246,9 +248,9 @@ void updateStateDoc()
   stateDoc["t"] = "state";
 
   // the pitch for the sync move calculation in MM
-  stateDoc["pitch"] = pitch;
+  stateDoc["pitch"] = mc.pitch;
   // the pitch for sync rapid moves
-  stateDoc["rapid"] = rapids;
+  stateDoc["rapid"] = mc.rapidPitch;
 
   // the run mode
   stateDoc["m"] = (int)run_mode;
@@ -273,23 +275,23 @@ void setRunMode(int mode)
   {
   case (int)RunMode::DEBUG_READY:
     // NEed to be able to stop what is currently running
-    btn_yasm.next(debugState);
+    bounce_yasm.next(debugState);
     break;
   case (int)RunMode::SLAVE_JOG_READY:
-    btn_yasm.next(slaveJogReadyState);
+    bounce_yasm.next(slaveJogReadyState);
     break;
   case (int)RunMode::SLAVE_READY:
-    btn_yasm.next(SlaveModeReadyState);
+    bounce_yasm.next(SlaveModeReadyState);
     break;
   case (int)RunMode::FEED_READY:
-    btn_yasm.next(FeedModeReadyState);
+    bounce_yasm.next(FeedModeReadyState);
     break;
   case (int)RunMode::HOB_READY:
     // hob_yasm.next(HobReadyState);
     HobReadyState();
     break;
   default:
-    btn_yasm.next(startupState);
+    bounce_yasm.next(startupState);
     break;
   }
 }
@@ -415,8 +417,8 @@ void handleRapid()
   JsonObject config = inDoc["config"];
   mc.moveDistanceSteps = config["moveSteps"].as<int>();
   // start_rapid(jog_mm);
-  mc.oldPitch = pitch;
-  mc.pitch = rapids;
+  mc.oldPitch = mc.pitch;
+  mc.pitch = mc.rapidPitch;
   rapiding = true;
   handleJog();
 }
@@ -428,18 +430,19 @@ void handleJog()
   {
     JsonObject config = inDoc["config"];
     mc.moveDistanceSteps = config["moveSteps"].as<int>();
+    mc.pitch = config["pitch"].as<double>();
 
     // don't do this direction is handled in setStops
     // mc.moveDirection = (bool)config["f"];
 
     if (!pos_feeding)
     {
-      bool dir = mc.setStops(gs.position);
-      gs.zstepper.setDir(dir);
+      bool thedir = mc.setStops(gs.position);
+      bool step_dir_response = gs.zstepper.setDirNow(thedir);
+      Serial.printf("Response from stepper: %d stepper current direction: %d\n",step_dir_response,gs.zstepper.dir);
       gs.setELSFactor(mc.pitch);
-      Serial.printf("handleJog pitch: %f target: %i\n",mc.pitch,mc.moveSyncTarget);
-      //gs.init_gear(encoder.getCount());
-      //mc.useStops = true;
+      Serial.printf("handleJog pitch: %f target: %i\n",mc.pitch,mc.moveDistanceSteps);
+      Serial.printf("\t\tStops: stopNeg: %i stopPos: %i\n",mc.stopNeg,mc.stopPos);
       init_pos_feed();
       updateStatusDoc();
     }
@@ -465,8 +468,8 @@ void handleHobRun()
     {
       // initialize hob run state?
       JsonObject config = inDoc["config"];
-      pitch = config["pitch"].as<double>();
-      Serial.printf("Pitch %f \n", pitch);
+      mc.pitch = config["pitch"].as<double>();
+      Serial.printf("Pitch %f \n", mc.pitch);
       mc.moveDirection = (bool)config["f"];
       // syncStart = (bool)config["s"];
       //  TODO: do I need to sync the spindle in this mode?
@@ -498,24 +501,24 @@ void handleBounce()
 
   // parse config
   mc.pitch = config["pitch"].as<double>();
-  pitch = mc.pitch;
+  //pitch = mc.pitch;
   mc.rapidPitch = config["rapid"].as<double>();
   mc.moveDistanceSteps = config["moveSteps"].as<int>();
+  Serial.printf("Bounce config: distance: %i rapid: %lf move: %lf\n",mc.moveDistanceSteps,mc.rapidPitch,mc.pitch);
   feeding_ccw = (bool)config["f"];
   //el.error("warning, TOOD: this only is setup for one spindle direction");
   
   bouncing = true;
-  bounce_yasm.next(BounceMoveState);
+  bounce_yasm.next(BounceMoveState,true);
 }
 
 void handleFeed(){
   JsonObject config = inDoc["config"];
   mc.pitch = config["pitch"].as<float>();
   feeding_ccw = (bool)config["f"]; 
-  pitch = mc.pitch;
-  Serial.printf("\nFeed ccw: %d pitch: %f config pitch %f\n",feeding_ccw,pitch,mc.pitch);
+  Serial.printf("\nFeed ccw: %d pitch: %f config pitch %f\n",feeding_ccw,mc.pitch);
   //bool d = mc.setStops(gs.currentPosition());
-  gs.zstepper.setDir(feeding_ccw);
+  gs.zstepper.setDirNow(feeding_ccw);
   gs.setELSFactor(mc.pitch);
   gs.init_gear(encoder.getCount());
   mc.useStops = false;
@@ -562,7 +565,7 @@ void handleDebug()
 
 void handleSend()
 {
-  // TODO: i dont' think I use this really
+  // this handles config changes sent from UI
 
   // This seems redundant, why not just access inDoc?
   JsonObject config = inDoc["config"];
@@ -570,18 +573,18 @@ void handleSend()
   Serial.print("got pitch: ");
   double p = config["pitch"];
   Serial.println(p);
-  if (p != pitch)
+  if (p != mc.pitch)
   {
     Serial.println("new pitch");
-    oldPitch = pitch;
-    pitch = p;
-    // setFactor();
-    gs.setELSFactor(pitch);
+    mc.oldPitch = mc.pitch;
+    mc.pitch = p;
+    // not needed?
+    //gs.setELSFactor(mc.pitch);
   }
-  if (config["rapid"] != rapids)
+  if (config["rapid"] != mc.rapidPitch)
   {
-    Serial.println("updating rapids");
-    rapids = config["rapid"];
+    mc.rapidPitch = config["rapid"];
+    Serial.printf("updating rapids: %lf",mc.rapidPitch);
     // stateDoc["rapid"] = rapids;
   }
   if (config["m"] != (int)run_mode)
@@ -670,6 +673,11 @@ void parseObj(AsyncWebSocketClient *client)
     jogging = false;
     rapiding = false;
     bouncing = false;
+
+
+    // this must be reset for moveSync to work after running feed
+    feeding_ccw = true;
+
     // TODO: need rapid cancel
   }
   else if (strcmp(cmd, "moveSyncAbs") == 0)

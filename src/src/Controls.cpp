@@ -17,6 +17,7 @@
 #include "web.h"
 #include "genStepper.h"
 #include "motion.h"
+#include "BounceMode.h"
 
 Neotimer button_print_timer = Neotimer(2000);
 Neotimer dro_timer = Neotimer(600);
@@ -34,10 +35,9 @@ char stats[ 2048];
 #define configUSE_STATS_FORMATTING_FUNCTIONS 1
 #endif
 
-YASM btn_yasm;
 
 void init_controls(){
-  btn_yasm.next(startupState);  
+  bounce_yasm.next(startupState);  
 }
 
 
@@ -51,25 +51,26 @@ void updateMode(RunMode run){
 }
 
 void startupState(){
-  if(btn_yasm.isFirstRun()){
+  if(bounce_yasm.isFirstRun()){
     updateMode(RunMode::STARTUP);
     web = true;
   }
 }
 
 void slaveJogReadyState(){
-  if(btn_yasm.isFirstRun()){
+  if(bounce_yasm.isFirstRun()){
     updateMode(RunMode::SLAVE_JOG_READY);
     //setFactor();
-    gs.setELSFactor(pitch);
+    //gs.setELSFactor(pitch);
     web = true;
+    return;
   }
 }
 
 
 // This is "slave jog" status mode, "slave" status is in SlaveMode.cpp
 void slaveJogStatusState(){
-  if(btn_yasm.isFirstRun()){
+  if(bounce_yasm.isFirstRun()){
     updateMode(RunMode::RUNNING);
     web = false;
   }

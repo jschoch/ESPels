@@ -35,6 +35,7 @@ namespace GenStepper {
         static rmtStepper::State zstepper;
         
 
+        // if returns true it worked
         inline bool setELSFactor(double pitch, bool recalculate_den = false){
             if(pitch == 0){
                 sprintf(lm.buf,"Pitch 0, no good");
@@ -64,7 +65,7 @@ namespace GenStepper {
                 mygear.last = mygear.prev;
                 return true;
             }else{
-                printf("init_gear setRatio failed: count: %lld nom: %i den: %i",count,nom,den);
+                printf("\n\n\n\tinit_gear setRatio failed: count: %lld nom: %i den: %i",count,nom,den);
                 return false;
             }
             

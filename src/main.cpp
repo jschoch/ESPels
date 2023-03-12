@@ -37,15 +37,14 @@ int GenStepper::State::position;
 int32_t MoveConfig::State::moveDistanceSteps ;
 bool MoveConfig::State::waitForSync ;
 bool MoveConfig::State::moveDirection ;
-int32_t MoveConfig::State::moveSyncTarget ;
+int32_t MoveConfig::State::moveTargetSteps ;
 int MoveConfig::State::stopPos ;
 int MoveConfig::State::stopNeg ;
 bool MoveConfig::State::spindle_handedness ;
-float MoveConfig::State::pitch ;
-float MoveConfig::State::rapidPitch ;
-float MoveConfig::State::oldPitch ;
-bool MoveConfig::State::syncMoveStart ;
-bool MoveConfig::State::isAbs  ;
+double MoveConfig::State::pitch ;
+double MoveConfig::State::rapidPitch ;
+double MoveConfig::State::oldPitch ;
+//bool MoveConfig::State::isAbs  ;
 bool MoveConfig::State::useStops ;
 int Gear::State::next;
 int Gear::State::prev;
@@ -65,7 +64,7 @@ void setup() {
   init_controls();
   
   //setFactor();
-  gs.setELSFactor(pitch);
+  gs.setELSFactor(mc.pitch);
 
   init_web();
 

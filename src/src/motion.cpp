@@ -35,13 +35,16 @@ char err[500] = "";
 
 
 void init_pos_feed(){
-  //setFactor();
-  gs.setELSFactor(pitch);
+  // this must be done by the caller
+  //gs.setELSFactor(pitch);
   if(!pos_feeding){
     
     //wait for the start to come around
-    if(mc.syncMoveStart){
-      Serial.printf("Move: waiting for spindle sync stopNeg: %d stopPos: %d nom: %d den: %d\n",mc.stopPos, mc.stopNeg,gs.nom, gs.den);
+    if(mc.waitForSync){
+      Serial.printf("Move: waiting for spindle sync target: %i distance: %i  stopNeg: %d stopPos: %d nom: %d den: %d\n",
+        mc.moveTargetSteps,
+        mc.moveDistanceSteps,
+        mc.stopNeg, mc.stopPos,gs.nom, gs.den);
       //gs.init_gear(encoder.getCount());
       syncWaiting = true;
       pos_feeding = true;
@@ -63,7 +66,7 @@ void init_hob_feed(){
   if(!pos_feeding){
     
     //wait for the start to come around
-    if(mc.syncMoveStart){
+    if(mc.waitForSync){
       Serial.println("waiting for spindle sync");
       syncWaiting = true;
       pos_feeding = true;
@@ -110,13 +113,13 @@ void waitForDir(){
 
 void finish_jog(){
   if(rapiding){
-    pitch = oldPitch;
-    pos_feeding = false;
+    mc.pitch = mc.oldPitch;
     rapiding = false;
   }else{
     jogging = false;
-    pos_feeding = false;
   }
+  pos_feeding = false;
+  feeding_ccw = true;
 }
 
 
@@ -148,7 +151,7 @@ void do_pos_feeding(){
     //int64_t pulse_counter = encoder.getCount();
     pulse_counter = encoder.pulse_counter;
 
-    if(pulse_counter > gs.mygear.next+max_error || pulse_counter < gs.mygear.prev -max_error){
+    if(pulse_counter > (gs.mygear.next + max_error) || pulse_counter < (gs.mygear.prev - max_error)){
       sprintf(err,"Tool outside expected range.  encPos: %lld next: %i  pos %i ",
         pulse_counter,
         gs.mygear.next,
@@ -206,25 +209,25 @@ void do_pos_feeding(){
 
       // evaluate stops, no motion if motion would exceed stops
 
-      if (mc.useStops && mc.moveDirection == true && gs.position >= mc.moveSyncTarget){
+      if (mc.useStops && mc.moveDirection == true && gs.position >= mc.moveTargetSteps){
         //ESP_LOGE(TAG,"reached target %d final position was: %d", mc.moveSyncTarget, gs.position);
         finish_jog();
         return;
       }
-      if(mc.useStops && mc.moveDirection == false && gs.position <= mc.moveSyncTarget){
+      if(mc.useStops && mc.moveDirection == false && gs.position <= mc.moveTargetSteps){
         //ESP_LOGE(TAG,"reached -target %d final position was: %d", mc.moveSyncTarget, gs.position);
         finish_jog();
         return;
       }
 
-      if(mc.useStops && (mc.moveSyncTarget < mc.stopNeg)){
+      if(mc.useStops && (mc.moveTargetSteps < mc.stopNeg)){
         el.addMsg("Tool past stopNeg: HALT");
         el.hasError = true;
         finish_jog();
         return;
       }
 
-      if(mc.useStops && mc.moveSyncTarget > mc.stopPos){
+      if(mc.useStops && mc.moveTargetSteps > mc.stopPos){
         el.addMsg("tool past stopPos: HALT");
         el.hasError = true;
 
@@ -293,8 +296,9 @@ void startCalcTask(){
                     ); 
 }
 
+// TOOD: is this needed?
 void init_motion(){
   esp_timer_init();
   //setFactor();
-  gs.setELSFactor(pitch);
+  //gs.setELSFactor(pitch);
 }
