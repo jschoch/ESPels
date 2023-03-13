@@ -433,6 +433,9 @@ void handleJog()
     mc.moveDistanceSteps = config["moveSteps"].as<int>();
     mc.pitch = config["pitch"].as<double>();
 
+    // TODO: validate this is correct
+    // TODO: calculate max pitch in init somewhare and compare this
+
     // don't do this direction is handled in setStops
     // mc.moveDirection = (bool)config["f"];
 
@@ -515,7 +518,7 @@ void handleBounce()
 
 void handleFeed(){
   JsonObject config = inDoc["config"];
-  mc.pitch = config["pitch"].as<float>();
+  mc.pitch = config["pitch"].as<double>();
   feeding_ccw = (bool)config["f"]; 
   Serial.printf("\nFeed ccw: %d pitch: %f config pitch %f\n",feeding_ccw,mc.pitch);
   //bool d = mc.setStops(gs.currentPosition());
@@ -571,30 +574,34 @@ void handleSend()
   // This seems redundant, why not just access inDoc?
   JsonObject config = inDoc["config"];
   Serial.println("getting config");
-  Serial.print("got pitch: ");
-  double p = config["pitch"];
-  Serial.println(p);
-  if (p != mc.pitch)
+  if (config["m"] != (int)run_mode)
   {
+    Serial.print("setting new mode from webUI: ");
+    int got_run_mode = config["m"].as<int>();
+    run_mode = RunMode(got_run_mode);
+    Serial.println((int)run_mode);
+    setRunMode(got_run_mode);
+  }
+  updateStateDoc();
+}
+void handleMoveConfig(){
+   JsonObject config = inDoc["config"];
+  Serial.println("MoveConfig: getting config");
+  Serial.print("got pitch: ");
+  double p = config["movePitch"];
+  if(p != mc.pitch){
     Serial.println("new pitch");
     mc.oldPitch = mc.pitch;
     mc.pitch = p;
     // not needed?
     //gs.setELSFactor(mc.pitch);
   }
-  if (config["rapid"] != mc.rapidPitch)
+  double r = config["rapidPitch"].as<double>();
+  if (r != mc.rapidPitch)
   {
-    mc.rapidPitch = config["rapid"];
+    Serial.println("new rapid");
+    mc.rapidPitch = r;
     Serial.printf("updating rapids: %lf",mc.rapidPitch);
-    // stateDoc["rapid"] = rapids;
-  }
-  if (config["m"] != (int)run_mode)
-  {
-    Serial.print("setting new mode from webUI: ");
-    int got_run_mode = config["m"];
-    run_mode = RunMode(got_run_mode);
-    Serial.println((int)run_mode);
-    setRunMode(got_run_mode);
   }
   updateStateDoc();
 }
@@ -692,6 +699,9 @@ void parseObj(AsyncWebSocketClient *client)
   else if (strcmp(cmd, "sendConfig") == 0)
   {
     handleSend();
+  }
+  else if (strcmp(cmd, "sendMoveConfig") == 0){
+    handleMoveConfig();
   }
   else if (strcmp(cmd, "hobrun") == 0)
   {

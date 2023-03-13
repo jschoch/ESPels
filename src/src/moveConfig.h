@@ -67,6 +67,8 @@ namespace MoveConfig{
         state.waitForSync = true;
         state.moveDirection = true;
         state.spindle_handedness = true;
+        state.pitch = 0.1;
+        state.rapidPitch = 0.1;
         //state.syncMoveStart = true;
         //state.isAbs = false;
         state.useStops = true;
