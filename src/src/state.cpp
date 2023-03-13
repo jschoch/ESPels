@@ -36,7 +36,7 @@ GenStepper::Config gconf = {
         ENCODER_RESOLUTION, // spindle enc resolution
         Z_NATIVE_STEPS_PER_REV, // native steps
         Z_MICROSTEPPING, // microsteps
-        (Z_NATIVE_STEPS_PER_REV * Z_MICROSTEPPING)
+        (Z_NATIVE_STEPS_PER_REV * Z_MICROSTEPPING) // motorsteps
     };
 GenStepper::State gs = GenStepper::init("Z",el,gconf);
 MoveConfig::State mc = MoveConfig::init();

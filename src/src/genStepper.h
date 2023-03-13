@@ -43,10 +43,15 @@ namespace GenStepper {
                 return false;
             }
             
-            if(recalculate_den){
-                den = c.lead_screw_pitch * c.spindle_encoder_resolution;
+            if(recalculate_den == true){
+                GenStepper::State::den = c.lead_screw_pitch * c.spindle_encoder_resolution;
+                printf("recalculated denominator: %i",den);
             }
-            nom = c.motor_steps * pitch;
+            GenStepper::State::nom = c.motor_steps * pitch;
+            if(nom == 0 || den == 0){
+                printf("\n\n\tStepper set factor failed, perhaps your config is bad? nom: %i den: %i\n\n",nom,den);
+                return false;
+            }
             if(!mygear.setRatio(nom,den)){
                 sprintf(lm.buf,"Bad Ratio: Den: %d Nom: %d\n",nom,den);
                 //lm.error();
@@ -96,8 +101,8 @@ namespace GenStepper {
         state.c = c;
         state.c.name = name;
         state.lm = lm;
-        state.nom = state.c.spindle_encoder_resolution * init_pitch;
-        state.den = (int)(state.c.lead_screw_pitch / state.c.motor_steps);
+        state.nom = c.spindle_encoder_resolution * init_pitch;
+        state.den = (int)(c.lead_screw_pitch / c.motor_steps);
          
         state.setELSFactor(init_pitch,true);
         state.init_gear(0);

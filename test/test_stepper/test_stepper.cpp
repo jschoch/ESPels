@@ -20,19 +20,19 @@ rmtStepper::State GenStepper::State::zstepper;
 int GenStepper::State::nom;
 int GenStepper::State::den;
 int GenStepper::State::position;
-
+int32_t MoveConfig::State::moveTargetSteps ;
 int32_t MoveConfig::State::moveDistanceSteps ;
 bool MoveConfig::State::waitForSync ;
 bool MoveConfig::State::moveDirection ;
-int32_t MoveConfig::State::moveSyncTarget ;
+//int32_t MoveConfig::State::moveSyncTarget ;
 int MoveConfig::State::stopPos ;
 int MoveConfig::State::stopNeg ;
 bool MoveConfig::State::spindle_handedness ;
-float MoveConfig::State::pitch ;
-float MoveConfig::State::rapidPitch ;
-float MoveConfig::State::oldPitch ;
-bool MoveConfig::State::syncMoveStart ;
-bool MoveConfig::State::isAbs  ;
+double MoveConfig::State::pitch ;
+double MoveConfig::State::rapidPitch ;
+double MoveConfig::State::oldPitch ;
+//bool MoveConfig::State::syncMoveStart ;
+//bool MoveConfig::State::isAbs  ;
 bool MoveConfig::State::useStops ;
 int Gear::State::next;
 int Gear::State::prev;
@@ -73,6 +73,7 @@ void loop()
 
 void test_genstepper()
 {
+    std::cout << "test_genstepper\n";
     Log::Msg lm;
     // GenStepper::State gs;
     GenStepper::Config gconf = {
@@ -81,7 +82,8 @@ void test_genstepper()
         2.0, // lead screw pitch
         2400, // spindle enc resolution
         200, // native steps
-        8 // microsteps
+        8, // microsteps
+        1600
     };
     GenStepper::State gs = GenStepper::init("Z", lm,gconf);
 
@@ -89,8 +91,6 @@ void test_genstepper()
 
     std::cout << "name: " << gs.c.name << " pitch: " << mc.pitch << "\n";
 
-    // init should set an initial setting
-    //gs.setELSFactor(0.1,true);
 
     gs.mygear.calc_jumps(100, true);
     std::cout << "gear nom: " << gs.mygear.N << " den: " << gs.mygear.D << " \n";
@@ -109,6 +109,7 @@ void test_genstepper()
 }
 void test_moveConfig()
 {
+    std::cout << "test_moveConfig\n";
     Log::Msg lm;
     MoveConfig::State mc = MoveConfig::init();
 
@@ -121,13 +122,14 @@ void test_moveConfig()
     gs.zstepper.setDir(r);
 
             std::cout
-        << "step dir bool: " << r << " stopPos: " << mc.stopPos << " stopNeg: " << mc.stopNeg << " target: " << mc.moveSyncTarget << "\n";
+        << "step dir bool: " << r << " stopPos: " << mc.stopPos << " stopNeg: " << mc.stopNeg << " target: " << mc.moveDistanceSteps << "\n";
     TEST_ASSERT(r);
     TEST_ASSERT(mc.stopPos == distance);
 }
 
 void test_fakePosFeeding()
 {
+    std::cout << "test_fakePosFeeding\n";
     Log::Msg lm;
     //      How it works
     // 1.record current encoder position
@@ -146,7 +148,8 @@ void test_fakePosFeeding()
         2.0, // lead screw pitch
         2400, // spindle enc resolution
         200, // native steps
-        8 // microsteps
+        8, // microsteps
+        1600 // motor_steps  this should be calculated from native steps and microsteps
     };
     GenStepper::State gs = GenStepper::init("Z", lm,gconf);
     MoveConfig::State mc = MoveConfig::init();
@@ -203,7 +206,9 @@ void test_fakePosFeeding()
 }
 void test_venc_moveSync()
 {
+    std::cout << "test_venc_moveSync \n";
     Log::Msg lm;
+
 
     GenStepper::Config gconf = {
         0,
@@ -211,7 +216,8 @@ void test_venc_moveSync()
         2.0, // lead screw pitch
         2400, // spindle enc resolution
         200, // native steps
-        8 // microsteps
+        8, // microsteps
+        1600 // motorsteps
     };
     GenStepper::State gs = GenStepper::init("Z", lm,gconf);
     MoveConfig::State mc = MoveConfig::init();
@@ -242,6 +248,29 @@ void test_venc_moveAbsSync()
     TEST_ASSERT(false);
 }
 
+void test_bad_config(){
+
+    std::cout << "test_bad_config\n";
+    Log::Msg lm;
+
+    GenStepper::Config gconf = {
+        0,
+        "Z",
+        2.0, // lead screw pitch
+        2400, // spindle enc resolution
+        200, // native steps
+        8 // microsteps
+        // **** missing motor_steps
+    };
+    GenStepper::State gs = GenStepper::init("Z", lm,gconf);
+    MoveConfig::State mc = MoveConfig::init();
+
+
+    gs.init_gear(0);
+    bool bad = gs.setELSFactor(0.1,true);
+    TEST_ASSERT_EQUAL(false,bad);
+}
+
 int main(int argc, char **argv)
 {
     UNITY_BEGIN();
@@ -253,5 +282,6 @@ int main(int argc, char **argv)
     // TODO: get abs working
     // RUN_TEST(test_venc_moveAbsSync);
     RUN_TEST(test_fakePosFeeding);
+    RUN_TEST(test_bad_config);
     return UNITY_END();
 }
