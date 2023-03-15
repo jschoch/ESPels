@@ -33,6 +33,7 @@ double MoveConfig::State::rapidPitch ;
 double MoveConfig::State::oldPitch ;
 //bool MoveConfig::State::syncMoveStart ;
 //bool MoveConfig::State::isAbs  ;
+int MoveConfig::State::accel;
 bool MoveConfig::State::useStops ;
 int Gear::State::next;
 int Gear::State::prev;

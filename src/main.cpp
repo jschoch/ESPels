@@ -44,6 +44,7 @@ bool MoveConfig::State::spindle_handedness ;
 double MoveConfig::State::pitch ;
 double MoveConfig::State::rapidPitch ;
 double MoveConfig::State::oldPitch ;
+int MoveConfig::State::accel;
 //bool MoveConfig::State::isAbs  ;
 bool MoveConfig::State::useStops ;
 int Gear::State::next;

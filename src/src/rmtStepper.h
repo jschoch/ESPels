@@ -52,15 +52,15 @@ namespace rmtStepper {
 
                 // TODO need  to be able to invert
                 //digitalWrite(config.dirPin, newdir ^ config.invert_step_pin);
-                digitalWrite(config.dirPin, newdir);
+                //digitalWrite(config.dirPin, newdir);
                 dir = newdir;
-                dir_change_timer = esp_timer_get_time();
+                //dir_change_timer = esp_timer_get_time();
             }
             return olddir == newdir;
         }
 
         bool setDirNow(bool newdir){
-            digitalWrite(config.dirPin, newdir);
+            //digitalWrite(config.dirPin, newdir);
             dir = newdir;
             return dir;
         }

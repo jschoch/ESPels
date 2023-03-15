@@ -6,10 +6,12 @@
 
 static const char* TAGmc = "Mc";
 
+
 namespace MoveConfig{
 
     struct State{
         // was jog_mm
+        int default_accel = 200000;
         static int32_t moveDistanceSteps ;
         static bool waitForSync ;
         // was z_feeding_direction
@@ -26,6 +28,7 @@ namespace MoveConfig{
         //static bool isAbs  ;
         static bool useStops ;
         static int moveTargetSteps;
+        static int accel;
 
         // returns a bool to be used by stepper.setDir
         inline bool setStops(int32_t current_position){
@@ -72,6 +75,7 @@ namespace MoveConfig{
         state.oldPitch = state.pitch;
         //state.syncMoveStart = true;
         //state.isAbs = false;
+        state.accel = state.default_accel;
         state.useStops = true;
         return state;
     }

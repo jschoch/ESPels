@@ -86,10 +86,10 @@ void init_hob_feed(){
 
 
 // ensure we don't send steps after changing dir pin until the proper delay has expired
-void waitForDir(){
-  if(gs.zstepper.dir_has_changed){
-    while(gs.zstepper.dir_has_changed && ((gs.zstepper.dir_change_timer + 5) - esp_timer_get_time() > 0)){
-        gs.zstepper.dir_has_changed = false;
+void updateGearForDir(){
+  //if(gs.zstepper.dir_has_changed){
+  //  while(gs.zstepper.dir_has_changed && ((gs.zstepper.dir_change_timer + 5) - esp_timer_get_time() > 0)){
+        //gs.zstepper.dir_has_changed = false;
         if(!gs.zstepper.dir){
           // reset stuff for dir changes guard against swapping when we just moved
           if(gs.mygear.last < encoder.pulse_counter){
@@ -104,8 +104,8 @@ void waitForDir(){
             gs.mygear.last = gs.mygear.prev;
           }
         }
-    }
-  }
+    //}
+  //}
 }
 
 
@@ -177,7 +177,7 @@ void do_pos_feeding(){
       }else if(!feeding_ccw && mc.moveDirection && !gs.zstepper.dir){
         gs.zstepper.setDir(true);
       }
-      waitForDir();
+      updateGearForDir();
     }else {
 
     // encoder incrementing
@@ -193,7 +193,7 @@ void do_pos_feeding(){
       }else if(!feeding_ccw && mc.moveDirection && gs.zstepper.dir){
         gs.zstepper.setDir(false);
       }
-      waitForDir();  
+      updateGearForDir();  
     } // done with direction changes
 
 

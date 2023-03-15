@@ -7,7 +7,10 @@
 #include "mocks.h"
 #else
 #include "rmtStepper.h"
+#include "FastAccelStepper.h"
 #endif
+
+
 
 
 namespace GenStepper {
@@ -33,6 +36,8 @@ namespace GenStepper {
         static Gear::State mygear;
         Log::Msg lm;
         static rmtStepper::State zstepper;
+        FastAccelStepper *fzstepper = NULL;
+        FastAccelStepperEngine engine = FastAccelStepperEngine();
         
 
         // if returns true it worked
@@ -77,16 +82,24 @@ namespace GenStepper {
         }
 
         inline void stepPos(){
-            zstepper.step();
+            //zstepper.step();
+            int8_t r = fzstepper->move(1,false);
             position++;
         }
         inline void stepNeg(){
-            zstepper.step();
+            //zstepper.step();
+            int8_t r = fzstepper->move(-1,false);
             position--;
 
         }
+
+        inline void setAccel(int val){
+            fzstepper->setAcceleration(val);
+            fzstepper->applySpeedAcceleration();
+        }
         inline void step(){
             if( zstepper.dir){
+            //if( fzstepper.)
                 stepPos();
             }else{
                 stepNeg();
@@ -106,6 +119,24 @@ namespace GenStepper {
          
         state.setELSFactor(init_pitch,true);
         state.init_gear(0);
+        int stepper_speed = 80000;
+        int accel = 200000;
+
+        state.engine.init();
+        state.fzstepper = state.engine.stepperConnectToPin(Z_STEP_PIN);
+        if (state.fzstepper) {
+            state.fzstepper->setDirectionPin(Z_DIR_PIN,true,10);
+            state.fzstepper->setEnablePin(Z_EN_PIN);
+            state.fzstepper->setAutoEnable(true);
+
+            // If auto enable/disable need delays, just add (one or both):
+            //stepper->setDelayToEnable(15);
+
+            state.fzstepper->setSpeedInHz(stepper_speed);  // the parameter is us/step !!!
+            state.fzstepper->setAcceleration(accel);
+            state.fzstepper->applySpeedAcceleration();
+        }
+        //gs.fzstepper = fzstepper;
         return state;
         
     }

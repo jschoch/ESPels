@@ -265,6 +265,9 @@ void updateStateDoc()
   // flag to wait for encocer "0" position
   stateDoc["s"] = syncStart;
   // TODO: add angle for angle readout in UI
+
+  // send current acceleration setting
+  stateDoc["a"] = gs.fzstepper->getAcceleration();
   
 
   sendState();
@@ -595,7 +598,7 @@ void handleSend()
   updateStateDoc();
 }
 void handleMoveConfig(){
-   JsonObject config = inDoc["config"];
+  JsonObject config = inDoc["config"];
   Serial.println("MoveConfig: getting config");
   Serial.print("got pitch: ");
   double p = config["movePitch"];
@@ -612,6 +615,13 @@ void handleMoveConfig(){
     Serial.println("new rapid");
     mc.rapidPitch = r;
     Serial.printf("updating rapids: %lf",mc.rapidPitch);
+  }
+
+  int accel = config["accel"].as<int>();
+  if(accel != mc.accel){
+    Serial.printf("Setting Accel to: %i",accel);
+    mc.accel = accel;
+    gs.setAccel(mc.accel);
   }
   updateStateDoc();
 }

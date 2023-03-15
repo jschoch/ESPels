@@ -5,6 +5,15 @@
 #include "genStepper.h"
 #include "state.h"
 
+
+#define SUPPORT_ESP32_RMT
+#include "FastAccelStepper.h"
+
+
+
+//FastAccelStepperEngine engine = FastAccelStepperEngine();
+//FastAccelStepper *fzstepper = NULL;
+
 int microsteps = Z_MICROSTEPPING;
 
 int native_steps = Z_NATIVE_STEPS_PER_REV;
@@ -52,17 +61,42 @@ consider moving display code into state functions
 
 void init_stepper(){
 
-  pinMode(Z_DIR_PIN, OUTPUT);
-  pinMode(Z_STEP_PIN, OUTPUT);
+  //pinMode(Z_DIR_PIN, OUTPUT);
+  //pinMode(Z_STEP_PIN, OUTPUT);
 
   stepsPerMM = motor_steps / lead_screw_pitch;
 
 
-  gs.zstepper.config.channel = RMT_CHANNEL_0;
-  gs.zstepper.config.stepPin = (gpio_num_t) Z_STEP_PIN;
-  gs.zstepper.config.dirPin = (gpio_num_t) Z_DIR_PIN;
+  //gs.zstepper.config.channel = RMT_CHANNEL_3;
+  //gs.zstepper.config.stepPin = (gpio_num_t) Z_STEP_PIN;
+  //gs.zstepper.config.dirPin = (gpio_num_t) Z_DIR_PIN;
 
-  gs.zstepper.init();
+  //gs.zstepper.init();
+
+  // Setup stepper
+  /*  moving to gs init
+
+  // should max at 80khz
+  int stepper_speed = 80000;
+  int accel = 1000;
+
+  engine.init();
+  gs.fzstepper = engine.stepperConnectToPin(Z_STEP_PIN);
+  if (gs.fzstepper) {
+    gs.fzstepper->setDirectionPin(Z_DIR_PIN);
+    gs.fzstepper->setEnablePin(Z_EN_PIN);
+    gs.fzstepper->setAutoEnable(true);
+
+    // If auto enable/disable need delays, just add (one or both):
+    //stepper->setDelayToEnable(15);
+
+    gs.fzstepper->setSpeedInHz(stepper_speed);  // the parameter is us/step !!!
+    gs.fzstepper->setAcceleration(accel);
+    gs.fzstepper->applySpeedAcceleration();
+  }
+  //gs.fzstepper = fzstepper;
+  int8_t r = gs.fzstepper->move(1000,false);
+  */
 
 
 }
