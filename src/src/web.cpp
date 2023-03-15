@@ -447,8 +447,9 @@ void handleJog()
       gs.setELSFactor(mc.pitch);
       Serial.printf("handleJog pitch: %f target: %i\n",mc.pitch,mc.moveDistanceSteps);
       Serial.printf("\t\tStops: stopNeg: %i stopPos: %i\n",mc.stopNeg,mc.stopPos);
-      init_pos_feed();
+      updateStateDoc();
       updateStatusDoc();
+      init_pos_feed();
     }
     else
     {
@@ -511,7 +512,7 @@ void handleBounce()
   Serial.printf("Bounce config: distance: %i rapid: %lf move: %lf\n",mc.moveDistanceSteps,mc.rapidPitch,mc.pitch);
   feeding_ccw = (bool)config["f"];
   //el.error("warning, TOOD: this only is setup for one spindle direction");
-  
+  updateStateDoc(); 
   bouncing = true;
   bounce_yasm.next(BounceMoveState,true);
 }
@@ -525,6 +526,7 @@ void handleFeed(){
   gs.zstepper.setDirNow(feeding_ccw);
   gs.setELSFactor(mc.pitch);
   gs.init_gear(encoder.getCount());
+  updateStateDoc();
   mc.useStops = false;
   syncWaiting = false;
   pos_feeding = true;
