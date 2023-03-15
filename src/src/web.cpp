@@ -414,14 +414,18 @@ void handleRapid()
 
   // TODO: calculate speed from current RPM and perhaps warn if accel is a problem?
   // really need the acceleration curve
-  Serial.println("Rapid! ");
+  
   JsonObject config = inDoc["config"];
   mc.moveDistanceSteps = config["moveSteps"].as<int>();
+  mc.rapidPitch = config["rapid"].as<double>();
   // start_rapid(jog_mm);
   mc.oldPitch = mc.pitch;
+  updateStateDoc();
+  
+  Serial.println("Rapid! ");
   mc.pitch = mc.rapidPitch;
   rapiding = true;
-  handleJog();
+  doMoveSync();
 }
 
 void handleJog()
@@ -438,28 +442,32 @@ void handleJog()
 
     // don't do this direction is handled in setStops
     // mc.moveDirection = (bool)config["f"];
-
-    if (!pos_feeding)
-    {
-      bool thedir = mc.setStops(gs.position);
-      bool step_dir_response = gs.zstepper.setDirNow(thedir);
-      Serial.printf("Response from stepper: %d stepper current direction: %d\n",step_dir_response,gs.zstepper.dir);
-      gs.setELSFactor(mc.pitch);
-      Serial.printf("handleJog pitch: %f target: %i\n",mc.pitch,mc.moveDistanceSteps);
-      Serial.printf("\t\tStops: stopNeg: %i stopPos: %i\n",mc.stopNeg,mc.stopPos);
-      updateStateDoc();
-      updateStatusDoc();
-      init_pos_feed();
-    }
-    else
-    {
-      el.error("already set feeding, wait till done or cancel");
-    }
+    updateStateDoc();
+    doMoveSync();
   }
   else
   {
     el.error("can't jog, no jogging mode is set ");
   }
+}
+void doMoveSync(){
+
+  if (!pos_feeding)
+    {
+      bool thedir = mc.setStops(gs.position);
+      bool step_dir_response = gs.zstepper.setDirNow(thedir);
+      Serial.printf("Response from stepper: %d stepper current direction: %d\n",step_dir_response,gs.zstepper.dir);
+      gs.setELSFactor(mc.pitch);
+      Serial.printf("doJog pitch: %f target: %i\n",mc.pitch,mc.moveDistanceSteps);
+      Serial.printf("\t\tStops: stopNeg: %i stopPos: %i\n",mc.stopNeg,mc.stopPos);
+      //updateStateDoc();
+      //updateStatusDoc();
+      init_pos_feed(); 
+    }
+    else
+    {
+      el.error("already set feeding, wait till done or cancel");
+    }
 }
 
 void handleHobRun()

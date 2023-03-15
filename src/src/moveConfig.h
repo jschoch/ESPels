@@ -69,6 +69,7 @@ namespace MoveConfig{
         state.spindle_handedness = true;
         state.pitch = 0.1;
         state.rapidPitch = 0.1;
+        state.oldPitch = state.pitch;
         //state.syncMoveStart = true;
         //state.isAbs = false;
         state.useStops = true;
