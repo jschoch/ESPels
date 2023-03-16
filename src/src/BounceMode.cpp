@@ -6,12 +6,14 @@
 #include "Machine.h"
 #include "web.h"
 #include "motion.h"
+#include "genStepper.h"
+#include "moveConfig.h"
 
 YASM bounce_yasm;
 volatile bool bouncing = false;
-double old_jog_mm = 0;
+int old_moveDistanceSteps = 0;
 
-Neotimer state_timer(100);
+Neotimer state_timer(200);
 
 void do_state(){
     if(state_timer.repeat()){
@@ -20,8 +22,8 @@ void do_state(){
     
 }
 
-void start_jog(){
-    Serial.println("Start Jog Called");
+void start_move(){
+    Serial.println("Bounce Start Move Called");
     jogging = true;
     init_pos_feed();
 }
@@ -35,47 +37,61 @@ void BounceIdleState(){
   }
   else if(bouncing){
       Serial.println("Bounce Init");
-      bounce_yasm.next(BounceJogState);
   }
 
 }
 
-void BounceJogState(){
+void BounceMoveState(){
     if(bounce_yasm.isFirstRun()){
-        Serial.print(toolPos);
-        Serial.println("Entering Bounce Jog Mode");
-        updateMode(RunMode::BounceJog);
-        start_jog();
+        printf("Entering Bounce Move Mode pitch: %f\n",mc.pitch);
+        bool d = mc.setStops(gs.position);
+        bool z_dir = gs.zstepper.setDir(d);
+        printf("z_dir was: %d\n",z_dir);
+        gs.setELSFactor(mc.pitch);
+        start_move();
+        updateMode(RunMode::BounceMove);
+        //bounce_yasm.next(BounceMoveState);
         return;
     }
     else if(!jogging){
         updateStateDoc();
-        Serial.println("Jog Done, starting rapid");
+        Serial.println("Move Done, starting rapid");
         bounce_yasm.next(BounceRapidState);
     }
 }
 
 void BounceRapidState(){
     if(bounce_yasm.isFirstRun()){
-        Serial.print(toolPos);
-        Serial.println(" Entering Rapid Mode");
-        oldPitch = pitch;
-        pitch = rapids;
-        old_jog_mm = jog_mm;
-        jog_mm = -jog_mm;
+        printf(" Entering Rapid Mode pitch: %f",mc.rapidPitch);
+        // TODO: yuck refactor this
+        mc.oldPitch = mc.pitch;
+        //pitch = rapids;
+        //mc.pitch = mc.rapidPitch;
+        old_moveDistanceSteps = mc.moveDistanceSteps;
+        mc.moveDistanceSteps = -mc.moveDistanceSteps;
         rapiding = true;
-        setStops();
-        start_jog();
+        gs.setELSFactor(mc.rapidPitch);
+        mc.setStops(gs.position);
+        start_move();
         updateStateDoc();
         return;
     }
     else if(!rapiding){
         Serial.println("Rapid Done, going Idle");
-        pitch = oldPitch;
-        jog_mm = old_jog_mm;
+        mc.pitch = mc.oldPitch;
+        mc.moveDistanceSteps = old_moveDistanceSteps;
         bouncing = false;
-        // TOOD this ends up undefined in the UI
-        bounce_yasm.next(BounceIdleState);
+        jogging = false;
+        
+        // not sure how isFirstRun works !?
+        //bounce_yasm.next(BounceIdleState);
+        //bounce_yasm.next(slaveJogReadyState);
+        //RunMode(SLAVE_JOG_READY);
+        //updateStateDoc();
+        //bounce_yasm.next(slaveJogReadyState,true);
+        setRunMode((int)RunMode::SLAVE_JOG_READY);
+        Serial.println("Bounce Mode done");
+        return;
     }
 
 }

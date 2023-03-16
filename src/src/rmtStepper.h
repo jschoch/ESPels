@@ -1,7 +1,18 @@
 #pragma once
 
+
+
+// this seems like a horrible hack
+#ifdef UNIT_TEST
+
+// if unit testing....
+// don't include, this will get included from 'mocks.h'
+
+#else
+
 #include "config.h"
 #include <driver/rmt.h>
+#include <esp_log.h>
 
 
 namespace rmtStepper {
@@ -33,6 +44,7 @@ namespace rmtStepper {
             }
         }
         bool setDir(bool newdir){
+            //ESP_LOGE("thing","setDir called current dir: %d  arg dir: %d",dir,newdir);
             bool olddir = dir;
             if(dir != newdir){
                 // XOR the dir for the inversion bool
@@ -47,9 +59,10 @@ namespace rmtStepper {
             return olddir == newdir;
         }
 
-        void setDir(bool newdir,bool now){
+        bool setDirNow(bool newdir){
             digitalWrite(config.dirPin, newdir);
             dir = newdir;
+            return dir;
         }
 
         void init(){
@@ -82,3 +95,4 @@ namespace rmtStepper {
         }
     };
 }
+#endif

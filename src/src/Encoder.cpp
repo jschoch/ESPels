@@ -21,6 +21,16 @@ bool virtEncoderDir = true;
 void IRAM_ATTR doA(){encoder.handleA();}
 void IRAM_ATTR doB(){encoder.handleB();}
 
+static int64_t pulse_start = 0;
+static int64_t pulse_stop = 0;
+static int64_t total_times = 0;
+double avg_times = 0;
+static int64_t timerdelta = 0;
+int runs = 0;
+static const char* TAG_a  = "T";
+
+
+
 void init_encoder(){
   encoder.init();
   encoder.enableInterrupts(doA, doB); 
@@ -83,6 +93,7 @@ void startVenc(){
 
 // B channel
 void IRAM_ATTR Encoder::handleB() {
+  //pulse_start = esp_timer_get_time();
   int B = digitalRead(pinB);
   switch (quadrature){
     case Quadrature::ON:
@@ -105,11 +116,14 @@ void IRAM_ATTR Encoder::handleB() {
       }
       break;
   }
+  //pulse_stop = esp_timer_get_time();
+  //startStatTask();
 }
 
 //  Encoder interrupt callback functions
 // A channel
 void IRAM_ATTR Encoder::handleA() {
+  pulse_start = esp_timer_get_time();
   int A = digitalRead(pinA);
   switch (quadrature){
     case Quadrature::ON:
@@ -132,6 +146,8 @@ void IRAM_ATTR Encoder::handleA() {
       }
       break;
   }
+  pulse_stop = esp_timer_get_time();
+  //startStatTask();
 }
 
 Encoder::Encoder(int _encA, int _encB , double _ppr){
@@ -227,3 +243,44 @@ int64_t  IRAM_ATTR Encoder::getCount(){
   // TODO: why not just read the value?
   return pulse_counter;
 }
+
+void IRAM_ATTR statTask(void *ptr){
+  // do stuff
+  if(runs < 10000){
+    timerdelta = pulse_stop - pulse_start;
+    total_times = total_times + timerdelta;
+    runs++;
+  }else{
+    avg_times = (double)(total_times / runs);
+    startPrintTask();
+    runs = 0;
+    total_times = 0;
+  }
+  vTaskDelete( NULL );
+}
+
+void IRAM_ATTR printTask(void *ptr){
+  ESP_LOGE(TAG_a,"\n\t avg: %lf  start: %lld : stop %lld\n",avg_times,pulse_start,pulse_stop);
+  vTaskDelete( NULL);
+}
+
+void startStatTask(){
+  xTaskCreate(
+                    statTask,             /* Task function. */
+                    "statTask",           /* String with name of task. */
+                    1000,                     /* Stack size in words. */
+                    NULL,      /* Parameter passed as input of the task */
+                    3,                         /* Priority of the task. */
+                    NULL); 
+}
+
+void startPrintTask(){
+  xTaskCreate(
+                    printTask,             /* Task function. */
+                    "printTask",           /* String with name of task. */
+                    10000,                     /* Stack size in words. */
+                    NULL,      /* Parameter passed as input of the task */
+                    1,                         /* Priority of the task. */
+                    NULL); 
+}
+

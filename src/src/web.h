@@ -7,6 +7,7 @@
 #include <ESPmDNS.h>
 #include <ArduinoJson.h>
 #include <StreamUtils.h>
+// #include <StaticJsonDocument.hpp>
 
 extern bool web;
 
@@ -20,5 +21,8 @@ void sendStatus();
 void sendLogP(Log::Msg *msg);
 void loadNvConfigDoc();
 void handleJog();
-void setStops();
 void sendUpdates();
+void sendDoc(const JsonDocument& doc);
+void sendLogP(Log::Msg *msg);
+void setRunMode(int mode);
+void doMoveSync();

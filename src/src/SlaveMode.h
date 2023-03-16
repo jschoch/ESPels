@@ -7,3 +7,4 @@
 void SlaveModeReadyState(void);
 void slaveStatusState(void);
 void slaveFeedingState(void);
+void FeedModeReadyState(void);

@@ -1,21 +1,23 @@
 #include "state.h"
+
+#include "genStepper.h"
+#include "moveConfig.h"
 //Initialize the starting memory. 
 //TODO: move this into a class constructor
+#include "ArduinoJson.h"
+//Initialize the starting memory.
+
+// TODO: can this be automagical somehow?
+const char* vsn = "0.0.3";
 
 //common variables used by multipe things
-volatile double jog_mm = 0;
 volatile int rpm = 0;
 double mmPerStep = 0;
 int32_t stepsPerMM = 0;
 int32_t relativePosition = 0;
 int32_t absolutePosition = 0;
+bool sendDebug = true;
 
-volatile bool z_feeding_dir = true;
-volatile double targetToolRelPosMM = 0.0;
-volatile double toolRelPosMM = 0.0;
-
-//tool position in steps
-volatile int64_t toolPos = 0;
 
 //State Machine stuff
 bool syncStart = true;
@@ -25,3 +27,40 @@ volatile bool rapiding = false;
 
 
 RunMode run_mode = RunMode::STARTUP;
+
+
+GenStepper::Config gconf = {
+        0,
+        "Z",
+        LEADSCREW_LEAD, // lead screw pitch
+        ENCODER_RESOLUTION, // spindle enc resolution
+        Z_NATIVE_STEPS_PER_REV, // native steps
+        Z_MICROSTEPPING, // microsteps
+        (Z_NATIVE_STEPS_PER_REV * Z_MICROSTEPPING) // motorsteps
+    };
+GenStepper::State gs = GenStepper::init("Z",el,gconf);
+MoveConfig::State mc = MoveConfig::init();
+// json docs
+
+// config stateDoc
+StaticJsonDocument<1000> stateDoc;
+
+//  items to store in NV ram/EEPROM
+StaticJsonDocument<1000> nvConfigDoc;
+
+// Used for msgs from UI
+StaticJsonDocument<1000> inDoc;
+
+// used to send status to UI
+StaticJsonDocument<600> statusDoc;
+
+// Used to log to UI
+StaticJsonDocument<5000> logDoc;
+
+// used for debugging, to slim down status doc 
+StaticJsonDocument<500> debugStatusDoc;
+
+StaticJsonDocument<100> pongDoc;
+char pongBuf[100];
+int pong_len = serializeMsgPack(pongDoc,pongBuf);
+

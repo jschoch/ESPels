@@ -1,16 +1,30 @@
 #ifdef UNIT_TEST
 
 #include <unity.h>
-#include "src/gear.h"
+#include "src/Gear.h"
 #include <iostream>
 
 
-void printJump(char *s,gear::Jump j){
+// yuck
+
+int Gear::State::next;
+int Gear::State::prev;
+int Gear::State::last;
+
+void printJump(char *s,Gear::Jump j){
     std::cout << s << "jump delta " << j.delta  << " , ";
     std::cout << "count " << j.count << " , ";
     std::cout << "error" << j.error<< "\n";
 
 
+}
+
+void setUp(void) {
+    // set stuff up here
+}
+
+void tearDown(void) {
+    // clean stuff up here
 }
 
 
@@ -41,7 +55,7 @@ int main( int argc, char **argv) {
 
    */
 
-    gear::State state;
+    Gear::State state;
     state.output_position = 0;
     int micro_steps = 8;
     int motor_steps = 200 * micro_steps;
@@ -72,33 +86,42 @@ int main( int argc, char **argv) {
     bool dir = true;
     state.calc_jumps(start,dir);
 
-    std::cout << "starting jumps: " << state.jumps.prev << " - " << state.jumps.next << "\n";
+    std::cout << "starting jumps: " << state.prev << " - " << state.next << "\n";
+    TEST_ASSERT_EQUAL_INT(-26,state.prev);
+
+    TEST_ASSERT_EQUAL_INT(5,state.next);
+
     
     for(int i = start;i < stop + 1;i++){
         // if the "encoder" is incrementing
 
         // calculate both forward and reverse
         
-        if(i == state.jumps.next ) {
+        if(i == state.next ) {
             state.calc_jumps(i,dir);
-            //std::cout << "+ p:" << gear::state.jumps.prev << " -- count: "<<  i << " -- n: " 
-                //<< gear::state.jumps.next << "+";
-            std::cout << "*" << i << "," << state.jumps.next << "," << state.jumps.prev << " ";
+            //std::cout << "+ p:" << Gear::state.jumps.prev << " -- count: "<<  i << " -- n: " 
+                //<< Gear::state.jumps.next << "+";
+            std::cout << "*" << i << "," << state.next << "," << state.prev << " ";
         }
 
 
     }
 
     //state.calc_jumps(stop,dir);
-    state.jumps.prev = state.jumps.last;
+    state.prev = state.last;
     std::cout << "\nREVERSE\n\n";
-    std::cout << "next: " << state.jumps.next << " prev: " << state.jumps.prev << " err: " << state.perror << "\n";
+    std::cout << "next: " << state.next << " prev: " << state.prev << " err: " << state.perror << "\n";
 
+    TEST_ASSERT_EQUAL_INT(185, state.next);
+    TEST_ASSERT_EQUAL_INT(155, state.prev);
+    TEST_ASSERT_EQUAL_INT(2240,state.perror);
+
+    // does this do anything?
     for(int i = stop +2;i > (start + 1);i--){
-        if(i == state.jumps.prev){
+        if(i == state.prev){
             state.calc_jumps(i,dir);
             //std::cout << "@" << i << " ";
-            std::cout << "@" << i << "," << state.jumps.next << "," << state.jumps.prev << " ";
+            std::cout << "@" << i << "," << state.next << "," << state.prev << " ";
             //std::cout << "next: " << state.jumps.next << " prev: " << state.jumps.prev << "\n";
         }
     }

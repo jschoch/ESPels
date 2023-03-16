@@ -6,15 +6,10 @@
 
 uint8_t motor_type = MOTOR_TYPE;
 
+//TODO: is this redundant?
 double lead_screw_pitch = 2.0;
-double pitch = 0.06;
-double oldPitch = pitch;
-
-int tpi = 0;
-double depth = 0.0;
 
 //TODO configure using config.h
-double rapids = 1.0;
 double backlash = 0.0;
 
 void init_machine(){

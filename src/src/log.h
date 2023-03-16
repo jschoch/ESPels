@@ -1,8 +1,11 @@
 #pragma once
+#include <Arduino.h>
 
-#include "config.h"
+//#include "config.h"
 
+#ifndef UNIT_TEST
 #include "web.h"
+#endif
 
 namespace Log{
     enum class T {
@@ -13,7 +16,8 @@ namespace Log{
     enum class Level {
         ERROR,
         WARN,
-        INFO
+        INFO,
+        HALT
     };
     class Msg{
         public:
@@ -21,8 +25,10 @@ namespace Log{
         bool hasError = false;
         char buf[500] = "";
         Level level = Level::ERROR;
-        void error();
+        void maybeSend();
+        void error(void);
         void error(const char*);
+        void halt(const char*);
         void addMsg(const char*);
         void errorTask();
         static void errorTaskImpl(void* _this);

@@ -1,4 +1,5 @@
 #pragma once
+#include <assert.h>
 
 
 
@@ -24,16 +25,19 @@ namespace Gear {
 #pragma GCC diagnostic ignored "-Wnarrowing"  
   // Narrowing comes due to integer promotion in arithmetic operations
   // k, the encoder count delta for the next step pulse, should fit within a short integer
+  static int32_t k;
 
   inline Jump next_jump_forward(int d, int n, int e, int64_t count) {
+    //assert(d != 0);
+    //assert(n != 0);
     // k = encoder_pulses per step
-    int32_t k = (d - 2 * e + 2 * n - 1) / (2 * n);
+    k = (d - 2 * e + 2 * n - 1) / (2 * n);
     return {count + k, k, e + k * n - d};
   }
 
   inline Jump next_jump_reverse(int d, int n, int e, int64_t count) {
     // k = encoder_pulses per step
-    int32_t k = 1 + ((d + 2 * e) / (2 * n));
+    k = 1 + ((d + 2 * e) / (2 * n));
     return {count - k, k, e - k * n + d};
   }
 
@@ -45,23 +49,33 @@ namespace Gear {
     // what units is this, seems to be encoder tics
     int output_position = 0;
     Jumps jumps = {0,0,0};
-    volatile bool is_setting_dir = false;
+    static int next;
+    static int prev;
+    static int last;
 
-    void calc_jumps(int encoder_count,bool dir){
+    // TODO: stop using the 2nd arg, it has to be true
+    void calc_jumps(int encoder_count,bool dir = true){
+      if(D == 0 || N == 0){
+        //printf("D: %d N: %d calc_jumps exiting",N,D);
+        // TODO: how to prevent this condition?
+        return;
+      }
       Jump nx = next_jump_forward(D,N,nerror,encoder_count);
       Jump px = next_jump_reverse(D,N,perror,encoder_count); 
-      jumps.next =  nx.count;
-      jumps.last = encoder_count;
+      next =  nx.count;
+      last = encoder_count;
       nerror = nx.error;
       if(dir){
-          jumps.prev = px.count;
+          prev = px.count;
           perror = nx.error + D -N;
       }
       // this doesn't seem to work for !dir 
+      /*
       else{
         jumps.prev = px.count + 1;
         perror = nx.error + D +N;
       }
+      */
 
 
     }
