@@ -1,7 +1,5 @@
 ## ESPels:  A simple electronic lead screw for the esp32.
 
-
-
 __DANGER__
 There is no estop right now, not safe.  Use at your own risk and hover over the lathe e-stop.  The thing could go crazy and crash the carriage into the spindle at any moment.   It shouldn't but bugs happen....
 
@@ -23,6 +21,7 @@ This is currently in a "beta" state. There may be unfinished features, UI glitch
 
 ### Planned Features
 
+
 * Spindle angle DRO indicator
 * Broaching mode
   * Utilize bounce mode with spindle fixed for broaching keyways.
@@ -37,13 +36,23 @@ This is currently in a "beta" state. There may be unfinished features, UI glitch
 
 Copy config.ini.d to config.ini
 
+
 in config.ini update the WIFI_SSID, WIFI_PASSWORD Z_STEP_PIN, Z_DIR_PIN, EA, and EB for your encoder signals etc.
+=======
+Wifi:  ssid and password need to be defined, this is default a file ../../wifisecret.h
 
-See (Install.md) for more info on installation
+```c
+#pragma once
+#ifndef _WEBCONFIG_H
+#define _WEBCONFIG_H
 
-## Testing
- 
-Getting started is easy.  You can flash the firmware to an esp32 (after you've updated the configuration) and connect it to the web UI. After flashing monitor the bootup messages and note the IP address. 
+static const char* ssid = "";
+static const char* password = "";
+
+#endif
+```
+
+Copy the "config.ini.default" to "config.ini" and update as needed.  For example `'-D HOSTNAME="mx210latheELS"'` sets the hostname,  EA, EB for your encoder signals.  
 
 The webUI simply is a react.js application designed to be responsive, it can live anywhere and should run on your phone, tablet, laptop or PC.  It connects to the firmware via websockets.  No network out to the internets is needed.  The s3 links are simply for convienence, you can serve the frontend yourself by copying the index.html or running `HOST=0.0.0.0 npm start`.  I may eventually offer an option to serve it from esp32's directly (assuming there is flash available).
 
@@ -66,7 +75,9 @@ Finally click the "Selected Mode" dropdown to change the mode, select Feed Mode,
 
 When installing on a lathe you will need an encoder with enough resolution.  Testing has been done with a 600PPI -- 2400CPI encoder. While more encoder pulses will create more accuracy the algorithm used is limited to a max of 1 step per 1 encoder position.  This limits the maximum pitch you can synchronize.  Consider this and the maximum thread pitch your lathe can handle when selecting an encoder and stepper microstepping configuration.
 
+
 A closed loop stepper is highly recommended.  The stepper online 1-CL57Y-24HE40 is a good kit for a small hobby lathe.
+
 
 You may need to swap your encoder pins and or change your stepper driver's direction.  The expectation is that when the spindle turns counter clockwise the "left" buttons should move the carriage Z-.
 
@@ -74,8 +85,6 @@ You may need to swap your encoder pins and or change your stepper driver's direc
 ## Frontend
 
 the webfrontend can be found here [https://github.com/jschoch/espELSfrontend]
-
-
 
 ## HOW
 
