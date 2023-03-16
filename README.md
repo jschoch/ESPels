@@ -36,27 +36,12 @@ This is currently in a "beta" state. There may be unfinished features, UI glitch
 
 Copy config.ini.d to config.ini
 
-
-in config.ini update the WIFI_SSID, WIFI_PASSWORD Z_STEP_PIN, Z_DIR_PIN, EA, and EB for your encoder signals etc.
-=======
-Wifi:  ssid and password need to be defined, this is default a file ../../wifisecret.h
-
-```c
-#pragma once
-#ifndef _WEBCONFIG_H
-#define _WEBCONFIG_H
-
-static const char* ssid = "";
-static const char* password = "";
-
-#endif
-```
-
-Copy the "config.ini.default" to "config.ini" and update as needed.  For example `'-D HOSTNAME="mx210latheELS"'` sets the hostname,  EA, EB for your encoder signals.  
+In config.ini update the WIFI_SSID, WIFI_PASSWORD Z_STEP_PIN, Z_DIR_PIN, EA, and EB for your encoder signals etc.
 
 The webUI simply is a react.js application designed to be responsive, it can live anywhere and should run on your phone, tablet, laptop or PC.  It connects to the firmware via websockets.  No network out to the internets is needed.  The s3 links are simply for convienence, you can serve the frontend yourself by copying the index.html or running `HOST=0.0.0.0 npm start`.  I may eventually offer an option to serve it from esp32's directly (assuming there is flash available).
 
 Once the firware is flashed you simply need to configure the frontend with the IP or dns of the firmware.
+
 ![image](https://user-images.githubusercontent.com/20271/225640770-0720b314-eee3-4650-9613-717a55c63898.png)
 
 
