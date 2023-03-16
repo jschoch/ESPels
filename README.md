@@ -7,16 +7,11 @@ this is currently in test mode and pre-alpha
 [b] DANGER 
 There is no estop right now, not safe.  Use at your own risk and hover over the lathe e-stop.  The thing could go crazy and crash the carriage into the spindle at any moment.  It shouldn't but bugs....
 
-[demo](https://www.youtube.com/watch?v=uXhqEe8Kw6M&list=PLvpLfzys-jPumkXZj8ZZn11zyY3UYtSkn&index=6)
+[ demo](https://www.youtube.com/watch?v=uXhqEe8Kw6M&list=PLvpLfzys-jPumkXZj8ZZn11zyY3UYtSkn&index=6)
+[latest frontend release](http://espels.s3-us-west-2.amazonaws.com/release_0_0_3/index.html)
+
 
 Disclaimer out of the way: i've been using it for a week and it has not freaked out yet.
-
-## Frontend
-
-![sample](https://user-images.githubusercontent.com/20271/104212553-33b6c200-53ea-11eb-899b-3ec2c22e56c2.png)
-
-the webfrontend can be found here [https://github.com/jschoch/espELSfrontend]
-
 
 
 ## Configuration
@@ -39,6 +34,11 @@ in config.h update Z_STEP_PIN, Z_DIR_PIN for your stepper.
 Update  EA, and EB for your encoder signals.  Let me know if you want to have an index pulse defined as my encoder does not have one.
 
 See (Install.md) for more info on installation
+
+## Frontend
+
+the webfrontend can be found here [https://github.com/jschoch/espELSfrontend]
+
 
 
 ## HOW
