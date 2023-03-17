@@ -4,7 +4,7 @@
 //#include <Arduino.h> //redirects to ArduinoFake.h in this case
 #include <unity.h>
 #include <iostream>
-#include "src/log.h"
+#include <elslog.h>
 
 #define Z_NATIVE_STEPS_PER_REV 200
 #define Z_MICROSTEPPING 8

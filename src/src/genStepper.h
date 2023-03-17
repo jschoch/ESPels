@@ -1,6 +1,6 @@
 #pragma once
 #include "gear.h"
-#include "log.h"
+#include <elslog.h>
 
 // yuck
 #ifdef UNIT_TEST
@@ -44,22 +44,23 @@ namespace GenStepper {
         inline bool setELSFactor(double pitch, bool recalculate_den = false){
             if(pitch == 0){
                 sprintf(lm.buf,"Pitch 0, no good");
-                //lm.error();
+                lm.error();
                 return false;
             }
             
             if(recalculate_den == true){
                 GenStepper::State::den = c.lead_screw_pitch * c.spindle_encoder_resolution;
-                printf("recalculated denominator: %i",den);
+                printf("recalculated denominator: %i\n",den);
             }
             GenStepper::State::nom = c.motor_steps * pitch;
             if(nom == 0 || den == 0){
-                printf("\n\n\tStepper set factor failed, perhaps your config is bad? nom: %i den: %i\n\n",nom,den);
+                sprintf(lm.buf,"Bad Config? Bad Ratio: Den: %d Nom: %d\n",nom,den);
+                lm.error();
                 return false;
             }
             if(!mygear.setRatio(nom,den)){
                 sprintf(lm.buf,"Bad Ratio: Den: %d Nom: %d\n",nom,den);
-                //lm.error();
+                lm.error();
                 return false;
             }
             printf("Set ELS Factor pitch: %f nom: %d den: %d\n",pitch,nom,den);
@@ -75,7 +76,8 @@ namespace GenStepper {
                 mygear.last = mygear.prev;
                 return true;
             }else{
-                printf("\n\n\n\tinit_gear setRatio failed: count: %lld nom: %i den: %i",count,nom,den);
+                sprintf(lm.buf,"\n\n\n\tinit_gear setRatio failed: count: %lld nom: %i den: %i",count,nom,den);
+                lm.error();
                 return false;
             }
             
@@ -104,6 +106,9 @@ namespace GenStepper {
             }else{
                 stepNeg();
             }
+        }
+        inline int maxPitch(){
+            return den;
         }
 
     };
@@ -141,7 +146,5 @@ namespace GenStepper {
         
     }
 
-    inline bool checkRatio(){
-        return false;
-    }
+    
 }
