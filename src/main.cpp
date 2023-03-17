@@ -11,6 +11,7 @@
 #include "src/moveConfig.h"
 #include "src/rmtStepper.h"
 #include "src/genStepper.h"
+
 #include "src/state.h"
 #include "src/Encoder.h"
 #include "Bounce2.h"
@@ -18,6 +19,7 @@
 #include "esp_log.h"
 #include "yasm.h"
 #include "src/web.h"
+#include <elslog.h>
 #include "src/display.h"
 #include "src/motion.h"
 #include "src/Controls.h"

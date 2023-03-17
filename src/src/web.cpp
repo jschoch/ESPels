@@ -3,8 +3,8 @@
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 #include <ArduinoJson.h>
-#include "config.h"
-#include "log.h"
+//#include "config.h"
+//#include <elslog.h> 
 #include "Encoder.h"
 #include "state.h"
 #include "Stepper.h"

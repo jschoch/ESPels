@@ -1,9 +1,9 @@
 #pragma once
 
-#include "config.h"
+//#include "config.h"
 #include "WiFi.h"
 #include "ESPAsyncWebServer.h"
-//#include "c:\Users\jesse\Documents\Arduino\config.h"
+#include <elslog.h>
 #include <ESPmDNS.h>
 #include <ArduinoJson.h>
 #include <StreamUtils.h>

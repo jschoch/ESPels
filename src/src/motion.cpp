@@ -9,7 +9,7 @@
 #include "Encoder.h"
 #include "Stepper.h"
 #include "state.h"
-#include "log.h"
+#include <elslog.h> 
 #include "Controls.h"
 #include "Machine.h"
 #include "genStepper.h"
