@@ -20,7 +20,7 @@ void sendState();
 void sendStatus();
 void sendLogP(Log::Msg *msg);
 void loadNvConfigDoc();
-void handleJog();
+void handleMove();
 void sendUpdates();
 void sendDoc(const JsonDocument& doc);
 void sendLogP(Log::Msg *msg);

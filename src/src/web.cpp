@@ -3,6 +3,7 @@
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 #include <ArduinoJson.h>
+#include "jsonValidation.h"
 //#include "config.h"
 //#include <elslog.h> 
 #include "Encoder.h"
@@ -431,22 +432,22 @@ void handleRapid()
   doMoveSync();
 }
 
-void handleJog()
+void handleMove()
 {
   Serial.println("got jog command");
   if (run_mode == RunMode::SLAVE_JOG_READY)
   {
     JsonObject config = inDoc["config"];
-    mc.moveDistanceSteps = config["moveSteps"].as<int>();
-    mc.pitch = config["pitch"].as<double>();
-
-    // TODO: validate this is correct
-    // TODO: calculate max pitch in init somewhare and compare this
-
-    // don't do this direction is handled in setStops
-    // mc.moveDirection = (bool)config["f"];
-    updateStateDoc();
-    doMoveSync();
+    MCDOC mcdoc = validateMoveConfig(config);
+    if(mcdoc.valid){
+      mc.moveDistanceSteps = mcdoc.distance;
+      mc.pitch = mcdoc.movePitch;
+      updateStateDoc();
+      doMoveSync();
+    }else{
+      el.error("invalid move config");
+    }
+    
   }
   else
   {
@@ -460,12 +461,15 @@ void doMoveSync(){
       bool thedir = mc.setStops(gs.position);
       bool step_dir_response = gs.zstepper.setDirNow(thedir);
       Serial.printf("Response from stepper: %d stepper current direction: %d\n",step_dir_response,gs.zstepper.dir);
-      gs.setELSFactor(mc.pitch);
-      Serial.printf("doJog pitch: %f target: %i\n",mc.pitch,mc.moveDistanceSteps);
-      Serial.printf("\t\tStops: stopNeg: %i stopPos: %i\n",mc.stopNeg,mc.stopPos);
-      //updateStateDoc();
-      //updateStatusDoc();
-      init_pos_feed(); 
+      bool valid = gs.setELSFactor(mc.pitch);
+      if(valid){
+         Serial.printf("doJog pitch: %f target: %i\n",mc.pitch,mc.moveDistanceSteps);
+        Serial.printf("\t\tStops: stopNeg: %i stopPos: %i\n",mc.stopNeg,mc.stopPos);
+        init_pos_feed(); 
+      }else{
+        el.error("Error setting pitch");
+      }
+     
     }
     else
     {
@@ -714,7 +718,7 @@ void parseObj(AsyncWebSocketClient *client)
   }
   else if (strcmp(cmd, "jog") == 0)
   {
-    handleJog();
+    handleMove();
   }
   else if (strcmp(cmd, "sendConfig") == 0)
   {

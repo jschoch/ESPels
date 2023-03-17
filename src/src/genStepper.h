@@ -125,7 +125,7 @@ namespace GenStepper {
         state.setELSFactor(init_pitch,true);
         state.init_gear(0);
         int stepper_speed = 80000;
-        int accel = 200000;
+        int accel = 50000;
 
         state.engine.init();
         state.fzstepper = state.engine.stepperConnectToPin(Z_STEP_PIN);
