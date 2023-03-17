@@ -11,47 +11,103 @@ bool validateJson(const char* input) {
 };
 
 struct MCDOC {
-    int movePitch = 0;
-    int rapidPitch = 0;
+    double movePitch = 0.0;
+    double rapidPitch = 0.0;
     int accel = 0;
     int dwell = 0;
+    int distance = 0;
     bool f = true;
+    bool valid = false;
 } ;
 
-struct Vres {
-    bool test;
-    MCDOC d;
-} ;
+inline bool operator==(const MCDOC& lhs, const MCDOC& rhs)
+{
+    return lhs.movePitch == rhs.movePitch &&
+           lhs.rapidPitch == rhs.rapidPitch &&
+           lhs.accel == rhs.accel &&
+           lhs.dwell == rhs.dwell &&
+           lhs.distance == rhs.distance &&
+           lhs.f == rhs.f;
+}
+
+void printMCDOC(MCDOC& d){
+    std::cout << "doc: movePitch: "<< d.movePitch << " rapidPitch: " << d.rapidPitch << "\n";
+    std::cout << "\t accel: " << d.accel << " dwell: " << d.dwell << " dist: " << d.distance << "\n";
+    std::cout << "\t f: " << d.f << "\n";
+    std::cout << "1 == 1.0" << (1 == 1.0) << "\n";
+}
 
 
-Vres validateMoveConfig(JsonObject& doc){
+
+MCDOC validateMoveConfig(JsonObject& doc){
     MCDOC m;
-    Vres vr = {false,m};
     if(doc.isNull()){
         printf("json doc was null\n");
-        vr.test = false;
-        return vr;
+        return m;
     }
     if(!doc.containsKey("f") ){
         printf("moveConfig doc: no f param\n");
-        return vr;
+        return m;
     }else{
         bool f = doc["f"].as<bool>();
-        vr.d.f = f;
+        m.f = f;
     }
     if(!doc.containsKey("movePitch") ){
         printf("moveConfig doc: no movePitch param\n");
-        return vr;
+        return m;
     }else if(doc["movePitch"].is<double>()){
-        double mp = doc["movePitch"].as<double>();
+        m.movePitch = doc["movePitch"].as<double>();
+        if(m.movePitch == 0){
+            printf("moveConfig: move pitch can't be zero");
+        }
     }else{
-        return vr;
+        printf("moveConfig doc: movePitch param type error\n");
+        return m;
     }
 
+    if(!doc.containsKey("rapidPitch") ){
+        printf("moveConfig doc: no rapidPitch param\n");
+        return m;
+    }else if(doc["rapidPitch"].is<double>()){
+        m.rapidPitch = doc["rapidPitch"].as<double>();
+        if(m.rapidPitch == 0){
+            printf("moveConfig: rapid pitch can't be zero");
+        }
+    }else{
+        printf("moveConfig doc: rapidPitch param type error\n");
+        return m;
+    }
 
-    char buff[1000];
-    serializeJsonPretty(doc,buff);
-    printf("moveConfig doc workie %s\n",buff);
-    vr.test = true;
-    return vr;
+    if(!doc.containsKey("distance") ){
+        printf("moveConfig doc: no distance param\n");
+        return m;
+    }else if(doc["distance"].is<int>()){
+        m.distance = doc["distance"].as<int>();
+    }else{
+        printf("moveConfig doc: distance param type error\n");
+        return m;
+    }
+
+    if(!doc.containsKey("accel") ){
+        printf("moveConfig doc: no accel param\n");
+        return m;
+    }else if(doc["accel"].is<int>()){
+        m.accel = doc["accel"].as<int>();
+    }else{
+        printf("moveConfig doc: accel param type error\n");
+        return m;
+    }
+
+    if(!doc.containsKey("dwell") ){
+        printf("moveConfig doc: no dwell param\n");
+        return m;
+    }else if(doc["dwell"].is<int>()){
+        m.dwell = doc["dwell"].as<int>();
+    }else{
+        printf("moveConfig doc: dwell param type error\n");
+        return m;
+    }
+    
+    m.valid = true;
+    return m;
 }

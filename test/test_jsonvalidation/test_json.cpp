@@ -29,6 +29,9 @@ void loop()
 void test_validate()
 {
     std::cout << "validate this\n";
+
+    char buff[1000];
+
     StaticJsonDocument<200> doc;
     static const char* raw = "{\"cmd\":\"world\"}";
     deserializeJson(doc, raw);
@@ -42,6 +45,8 @@ void test_validate()
     is_valid_json = validateJson(raw);
     TEST_ASSERT(is_valid_json);
 
+
+    std::cout << "test: missing f param \n";
     StaticJsonDocument<1000> badMoveConfig;
     JsonObject c = badMoveConfig.createNestedObject();
     c["movePitch"] = 1.0;
@@ -49,31 +54,55 @@ void test_validate()
     c["accel"] = 100000;
     //c["f"] = true;
     c["dwell"] = 0;
+    c["distance"] = 0;
 
-    Vres validMoveConfig = validateMoveConfig(c);
+    MCDOC validMoveConfig = validateMoveConfig(c);
 
-    TEST_ASSERT(!validMoveConfig.test);
+    TEST_ASSERT(!validMoveConfig.valid);
 
     c["movePitch"] = "not ";
     c["rapidPitch"] = "not a float";
     c["accel"] = 100000;
     c["f"] = true;
     c["dwell"] = 0;
+    c["distance"] = 0;
 
+    std::cout << "test bad float \n";
+
+    serializeJsonPretty(c,buff);
     validMoveConfig = validateMoveConfig(c);
+    printf("moveConfig doc: bad float\nc.movepitch: %d\n  %s\n",validMoveConfig.movePitch,buff);
+    printf("%s is<double> %d",c["rapidPitch"],c["rapidPitch"].is<double>());
+    
 
-    TEST_ASSERT(!validMoveConfig.test);
+    TEST_ASSERT(!validMoveConfig.valid);
+
+    MCDOC start_struct = {
+        1.0, // move pitch
+        1.1, // rapid pitch
+        100000, // accel
+        1, // dwell
+        1, // distance
+        true, // f
+        false
+    };
 
 
-    c["movePitch"] = 1.0;
-    c["rapidPitch"] = 1.1;
-    c["accel"] = 100000;
-    c["f"] = true;
-    c["dwell"] = 0;
+    c["movePitch"] = start_struct.movePitch;
+    c["rapidPitch"] = start_struct.rapidPitch;
+    c["accel"] = start_struct.accel;
+    c["f"] = start_struct.f;
+    c["dwell"] = start_struct.dwell;
+    c["distance"] = start_struct.distance;
 
+    
+    serializeJsonPretty(c,buff);
+    printf("moveConfig doc:\n  %s\n",buff);
     validMoveConfig = validateMoveConfig(c);
-    TEST_ASSERT(validMoveConfig.test);
-    //return;
+    printMCDOC(validMoveConfig);
+    TEST_ASSERT(validMoveConfig.valid);
+
+    TEST_ASSERT(start_struct == validMoveConfig);
     std::cout << "done validate\n";
 }
 
