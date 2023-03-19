@@ -12,7 +12,7 @@
 #endif
 
 // use fast accel stepper
-#define useFAS
+//#define useFAS
 
 
 
