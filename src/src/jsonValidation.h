@@ -16,8 +16,9 @@ struct MCDOC {
     double rapidPitch = 0.0;
     int accel = 0;
     int dwell = 0;
-    int distance = 0;
+    int moveSteps = 0;
     bool f = true;
+    bool startSync = true;
     bool valid = false;
 } ;
 
@@ -27,15 +28,15 @@ inline bool operator==(const MCDOC& lhs, const MCDOC& rhs)
            lhs.rapidPitch == rhs.rapidPitch &&
            lhs.accel == rhs.accel &&
            lhs.dwell == rhs.dwell &&
-           lhs.distance == rhs.distance &&
+           lhs.moveSteps == rhs.moveSteps&&
+           lhs.startSync == rhs.startSync &&
            lhs.f == rhs.f;
 }
 
 void printMCDOC(MCDOC& d){
-    std::cout << "doc: movePitch: "<< d.movePitch << " rapidPitch: " << d.rapidPitch << "\n";
-    std::cout << "\t accel: " << d.accel << " dwell: " << d.dwell << " dist: " << d.distance << "\n";
-    std::cout << "\t f: " << d.f << "\n";
-    std::cout << "1 == 1.0" << (1 == 1.0) << "\n";
+    std::cout << "doc: movePitch: \n\t"<< d.movePitch << " rapidPitch: " << d.rapidPitch << "\n";
+    std::cout << "\t accel: " << d.accel << " dwell: " << d.dwell << " movesteps: " << d.moveSteps<< "\n";
+    std::cout << "\t f: " << d.f << " startSync: " << d.startSync << "\n";
 }
 
 
@@ -53,6 +54,7 @@ MCDOC validateMoveConfig(JsonObject& doc){
         bool f = doc["f"].as<bool>();
         m.f = f;
     }
+
     if(!doc.containsKey("movePitch") ){
         printf("moveConfig doc: no movePitch param\n");
         return m;
@@ -79,13 +81,13 @@ MCDOC validateMoveConfig(JsonObject& doc){
         return m;
     }
 
-    if(!doc.containsKey("distance") ){
-        printf("moveConfig doc: no distance param\n");
+    if(!doc.containsKey("moveSteps") ){
+        printf("moveConfig doc: no moveSteps param\n");
         return m;
-    }else if(doc["distance"].is<int>()){
-        m.distance = doc["distance"].as<int>();
+    }else if(doc["moveSteps"].is<int>()){
+        m.moveSteps= doc["moveSteps"].as<int>();
     }else{
-        printf("moveConfig doc: distance param type error\n");
+        printf("moveConfig doc: moveSteps param type error\n");
         return m;
     }
 
@@ -108,6 +110,17 @@ MCDOC validateMoveConfig(JsonObject& doc){
         printf("moveConfig doc: dwell param type error\n");
         return m;
     }
+
+    if(!doc.containsKey("startSync") ){
+        printf("moveConfig doc: no startSync param\n");
+        return m;
+    }else if(doc["startSync"].is<bool>()){
+        m.dwell = doc["startSync"].as<bool>();
+    }else{
+        printf("moveConfig doc: startSync param type error\n");
+        return m;
+    }
+
     
     m.valid = true;
     return m;

@@ -42,6 +42,7 @@ namespace GenStepper {
 
         // if returns true it worked
         inline bool setELSFactor(double pitch, bool recalculate_den = false){
+            int old_nom = nom;
             if(pitch == 0){
                 sprintf(lm.buf,"Pitch 0, no good");
                 lm.error();
@@ -54,12 +55,14 @@ namespace GenStepper {
             }
             GenStepper::State::nom = c.motor_steps * pitch;
             if(nom == 0 || den == 0){
-                sprintf(lm.buf,"Bad Config? Bad Ratio: Den: %d Nom: %d\n",nom,den);
+                nom = old_nom;
+                sprintf(lm.buf,"Bad Config? Bad Ratio: Den: %d Nom: %d\n",den,nom);
                 lm.error();
                 return false;
             }
             if(!mygear.setRatio(nom,den)){
-                sprintf(lm.buf,"Bad Ratio: Den: %d Nom: %d\n",nom,den);
+                nom = old_nom;
+                sprintf(lm.buf,"Bad Ratio: Den: %d Nom: %d\n",den,nom);
                 lm.error();
                 return false;
             }
@@ -109,6 +112,16 @@ namespace GenStepper {
         }
         inline int maxPitch(){
             return den;
+        }
+        inline bool validPitch(double pitch){
+            int stepsPerMM = c.motor_steps / c.lead_screw_pitch;
+            int pitchInSteps = stepsPerMM * pitch;
+            int max =  den;
+            printf("steps per mm: %i pitch in steps: %i max pitch was: %i",stepsPerMM,pitchInSteps,max);
+            if(max > pitchInSteps){
+                return true;
+            }
+            return false;
         }
 
     };

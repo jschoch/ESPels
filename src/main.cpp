@@ -58,7 +58,7 @@ void setup() {
   led_init();
   Serial.begin(115200);
 
-   
+  WiFi.disconnect(true, true); 
 
   init_motion();
 

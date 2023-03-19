@@ -32,6 +32,17 @@ void test_validate()
 
     char buff[1000];
 
+    MCDOC start_struct = {
+        1.0, // move pitch
+        1.0, // rapid pitch
+        100000, // accel
+        1, // dwell
+        1, // moveSteps
+        true, // f
+        true,
+        false
+    };
+
     StaticJsonDocument<200> doc;
     static const char* raw = "{\"cmd\":\"world\"}";
     deserializeJson(doc, raw);
@@ -53,8 +64,6 @@ void test_validate()
     c["rapidPitch"] = 1.1;
     c["accel"] = 100000;
     //c["f"] = true;
-    c["dwell"] = 0;
-    c["distance"] = 0;
 
     MCDOC validMoveConfig = validateMoveConfig(c);
 
@@ -65,7 +74,8 @@ void test_validate()
     c["accel"] = 100000;
     c["f"] = true;
     c["dwell"] = 0;
-    c["distance"] = 0;
+    c["moveSteps"] = start_struct.moveSteps;
+    c["startSync"] = start_struct.startSync;
 
     std::cout << "test bad float \n";
 
@@ -77,15 +87,7 @@ void test_validate()
 
     TEST_ASSERT(!validMoveConfig.valid);
 
-    MCDOC start_struct = {
-        1.0, // move pitch
-        1.1, // rapid pitch
-        100000, // accel
-        1, // dwell
-        1, // distance
-        true, // f
-        false
-    };
+    
 
 
     c["movePitch"] = start_struct.movePitch;
@@ -93,7 +95,8 @@ void test_validate()
     c["accel"] = start_struct.accel;
     c["f"] = start_struct.f;
     c["dwell"] = start_struct.dwell;
-    c["distance"] = start_struct.distance;
+    c["moveSteps"] = start_struct.moveSteps;
+    c["startSync"] = start_struct.startSync;
 
     
     serializeJsonPretty(c,buff);

@@ -23,6 +23,10 @@
 #include <Ticker.h>
 #include "led.h"
 
+// Stringify wifi stuff
+#define ST(A) #A
+#define STR(A) ST(A)
+//const char* WIFI_P = STR(WIFI_PASSWORD);
 
 #include "web.h"
 
@@ -151,7 +155,7 @@ void loadNvConfigDoc()
     microsteps = nvConfigDoc["microsteps"];
     spindle_encoder_resolution = nvConfigDoc["spindle_encoder_resolution"];
     */
-    Serial.printf("Loaded Configuration com version %s lead screw pitch: %f\n", vsn, lead_screw_pitch);
+    Serial.printf("Loaded Configuration com version %s lead screw pitch: %lf\n", vsn, lead_screw_pitch);
     init_machine();
     // setFactor();
     gs.c.lead_screw_pitch = lead_screw_pitch;
@@ -434,24 +438,34 @@ void handleRapid()
 
 void handleMove()
 {
-  Serial.println("got jog command");
+  Serial.println("got move command");
   if (run_mode == RunMode::SLAVE_JOG_READY)
   {
     JsonObject config = inDoc["config"];
     MCDOC mcdoc = validateMoveConfig(config);
     if(mcdoc.valid){
-      mc.moveDistanceSteps = mcdoc.distance;
-      mc.pitch = mcdoc.movePitch;
-      updateStateDoc();
-      doMoveSync();
+      mc.moveDistanceSteps = mcdoc.moveSteps;
+      if(gs.validPitch(mcdoc.movePitch)){
+        mc.pitch = mcdoc.movePitch;
+        //mc.f = mcdoc.f;
+        updateStateDoc();
+        doMoveSync();
+      }else{
+        el.error("move pitch greater than max pitch");
+      }
+      
     }else{
-      el.error("invalid move config");
+      printMCDOC(mcdoc);
+      char err_buff[600] = "";
+      serializeJsonPretty(inDoc,err_buff);
+      sprintf(el.buf,"invalid move config: %s",err_buff);
+      el.error();
     }
     
   }
   else
   {
-    el.error("can't jog, no jogging mode is set ");
+    el.error("can't move, no moving mode is set ");
   }
 }
 void doMoveSync(){
@@ -463,7 +477,7 @@ void doMoveSync(){
       Serial.printf("Response from stepper: %d stepper current direction: %d\n",step_dir_response,gs.zstepper.dir);
       bool valid = gs.setELSFactor(mc.pitch);
       if(valid){
-         Serial.printf("doJog pitch: %f target: %i\n",mc.pitch,mc.moveDistanceSteps);
+         Serial.printf("doJog pitch: %lf target: %i\n",mc.pitch,mc.moveDistanceSteps);
         Serial.printf("\t\tStops: stopNeg: %i stopPos: %i\n",mc.stopNeg,mc.stopPos);
         init_pos_feed(); 
       }else{
@@ -489,7 +503,7 @@ void handleHobRun()
       // initialize hob run state?
       JsonObject config = inDoc["config"];
       mc.pitch = config["pitch"].as<double>();
-      Serial.printf("Pitch %f \n", mc.pitch);
+      Serial.printf("Pitch %lf \n", mc.pitch);
       mc.moveDirection = (bool)config["f"];
       // syncStart = (bool)config["s"];
       //  TODO: do I need to sync the spindle in this mode?
@@ -536,7 +550,7 @@ void handleFeed(){
   JsonObject config = inDoc["config"];
   mc.pitch = config["pitch"].as<double>();
   feeding_ccw = (bool)config["f"]; 
-  Serial.printf("\nFeed ccw: %d pitch: %f config pitch %f\n",feeding_ccw,mc.pitch);
+  Serial.printf("\nFeed ccw: %d config pitch %lf\n",feeding_ccw,mc.pitch);
   //bool d = mc.setStops(gs.currentPosition());
   gs.zstepper.setDirNow(feeding_ccw);
   gs.setELSFactor(mc.pitch);
@@ -716,7 +730,7 @@ void parseObj(AsyncWebSocketClient *client)
   {
     handleJogAbs();
   }
-  else if (strcmp(cmd, "jog") == 0)
+  else if (strcmp(cmd, "moveSync") == 0)
   {
     handleMove();
   }
@@ -836,14 +850,15 @@ Ticker reconnectTimer;
 
 void connectToWifi() {
   Serial.println("reConnecting to Wi-Fi...");
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  WiFi.begin(STR(WIFI_SSID), WIFI_PWD);
+  Serial.printf(": %s\n",WIFI_PWD);
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print(".");
     delay(100);
   }
   WiFi.setTxPower(WIFI_POWER_19_5dBm);
   WiFi.setAutoReconnect(true);
-  WiFi.persistent(true);
+  //WiFi.persistent(true);
   WiFi.setSleep(false);
   Serial.print("Connected. IP=");
   Serial.println(WiFi.localIP());
@@ -946,10 +961,6 @@ void sendUpdates()
   // called in main loop
   if (update_timer.repeat())
   {
-    // only send state when it changes
-    // updateStateDoc();
-    // Serial.printf(" %d ",(int)run_mode);
-    Serial.printf(" %d %d %d ", (int)run_mode, gs.position, WiFi.RSSI());
     updateDebugStatusDoc();
     updateStatusDoc();
 
