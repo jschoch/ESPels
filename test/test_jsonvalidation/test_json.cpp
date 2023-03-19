@@ -39,7 +39,8 @@ void test_validate()
         1, // dwell
         1, // moveSteps
         true, // f
-        true,
+        true, // startSync
+        true, // feeding_ccw
         false
     };
 
@@ -96,6 +97,7 @@ void test_validate()
     c["f"] = start_struct.f;
     c["dwell"] = start_struct.dwell;
     c["moveSteps"] = start_struct.moveSteps;
+    c["feeding_ccw"] = start_struct.feeding_ccw;
     c["startSync"] = start_struct.startSync;
 
     

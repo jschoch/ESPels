@@ -37,16 +37,18 @@ int GenStepper::State::den;
 int GenStepper::State::position;
 
 int32_t MoveConfig::State::moveDistanceSteps ;
-bool MoveConfig::State::waitForSync ;
+bool MoveConfig::State::startSync;
 bool MoveConfig::State::moveDirection ;
 int32_t MoveConfig::State::moveTargetSteps ;
 int MoveConfig::State::stopPos ;
 int MoveConfig::State::stopNeg ;
 bool MoveConfig::State::spindle_handedness ;
-double MoveConfig::State::pitch ;
+double MoveConfig::State::movePitch ;
 double MoveConfig::State::rapidPitch ;
 double MoveConfig::State::oldPitch ;
 int MoveConfig::State::accel;
+int MoveConfig::State::dwell;
+bool MoveConfig::State::feeding_ccw;
 //bool MoveConfig::State::isAbs  ;
 bool MoveConfig::State::useStops ;
 int Gear::State::next;
@@ -66,11 +68,9 @@ void setup() {
 
   init_controls();
   
-  //setFactor();
-  gs.setELSFactor(mc.pitch);
-
   init_web();
 
+  gs.setELSFactor(mc.movePitch,true);
 
   esp_log_level_set("perfmon", ESP_LOG_DEBUG);
   esp_err_t e = perfmon_start();

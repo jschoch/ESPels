@@ -60,6 +60,9 @@ StaticJsonDocument<5000> logDoc;
 // used for debugging, to slim down status doc 
 StaticJsonDocument<500> debugStatusDoc;
 
+// for sending updates to move config
+StaticJsonDocument<1000> moveConfigDoc;
+
 StaticJsonDocument<100> pongDoc;
 char pongBuf[100];
 int pong_len = serializeMsgPack(pongDoc,pongBuf);

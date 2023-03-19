@@ -13,7 +13,7 @@ namespace MoveConfig{
         // was jog_mm
         int default_accel = 200000;
         static int32_t moveDistanceSteps ;
-        static bool waitForSync ;
+        static bool startSync;
         // was z_feeding_direction
         static bool moveDirection ;
 
@@ -21,7 +21,7 @@ namespace MoveConfig{
         static int stopNeg ;
         // spindle spinning CW or CCW
         static bool spindle_handedness ;
-        static double pitch ;
+        static double movePitch;
         static double rapidPitch ;
         static double oldPitch ;
         //static bool syncMoveStart ;
@@ -29,6 +29,14 @@ namespace MoveConfig{
         static bool useStops ;
         static int moveTargetSteps;
         static int accel;
+        static int dwell;
+
+        // this shoudl be true for normal operation
+        // chaning this should reverse all operations
+        // hard to describe
+        static bool feeding_ccw;
+
+        
 
         // returns a bool to be used by stepper.setDir
         inline bool setStops(int32_t current_position){
@@ -62,21 +70,20 @@ namespace MoveConfig{
              return true;
            }
         }
-        
+
 
     };
     inline State init(){
         State state;
-        state.waitForSync = true;
+        state.startSync = true;
         state.moveDirection = true;
         state.spindle_handedness = true;
-        state.pitch = 0.1;
         state.rapidPitch = 0.1;
-        state.oldPitch = state.pitch;
-        //state.syncMoveStart = true;
+        state.oldPitch = state.movePitch;
         //state.isAbs = false;
         state.accel = state.default_accel;
         state.useStops = true;
+        state.feeding_ccw = true;
         return state;
     }
 }

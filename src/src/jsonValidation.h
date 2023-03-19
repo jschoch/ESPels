@@ -17,8 +17,10 @@ struct MCDOC {
     int accel = 0;
     int dwell = 0;
     int moveSteps = 0;
+    // is f the same as feeding_ccw !???
     bool f = true;
     bool startSync = true;
+    bool feeding_ccw = true;
     bool valid = false;
 } ;
 
@@ -30,13 +32,14 @@ inline bool operator==(const MCDOC& lhs, const MCDOC& rhs)
            lhs.dwell == rhs.dwell &&
            lhs.moveSteps == rhs.moveSteps&&
            lhs.startSync == rhs.startSync &&
+           lhs.feeding_ccw == rhs.feeding_ccw &&
            lhs.f == rhs.f;
 }
 
 void printMCDOC(MCDOC& d){
     std::cout << "doc: movePitch: \n\t"<< d.movePitch << " rapidPitch: " << d.rapidPitch << "\n";
     std::cout << "\t accel: " << d.accel << " dwell: " << d.dwell << " movesteps: " << d.moveSteps<< "\n";
-    std::cout << "\t f: " << d.f << " startSync: " << d.startSync << "\n";
+    std::cout << "\t f: " << d.f  << " feeding_ccw: " << d.feeding_ccw << " startSync: " << d.startSync << "\n";
 }
 
 
@@ -50,10 +53,23 @@ MCDOC validateMoveConfig(JsonObject& doc){
     if(!doc.containsKey("f") ){
         printf("moveConfig doc: no f param\n");
         return m;
-    }else{
+    }else if(doc["f"].is<bool>()){
         bool f = doc["f"].as<bool>();
         m.f = f;
+    }else{
+        printf("moveConfig doc: f param type error");
     }
+
+    if(!doc.containsKey("feeding_ccw") ){
+        printf("moveConfig doc: no feeding_ccw param\n");
+        return m;
+    }else if(doc["feeding_ccw"].is<bool>()){
+        bool feeding_ccw = doc["feeding_ccw"].as<bool>();
+        m.feeding_ccw = feeding_ccw;
+    }else{
+        printf("moveConfig doc: feeding_ccw param type error");
+    }
+
 
     if(!doc.containsKey("movePitch") ){
         printf("moveConfig doc: no movePitch param\n");
