@@ -76,13 +76,10 @@ void init_hob_feed(){
   }
 }
 
-
-
-// ensure we don't send steps after changing dir pin until the proper delay has expired
-void updateGearForDir(){
-  //if(gs.zstepper.dir_has_changed){
-  //  while(gs.zstepper.dir_has_changed && ((gs.zstepper.dir_change_timer + 5) - esp_timer_get_time() > 0)){
-        //gs.zstepper.dir_has_changed = false;
+void waitForDir(){
+  if(gs.zstepper.dir_has_changed){
+    while(gs.zstepper.dir_has_changed && ((gs.zstepper.dir_change_timer + 5) - esp_timer_get_time() > 0)){
+        gs.zstepper.dir_has_changed = false;
         if(!gs.zstepper.dir){
           // reset stuff for dir changes guard against swapping when we just moved
           if(gs.mygear.last < encoder.pulse_counter){
@@ -97,9 +94,41 @@ void updateGearForDir(){
             gs.mygear.last = gs.mygear.prev;
           }
         }
-    //}
-  //}
+    }
+  }
 }
+
+void dealWithDirChange(){
+  
+        if(!gs.zstepper.dir){
+          // reset stuff for dir changes guard against swapping when we just moved
+          if(gs.mygear.last < encoder.pulse_counter){
+            gs.mygear.prev = gs.mygear.last;
+            gs.mygear.last = gs.mygear.next;
+          }
+
+        }else{
+          // reset stuff for dir changes
+          if(gs.mygear.last  > encoder.pulse_counter){
+            gs.mygear.next = gs.mygear.last;
+            gs.mygear.last = gs.mygear.prev;
+          }
+        }
+}
+
+// ensure we don't send steps after changing dir pin until the proper delay has expired
+void updateGearForDir(){
+  if(gs.zstepper.dir_has_changed && gs.diduseFAS == 0){
+    while(gs.zstepper.dir_has_changed && ((gs.zstepper.dir_change_timer + 5) - esp_timer_get_time() > 0)){
+       gs.zstepper.dir_has_changed = false;
+       dealWithDirChange(); 
+    }
+  }else{
+    dealWithDirChange();
+  }
+}
+
+
 
 
 // clean up vars on finish

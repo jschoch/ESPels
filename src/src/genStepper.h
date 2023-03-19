@@ -7,8 +7,12 @@
 #include "mocks.h"
 #else
 #include "rmtStepper.h"
+#define SUPPORT_ESP32_RMT
 #include "FastAccelStepper.h"
 #endif
+
+// use fast accel stepper
+#define useFAS
 
 
 
@@ -38,6 +42,7 @@ namespace GenStepper {
         static rmtStepper::State zstepper;
         FastAccelStepper *fzstepper = NULL;
         FastAccelStepperEngine engine = FastAccelStepperEngine();
+        static bool diduseFAS ;
         
 
         // if returns true it worked
@@ -87,24 +92,33 @@ namespace GenStepper {
         }
 
         inline void stepPos(){
-            //zstepper.step();
+#ifdef useFAS
             int8_t r = fzstepper->move(1,false);
+#else
+            zstepper.step();
+#endif
             position++;
         }
         inline void stepNeg(){
-            //zstepper.step();
+#ifdef useFAS
             int8_t r = fzstepper->move(-1,false);
+#else
+            zstepper.step();
+#endif
             position--;
 
         }
 
         inline void setAccel(int val){
+#ifdef useFAS
             fzstepper->setAcceleration(val);
             fzstepper->applySpeedAcceleration();
+#else
+            // do nothing no acceleration
+#endif
         }
         inline void step(){
             if( zstepper.dir){
-            //if( fzstepper.)
                 stepPos();
             }else{
                 stepNeg();
@@ -139,7 +153,7 @@ namespace GenStepper {
         state.init_gear(0);
         int stepper_speed = 80000;
         int accel = 50000;
-
+#ifdef useFAS
         state.engine.init();
         state.fzstepper = state.engine.stepperConnectToPin(Z_STEP_PIN);
         if (state.fzstepper) {
@@ -153,8 +167,22 @@ namespace GenStepper {
             state.fzstepper->setSpeedInHz(stepper_speed);  // the parameter is us/step !!!
             state.fzstepper->setAcceleration(accel);
             state.fzstepper->applySpeedAcceleration();
+            state.diduseFAS = true;
         }
-        //gs.fzstepper = fzstepper;
+#else
+        pinMode(Z_DIR_PIN, OUTPUT);
+        pinMode(Z_STEP_PIN, OUTPUT);
+
+        //stepsPerMM = c.motor_steps / c.lead_screw_pitch;
+
+
+        state.zstepper.config.channel = RMT_CHANNEL_0;
+        state.zstepper.config.stepPin = (gpio_num_t) Z_STEP_PIN;
+        state.zstepper.config.dirPin = (gpio_num_t) Z_DIR_PIN;
+
+        state.zstepper.init();
+        state.diduseFAS = false;
+#endif
         return state;
         
     }

@@ -35,6 +35,7 @@ rmtStepper::State GenStepper::State::zstepper;
 int GenStepper::State::nom;
 int GenStepper::State::den;
 int GenStepper::State::position;
+bool GenStepper::State::diduseFAS;
 
 int32_t MoveConfig::State::moveDistanceSteps ;
 bool MoveConfig::State::startSync;
@@ -60,7 +61,8 @@ void setup() {
   led_init();
   Serial.begin(115200);
 
-  WiFi.disconnect(true, true); 
+  // may be needed to flush wifi creds from nvram
+  //WiFi.disconnect(true, true); 
 
   init_motion();
 

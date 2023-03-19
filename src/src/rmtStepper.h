@@ -35,8 +35,8 @@ namespace rmtStepper {
         bool dir_has_changed = false;
 
         void step(){
-            RMT.conf_ch[RMT_CHANNEL_0].conf1.mem_rd_rst = 1;
-            RMT.conf_ch[RMT_CHANNEL_0].conf1.tx_start   = 1;
+            RMT.conf_ch[config.channel].conf1.mem_rd_rst = 1;
+            RMT.conf_ch[config.channel].conf1.tx_start   = 1;
             if(dir){
                 pos++;
             }else{
@@ -47,20 +47,25 @@ namespace rmtStepper {
             //ESP_LOGE("thing","setDir called current dir: %d  arg dir: %d",dir,newdir);
             bool olddir = dir;
             if(dir != newdir){
-                // XOR the dir for the inversion bool
-                dir_has_changed = true;
+
 
                 // TODO need  to be able to invert
                 //digitalWrite(config.dirPin, newdir ^ config.invert_step_pin);
-                //digitalWrite(config.dirPin, newdir);
+#ifndef useFAS
+                // XOR the dir for the inversion bool
+                dir_has_changed = true;
+                digitalWrite(config.dirPin, newdir);
+                dir_change_timer = esp_timer_get_time();
+#endif
                 dir = newdir;
-                //dir_change_timer = esp_timer_get_time();
             }
             return olddir == newdir;
         }
 
         bool setDirNow(bool newdir){
-            //digitalWrite(config.dirPin, newdir);
+#ifndef useFAS
+            digitalWrite(config.dirPin, newdir);
+#endif
             dir = newdir;
             return dir;
         }

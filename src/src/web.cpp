@@ -236,9 +236,8 @@ void updateDebugStatusDoc()
   // but this somewhat depends on the setup
 
 
-  // This is the number of encoder pulses needed before the next stepper pulse
   // TODO: make this optional and move to a "debug" doc
-  debugStatusDoc["delta"] = delta;
+
   // this doesn't appear to be used now, but...
   debugStatusDoc["targetPos"] = mc.moveTargetSteps;
   // for cpu stats
@@ -277,7 +276,9 @@ void updateStateDoc()
   stateDoc["s"] = syncStart;
   // TODO: add angle for angle readout in UI
   // send current acceleration setting
+#ifdef useFAS
   stateDoc["a"] = gs.fzstepper->getAcceleration();
+#endif
   
 
   sendState();
@@ -633,32 +634,14 @@ void handleSend()
   updateStateDoc();
 }
 void handleMoveConfig(){
-  JsonObject config = inDoc["config"];
-  Serial.println("MoveConfig: getting config");
-  Serial.print("got pitch: ");
-  double p = config["movePitch"];
-  if(p != mc.movePitch){
-    Serial.println("new pitch");
-    mc.oldPitch = mc.movePitch;
-    mc.movePitch = p;
-    // not needed?
-    //gs.setELSFactor(mc.movePitch);
-  }
-  double r = config["rapidPitch"].as<double>();
-  if (r != mc.rapidPitch)
-  {
-    Serial.println("new rapid");
-    mc.rapidPitch = r;
-    Serial.printf("updating rapids: %lf",mc.rapidPitch);
-  }
+  if ((run_mode == RunMode::SLAVE_JOG_READY || run_mode == RunMode::FEED_READY) && processDoc()){
 
-  int accel = config["accel"].as<int>();
-  if(accel != mc.accel){
-    Serial.printf("Setting Accel to: %i",accel);
-    mc.accel = accel;
+    Serial.printf("Setting Accel to: %i",mc.accel);
     gs.setAccel(mc.accel);
+    updateStateDoc();
+  }else{
+    printf("handleMoveConfig problem with state or doc\n");
   }
-  updateStateDoc();
 }
 void handleNvConfig()
 {
@@ -919,8 +902,6 @@ void init_web()
   Serial.println("Setting up WiFi");
   WiFi.setHostname(HOSTNAME);
   WiFi.mode(WIFI_MODE_STA);
-  
-  //wifiConnectHandler = WiFi.onStationModeGotIP(onWifiConnect);
   
   WiFi.onEvent(onWifiConnect, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
   WiFiEventId_t eventID = WiFi.onEvent(onWifiDisconnect, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
