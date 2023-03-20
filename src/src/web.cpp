@@ -798,6 +798,17 @@ void parseObj(AsyncWebSocketClient *client)
     Serial.println("toggle send debug");
     sendDebug = !sendDebug;
   }
+  else if(strcmp(cmd,"update_stats_interval") == 0){
+    
+    int tmp = inDoc["value"].as<int>();
+    if( tmp != 0){
+      sse_timer.set(tmp);
+      sse_timer.repeatReset();
+      Serial.printf("update Stats interval %i",tmp);
+    }
+    
+
+  }
   else
   {
     Serial.println("unknown command");
