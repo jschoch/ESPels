@@ -40,6 +40,10 @@
 #error Set your Z_DIR_PIN in your config.ini
 #endif
 
+#ifndef Z_EN_PIN
+#error Set the enable pin in the config.ini
+#endif
+
 //I don't think this is needed, we can infer this by microstepping and native steps per rev
 #define MOTOR_TYPE 1 // 1 is 1.8 degree, 2 is .9 degree
 

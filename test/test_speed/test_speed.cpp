@@ -4,7 +4,7 @@
 //#include <Arduino.h> //redirects to ArduinoFake.h in this case
 #include <unity.h>
 #include <iostream>
-#include "src/log.h"
+#include <elslog.h>
 
 #define Z_NATIVE_STEPS_PER_REV 200
 #define Z_MICROSTEPPING 8
@@ -24,17 +24,19 @@ int GenStepper::State::den;
 int GenStepper::State::position;
 int32_t MoveConfig::State::moveTargetSteps ;
 int32_t MoveConfig::State::moveDistanceSteps ;
-bool MoveConfig::State::waitForSync ;
+bool MoveConfig::State::startSync;
 bool MoveConfig::State::moveDirection ;
 //int32_t MoveConfig::State::moveSyncTarget ;
 int MoveConfig::State::stopPos ;
 int MoveConfig::State::stopNeg ;
 bool MoveConfig::State::spindle_handedness ;
-double MoveConfig::State::pitch ;
+double MoveConfig::State::movePitch ;
 double MoveConfig::State::rapidPitch ;
 double MoveConfig::State::oldPitch ;
+bool MoveConfig::State::feeding_ccw;
 //bool MoveConfig::State::syncMoveStart ;
 //bool MoveConfig::State::isAbs  ;
+int MoveConfig::State::accel;
 bool MoveConfig::State::useStops ;
 int Gear::State::next;
 int Gear::State::prev;

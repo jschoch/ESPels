@@ -43,11 +43,11 @@ void BounceIdleState(){
 
 void BounceMoveState(){
     if(bounce_yasm.isFirstRun()){
-        printf("Entering Bounce Move Mode pitch: %f\n",mc.pitch);
+        printf("Entering Bounce Move Mode pitch: %f\n",mc.movePitch);
         bool d = mc.setStops(gs.position);
         bool z_dir = gs.zstepper.setDir(d);
         printf("z_dir was: %d\n",z_dir);
-        gs.setELSFactor(mc.pitch);
+        gs.setELSFactor(mc.movePitch);
         start_move();
         updateMode(RunMode::BounceMove);
         //bounce_yasm.next(BounceMoveState);
@@ -64,9 +64,7 @@ void BounceRapidState(){
     if(bounce_yasm.isFirstRun()){
         printf(" Entering Rapid Mode pitch: %f",mc.rapidPitch);
         // TODO: yuck refactor this
-        mc.oldPitch = mc.pitch;
-        //pitch = rapids;
-        //mc.pitch = mc.rapidPitch;
+        mc.oldPitch = mc.movePitch;
         old_moveDistanceSteps = mc.moveDistanceSteps;
         mc.moveDistanceSteps = -mc.moveDistanceSteps;
         rapiding = true;
@@ -78,7 +76,7 @@ void BounceRapidState(){
     }
     else if(!rapiding){
         Serial.println("Rapid Done, going Idle");
-        mc.pitch = mc.oldPitch;
+        mc.movePitch = mc.oldPitch;
         mc.moveDistanceSteps = old_moveDistanceSteps;
         bouncing = false;
         jogging = false;

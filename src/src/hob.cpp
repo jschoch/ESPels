@@ -4,7 +4,7 @@
 #include "Stepper.h"
 #include "state.h"
 #include "motion.h"
-#include "log.h"
+#include <elslog.h>
 
 void HobReadyState(){
     if(run_mode != RunMode::HOB_RUN){
