@@ -1030,12 +1030,25 @@ void sendUpdates()
 
     // this is used by "Distance to Go" in the UI to figure out the direction 
     eventDoc["fd"] = mc.moveDirection;
+
+    // angle
+    // do this in the UI!!!!
+    //eventDoc["ngl"] = encoder.getAngle();
+
+
+    // unclear how to send binary data via events
     eventLen = serializeJson(eventDoc, eventBuf);
-    //serializeMsgPack(eventDoc,eventBuf);
+    //eventLen = serializeMsgPack(eventDoc,eventBuf);
+    
+    // none of these seem to work
     //events.send("e",eventBuf,millis());
     //events.send("e",eventBuf,millis());
     //events.send(eventBuf,"e",millis());
-    Serial.print(".");
+    if(eventLen > SSE_EVENT_SIZE){
+      Serial.print("*");
+    }else{
+      Serial.print(".");
+    }
     events.send(eventBuf);
   }
 }
