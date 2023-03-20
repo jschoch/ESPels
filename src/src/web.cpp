@@ -40,6 +40,10 @@ static const char* TAGweb = "Mc";
 // buffer for msgpack
 char outBuffer[6000];
 
+// for events
+int eventLen = 0;
+char eventBuf[SSE_EVENT_SIZE];
+
 size_t serialize_len = 0;
 
 // stores websocket data from asyncWebServer that gets fed to arduinoJSON
@@ -47,10 +51,12 @@ String wsData;
 
 // sends updates (statusDoc) to UI every interval
 Neotimer update_timer = Neotimer(1000);
+Neotimer sse_timer = Neotimer(100);
 Neotimer ota_timer = Neotimer(200);
 
 // TOOD: consider configs from config.h to update this stuff
 AsyncWebServer server(80);
+AsyncEventSource events("/events");
 AsyncWebSocket ws("/els");
 AsyncWebSocketClient *globalClient = NULL;
 
@@ -876,8 +882,20 @@ void connectToWifi() {
   MDNS.setInstanceName(HOSTNAME);
   MDNS.addService("http", "tcp", 80);
 
+  events.onConnect([](AsyncEventSourceClient *client){
+    if(client->lastId()){
+      Serial.printf("Client reconnected! Last message ID that it got is: %u\n", client->lastId());
+    }
+    // send event with message "hello!", id current millis
+    // and set reconnect delay to 1 second
+    client->send("hello!", NULL, millis(), 10000);
+  });
+
   ws.onEvent(onWsEvent);
   server.addHandler(&ws);
+  server.addHandler(&events);
+  DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
+  DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "*");
   server.begin();
   Serial.println("HTTP websocket server started");
 
@@ -925,6 +943,8 @@ void init_web()
   {
     loadNvConfigDoc();
   }
+
+  
 }
 
 void init_ota()
@@ -955,6 +975,7 @@ void init_ota()
 
   ArduinoOTA.begin();
 }
+
 void sendUpdates()
 {
   // called in main loop
@@ -964,6 +985,18 @@ void sendUpdates()
     updateStatusDoc();
 
     ws.cleanupClients();
+  }
+  if(sse_timer.repeat()){
+    //if ( (webeventclient) && (webeventclient->connected()) ) {
+      //if (webeventclient->packetsWaiting() < 2) {
+    eventDoc["rpm"] = rpm ;
+    eventLen = serializeJson(eventDoc, eventBuf);
+    //serializeMsgPack(eventDoc,eventBuf);
+    //events.send("e",eventBuf,millis());
+    //events.send("e",eventBuf,millis());
+    //events.send(eventBuf,"e",millis());
+    Serial.print(".");
+    events.send(eventBuf);
   }
 }
 void do_web()
