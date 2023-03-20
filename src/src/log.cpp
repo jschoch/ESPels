@@ -1,27 +1,20 @@
-#include "elslog.h"
-#include <Arduino.h>
-
-
-#ifdef PIO_UNIT_TESTING
-
-#else
-#include "../../src/src/web.h"
-#endif
+#include "log.h"
 
 Log::Msg el;
 
 void Log::Msg::maybeSend(){
-    #ifndef PIO_UNIT_TESTING
+    #ifndef UNIT_TEST
     sendLogP(this);
     #endif
-    #ifdef PIO_UNIT_TESTING
-    //printf("mock send");
+    #ifdef UNIT_TEST
+
     #endif
 }
 
 void Log::Msg::error(){
     if(this->t == T::WS){
-        printf("\nWS Log: %s\n",this->buf);
+        Serial.print("\nWS Log: ");
+        Serial.println(this->buf);
         maybeSend();
     }
 }
@@ -30,18 +23,16 @@ void Log::Msg::error(const char* s){
     if(this->t == T::WS){
         sprintf(buf,s);
         maybeSend();
-        printf(s);
+        Serial.println(s);
     }
 }
 void Log::Msg::halt(const char* s){
     if(this->t == T::WS){
         sprintf(buf,s);
         maybeSend();
-        printf(s);
+        Serial.println(s);
     }
 }
-
-#ifndef PIO_UNIT_TESTING
 
 void Log::Msg::errorTaskImpl(void* _this){
     static_cast<Log::Msg *>(_this)->error();
@@ -51,7 +42,6 @@ void Log::Msg::errorTask(){
     xTaskCreate(this->errorTaskImpl,"errorTask",2048,this, 5,NULL);
 }
 
-#endif
 
 void Log::Msg::addMsg(const char* s){
     sprintf(buf,s);

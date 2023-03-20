@@ -1,9 +1,9 @@
 #pragma once
 
-//#include "config.h"
+#include "config.h"
 #include "WiFi.h"
 #include "ESPAsyncWebServer.h"
-#include <elslog.h>
+//#include "c:\Users\jesse\Documents\Arduino\config.h"
 #include <ESPmDNS.h>
 #include <ArduinoJson.h>
 #include <StreamUtils.h>
@@ -20,7 +20,7 @@ void sendState();
 void sendStatus();
 void sendLogP(Log::Msg *msg);
 void loadNvConfigDoc();
-void handleMove();
+void handleJog();
 void sendUpdates();
 void sendDoc(const JsonDocument& doc);
 void sendLogP(Log::Msg *msg);

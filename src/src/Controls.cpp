@@ -10,7 +10,7 @@
 #include "gear.h"
 #include "Machine.h"
 #include "Encoder.h"
-#include <elslog.h>
+#include "log.h"
 #include "state.h"
 #include "Stepper.h"
 #include "display.h"

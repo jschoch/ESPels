@@ -1,7 +1,7 @@
 #include <Arduino.h> //redirects to ArduinoFake.h in this case
 #include <unity.h>
 #include <iostream>
-
+#include "src/log.h"
 
 
 #define Z_NATIVE_STEPS_PER_REV 200
@@ -10,8 +10,6 @@
 #include "src/genStepper.h"
 #include "src/moveConfig.h"
 #include "src/mocks.h"
-#include "src/jsonValidation.h"
-#include <elslog.h>
 
 using namespace fakeit;
 
@@ -24,20 +22,18 @@ int GenStepper::State::den;
 int GenStepper::State::position;
 int32_t MoveConfig::State::moveTargetSteps ;
 int32_t MoveConfig::State::moveDistanceSteps ;
-bool MoveConfig::State::startSync;
+bool MoveConfig::State::waitForSync ;
 bool MoveConfig::State::moveDirection ;
 //int32_t MoveConfig::State::moveSyncTarget ;
 int MoveConfig::State::stopPos ;
 int MoveConfig::State::stopNeg ;
 bool MoveConfig::State::spindle_handedness ;
-double MoveConfig::State::movePitch ;
+double MoveConfig::State::pitch ;
 double MoveConfig::State::rapidPitch ;
 double MoveConfig::State::oldPitch ;
 //bool MoveConfig::State::syncMoveStart ;
 //bool MoveConfig::State::isAbs  ;
-int MoveConfig::State::accel;
 bool MoveConfig::State::useStops ;
-bool MoveConfig::State::feeding_ccw;
 int Gear::State::next;
 int Gear::State::prev;
 int Gear::State::last;
@@ -89,22 +85,11 @@ void test_genstepper()
         8, // microsteps
         1600
     };
-
-    MCDOC mcdoc = {
-        1.0, // move pitch
-        1.1, // rapid pitch
-        100000, // accel
-        1, // dwell
-        1, // distance
-        true, // f
-        false
-    };
-
     GenStepper::State gs = GenStepper::init("Z", lm,gconf);
 
     TEST_ASSERT(gs.c.dir == 0);
 
-    std::cout << "name: " << gs.c.name << " movePitch: " << mc.movePitch << "\n";
+    std::cout << "name: " << gs.c.name << " pitch: " << mc.pitch << "\n";
 
 
     gs.mygear.calc_jumps(100, true);
@@ -121,14 +106,6 @@ void test_genstepper()
 
     bool fails_zero_pitch = gs.setELSFactor(0, false);
     TEST_ASSERT(fails_zero_pitch == false);
-
-    // test max pitch 
-    std::cout << "test max pitch check\n";
-    mcdoc.rapidPitch = 10;
-    bool fails_max_pitch = gs.setELSFactor(mcdoc.rapidPitch);
-
-    TEST_ASSERT(fails_max_pitch == false);
-    std::cout << "\tdone\n";
 }
 void test_moveConfig()
 {
