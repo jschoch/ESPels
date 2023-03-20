@@ -57,10 +57,6 @@ extern StaticJsonDocument<500> debugStatusDoc;
 
 // for pong
 extern StaticJsonDocument<100> pingDoc;
-
-// for sending upated move config
-extern StaticJsonDocument<1000> moveConfigDoc;
-
 extern char pongBuf[100];
 extern int pong_len;
 

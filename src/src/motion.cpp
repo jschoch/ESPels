@@ -9,7 +9,7 @@
 #include "Encoder.h"
 #include "Stepper.h"
 #include "state.h"
-#include <elslog.h> 
+#include "log.h"
 #include "Controls.h"
 #include "Machine.h"
 #include "genStepper.h"
@@ -22,6 +22,12 @@ static const char* TAG = "Mo";
 // actual error is max_error * 2 since this is a range around the tool potion + and -
 static int max_error = 20;
 
+// not sure this is needed
+//volatile bool feeding = false;
+
+// this is used mostly for feed mode to flip the behaviors, spindle moving ccw moves carriage Z+ or Z- depending on 
+// how this is set
+volatile bool feeding_ccw = true;
 
 char err[500] = "";
 
@@ -30,10 +36,11 @@ char err[500] = "";
 
 void init_pos_feed(){
   // this must be done by the caller
+  //gs.setELSFactor(pitch);
   if(!pos_feeding){
     
     //wait for the start to come around
-    if(mc.startSync){
+    if(mc.waitForSync){
       Serial.printf("Move: waiting for spindle sync target: %i distance: %i  stopNeg: %d stopPos: %d nom: %d den: %d\n",
         mc.moveTargetSteps,
         mc.moveDistanceSteps,
@@ -59,7 +66,7 @@ void init_hob_feed(){
   if(!pos_feeding){
     
     //wait for the start to come around
-    if(mc.startSync){
+    if(mc.waitForSync){
       Serial.println("waiting for spindle sync");
       syncWaiting = true;
       pos_feeding = true;
@@ -76,6 +83,9 @@ void init_hob_feed(){
   }
 }
 
+
+
+// ensure we don't send steps after changing dir pin until the proper delay has expired
 void waitForDir(){
   if(gs.zstepper.dir_has_changed){
     while(gs.zstepper.dir_has_changed && ((gs.zstepper.dir_change_timer + 5) - esp_timer_get_time() > 0)){
@@ -98,50 +108,18 @@ void waitForDir(){
   }
 }
 
-void dealWithDirChange(){
-  
-        if(!gs.zstepper.dir){
-          // reset stuff for dir changes guard against swapping when we just moved
-          if(gs.mygear.last < encoder.pulse_counter){
-            gs.mygear.prev = gs.mygear.last;
-            gs.mygear.last = gs.mygear.next;
-          }
-
-        }else{
-          // reset stuff for dir changes
-          if(gs.mygear.last  > encoder.pulse_counter){
-            gs.mygear.next = gs.mygear.last;
-            gs.mygear.last = gs.mygear.prev;
-          }
-        }
-}
-
-// ensure we don't send steps after changing dir pin until the proper delay has expired
-void updateGearForDir(){
-  if(gs.zstepper.dir_has_changed && gs.diduseFAS == 0){
-    while(gs.zstepper.dir_has_changed && ((gs.zstepper.dir_change_timer + 5) - esp_timer_get_time() > 0)){
-       gs.zstepper.dir_has_changed = false;
-       dealWithDirChange(); 
-    }
-  }else{
-    dealWithDirChange();
-  }
-}
-
-
-
 
 // clean up vars on finish
 
 void finish_jog(){
   if(rapiding){
-    mc.movePitch = mc.oldPitch;
+    mc.pitch = mc.oldPitch;
     rapiding = false;
   }else{
     jogging = false;
   }
   pos_feeding = false;
-  mc.feeding_ccw = true;
+  feeding_ccw = true;
 }
 
 
@@ -187,35 +165,35 @@ void do_pos_feeding(){
     // Deal with direction changes
     // Encoder decrementing
     if(!encoder.dir){ // dir neg and not pausing for the direction change
-      if(mc.feeding_ccw && mc.moveDirection && gs.zstepper.dir){
+      if(feeding_ccw && mc.moveDirection && gs.zstepper.dir){
         gs.zstepper.setDir(false);
-      }else if(mc.feeding_ccw && !mc.moveDirection && !gs.zstepper.dir){
+      }else if(feeding_ccw && !mc.moveDirection && !gs.zstepper.dir){
         gs.zstepper.setDir(true);
       }
       
       // reverse spindle case 
-      else if(!mc.feeding_ccw && !mc.moveDirection && gs.zstepper.dir){
+      else if(!feeding_ccw && !mc.moveDirection && gs.zstepper.dir){
         gs.zstepper.setDir(false);
-      }else if(!mc.feeding_ccw && mc.moveDirection && !gs.zstepper.dir){
+      }else if(!feeding_ccw && mc.moveDirection && !gs.zstepper.dir){
         gs.zstepper.setDir(true);
       }
-      updateGearForDir();
+      waitForDir();
     }else {
 
     // encoder incrementing
-      if(mc.feeding_ccw && mc.moveDirection && !gs.zstepper.dir){
+      if(feeding_ccw && mc.moveDirection && !gs.zstepper.dir){
         gs.zstepper.setDir(true);
-      }else if(mc.feeding_ccw && !mc.moveDirection && gs.zstepper.dir){
+      }else if(feeding_ccw && !mc.moveDirection && gs.zstepper.dir){
         gs.zstepper.setDir(false);
       }
       
      // reverse spindle case 
-      else if(!mc.feeding_ccw && !mc.moveDirection && !gs.zstepper.dir){
+      else if(!feeding_ccw && !mc.moveDirection && !gs.zstepper.dir){
         gs.zstepper.setDir(true);
-      }else if(!mc.feeding_ccw && mc.moveDirection && gs.zstepper.dir){
+      }else if(!feeding_ccw && mc.moveDirection && gs.zstepper.dir){
         gs.zstepper.setDir(false);
       }
-      updateGearForDir();  
+      waitForDir();  
     } // done with direction changes
 
 
@@ -321,4 +299,6 @@ void startCalcTask(){
 // TOOD: is this needed?
 void init_motion(){
   esp_timer_init();
+  //setFactor();
+  //gs.setELSFactor(pitch);
 }

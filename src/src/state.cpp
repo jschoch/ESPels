@@ -8,7 +8,7 @@
 //Initialize the starting memory.
 
 // TODO: can this be automagical somehow?
-const char* vsn = "0.0.4";
+const char* vsn = "0.0.3";
 
 //common variables used by multipe things
 volatile int rpm = 0;
@@ -59,9 +59,6 @@ StaticJsonDocument<5000> logDoc;
 
 // used for debugging, to slim down status doc 
 StaticJsonDocument<500> debugStatusDoc;
-
-// for sending updates to move config
-StaticJsonDocument<1000> moveConfigDoc;
 
 StaticJsonDocument<100> pongDoc;
 char pongBuf[100];

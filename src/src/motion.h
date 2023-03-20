@@ -7,8 +7,7 @@ extern volatile bool feeding;
 
 // i think this reverses everything, usecase is unclear
 // should look at refactoring it out but unclear impact
-// this is replaced by mc.feeding_ccw
-//extern volatile bool feeding_ccw;
+extern volatile bool feeding_ccw;
 
 void init_motion(void);
 void IRAM_ATTR calcDelta(void);

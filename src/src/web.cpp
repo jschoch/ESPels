@@ -3,9 +3,8 @@
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 #include <ArduinoJson.h>
-#include "jsonValidation.h"
-//#include "config.h"
-//#include <elslog.h> 
+#include "config.h"
+#include "log.h"
 #include "Encoder.h"
 #include "state.h"
 #include "Stepper.h"
@@ -23,10 +22,6 @@
 #include <Ticker.h>
 #include "led.h"
 
-// Stringify wifi stuff
-#define ST(A) #A
-#define STR(A) ST(A)
-//const char* WIFI_P = STR(WIFI_PASSWORD);
 
 #include "web.h"
 
@@ -155,7 +150,7 @@ void loadNvConfigDoc()
     microsteps = nvConfigDoc["microsteps"];
     spindle_encoder_resolution = nvConfigDoc["spindle_encoder_resolution"];
     */
-    Serial.printf("Loaded Configuration com version %s lead screw pitch: %lf\n", vsn, lead_screw_pitch);
+    Serial.printf("Loaded Configuration com version %s lead screw pitch: %f\n", vsn, lead_screw_pitch);
     init_machine();
     // setFactor();
     gs.c.lead_screw_pitch = lead_screw_pitch;
@@ -164,21 +159,10 @@ void loadNvConfigDoc()
     gs.c.spindle_encoder_resolution = spindle_encoder_resolution;
     Serial.print("Loaded this NvConfig doc");
     serializeJsonPretty(nvConfigDoc, Serial);
-    if(!gs.setELSFactor(mc.movePitch,true)){
+    if(!gs.setELSFactor(mc.pitch,true)){
       Serial.println("Something wrong with this NvConfig!!!!!");
     }
   }
-}
-
-void updateMoveConfigDoc(){
-  moveConfigDoc["t"] = "moveConfigDoc";
-  moveConfigDoc["movePitch"] = mc.movePitch;
-  moveConfigDoc["rapidPitch"] = mc.rapidPitch;
-  moveConfigDoc["accel"] = mc.accel;
-  moveConfigDoc["moveDirection"] = mc.moveDirection;
-  moveConfigDoc["dwell"] = mc.dwell;
-  moveConfigDoc["startSync"] = mc.startSync;
-  sendDoc(moveConfigDoc);
 }
 
 void updateStatusDoc()
@@ -236,8 +220,9 @@ void updateDebugStatusDoc()
   // but this somewhat depends on the setup
 
 
+  // This is the number of encoder pulses needed before the next stepper pulse
   // TODO: make this optional and move to a "debug" doc
-
+  debugStatusDoc["delta"] = delta;
   // this doesn't appear to be used now, but...
   debugStatusDoc["targetPos"] = mc.moveTargetSteps;
   // for cpu stats
@@ -263,6 +248,11 @@ void updateStateDoc()
 {
   stateDoc["t"] = "state";
 
+  // the pitch for the sync move calculation in MM
+  stateDoc["pitch"] = mc.pitch;
+  // the pitch for sync rapid moves
+  stateDoc["rapid"] = mc.rapidPitch;
+
   // the run mode
   stateDoc["m"] = (int)run_mode;
   // TODO: not used but this shold be used instead of jog_mm and the UI should do the conversion
@@ -275,10 +265,6 @@ void updateStateDoc()
   // flag to wait for encocer "0" position
   stateDoc["s"] = syncStart;
   // TODO: add angle for angle readout in UI
-  // send current acceleration setting
-#ifdef useFAS
-  stateDoc["a"] = gs.fzstepper->getAcceleration();
-#endif
   
 
   sendState();
@@ -356,31 +342,6 @@ void sendNvConfigDoc()
   sendDoc(nvConfigDoc);
 }
 
-bool processDoc(){
-          JsonObject config = inDoc["moveConfig"];
-          MCDOC mcdoc = validateMoveConfig(config);
-          if(mcdoc.valid){
-            if(gs.validPitch(mcdoc.movePitch)){
-              mc.moveDistanceSteps = mcdoc.moveSteps;
-              mc.movePitch = mcdoc.movePitch;
-              mc.rapidPitch = mcdoc.rapidPitch;
-              mc.feeding_ccw = mcdoc.feeding_ccw;
-              updateMoveConfigDoc();
-              return true;
-            }else{
-              el.error("move pitch greater than max pitch");
-            }
-            
-          }else{
-            printMCDOC(mcdoc);
-            char err_buff[600] = "";
-            serializeJsonPretty(inDoc,err_buff);
-            sprintf(el.buf,"invalid move config: %s",err_buff);
-            el.error();
-          }
-          return false;
-        }
-
 void handleJogAbs()
 {
 
@@ -454,34 +415,39 @@ void handleRapid()
   // TODO: calculate speed from current RPM and perhaps warn if accel is a problem?
   // really need the acceleration curve
   
-  Serial.println("got rapid move command");
-  if (run_mode == RunMode::SLAVE_JOG_READY && processDoc())
-  {
-    mc.oldPitch = mc.movePitch;
-    updateStateDoc();
-    
-    Serial.println("Rapid! ");
-    mc.movePitch = mc.rapidPitch;
-    rapiding = true;
-    doMoveSync();
-  }else{
-    printf("problems with rapid\n");
-  }
+  JsonObject config = inDoc["config"];
+  mc.moveDistanceSteps = config["moveSteps"].as<int>();
+  mc.rapidPitch = config["rapid"].as<double>();
+  // start_rapid(jog_mm);
+  mc.oldPitch = mc.pitch;
+  updateStateDoc();
+  
+  Serial.println("Rapid! ");
+  mc.pitch = mc.rapidPitch;
+  rapiding = true;
+  doMoveSync();
 }
 
-void handleMove()
+void handleJog()
 {
-  Serial.println("got move command");
-  if (run_mode == RunMode::SLAVE_JOG_READY && processDoc())
+  Serial.println("got jog command");
+  if (run_mode == RunMode::SLAVE_JOG_READY)
   {
-    // pitch rapid and distance should all be in the moveConfig now
+    JsonObject config = inDoc["config"];
+    mc.moveDistanceSteps = config["moveSteps"].as<int>();
+    mc.pitch = config["pitch"].as<double>();
+
+    // TODO: validate this is correct
+    // TODO: calculate max pitch in init somewhare and compare this
+
+    // don't do this direction is handled in setStops
+    // mc.moveDirection = (bool)config["f"];
     updateStateDoc();
-    doMoveSync(); 
-    
+    doMoveSync();
   }
   else
   {
-    el.error("can't move, no moving mode is set ");
+    el.error("can't jog, no jogging mode is set ");
   }
 }
 void doMoveSync(){
@@ -491,15 +457,12 @@ void doMoveSync(){
       bool thedir = mc.setStops(gs.position);
       bool step_dir_response = gs.zstepper.setDirNow(thedir);
       Serial.printf("Response from stepper: %d stepper current direction: %d\n",step_dir_response,gs.zstepper.dir);
-      bool valid = gs.setELSFactor(mc.movePitch);
-      if(valid){
-         Serial.printf("doJog pitch: %lf target: %i\n",mc.movePitch,mc.moveDistanceSteps);
-        Serial.printf("\t\tStops: stopNeg: %i stopPos: %i\n",mc.stopNeg,mc.stopPos);
-        init_pos_feed(); 
-      }else{
-        el.error("Error setting pitch");
-      }
-     
+      gs.setELSFactor(mc.pitch);
+      Serial.printf("doJog pitch: %f target: %i\n",mc.pitch,mc.moveDistanceSteps);
+      Serial.printf("\t\tStops: stopNeg: %i stopPos: %i\n",mc.stopNeg,mc.stopPos);
+      //updateStateDoc();
+      //updateStatusDoc();
+      init_pos_feed(); 
     }
     else
     {
@@ -517,9 +480,9 @@ void handleHobRun()
     if (!pos_feeding)
     {
       // initialize hob run state?
-      JsonObject config = inDoc["moveConfig"];
-      mc.movePitch = config["pitch"].as<double>();
-      Serial.printf("Pitch %lf \n", mc.movePitch);
+      JsonObject config = inDoc["config"];
+      mc.pitch = config["pitch"].as<double>();
+      Serial.printf("Pitch %f \n", mc.pitch);
       mc.moveDirection = (bool)config["f"];
       // syncStart = (bool)config["s"];
       //  TODO: do I need to sync the spindle in this mode?
@@ -546,37 +509,35 @@ void handleHobStop()
 
 void handleBounce()
 {
-   Serial.println("got bounce move command");
-  if (run_mode == RunMode::SLAVE_JOG_READY && processDoc())
-  {
-    Serial.printf("Bounce config: distance: %i rapid: %lf move: %lf\n",mc.moveDistanceSteps,mc.rapidPitch,mc.movePitch);
-    //feeding_ccw = (bool)config["f"];
-    //el.error("warning, TOOD: this only is setup for one spindle direction");
-    updateStateDoc(); 
-    bouncing = true;
-    bounce_yasm.next(BounceMoveState,true);
-  }
-  else{
-    printf("problem with bounce move config or state\n");
-  }
+  Serial.println("Bounce! ");
+  JsonObject config = inDoc["config"];
+
+  // parse config
+  mc.pitch = config["pitch"].as<double>();
+  //pitch = mc.pitch;
+  mc.rapidPitch = config["rapid"].as<double>();
+  mc.moveDistanceSteps = config["moveSteps"].as<int>();
+  Serial.printf("Bounce config: distance: %i rapid: %lf move: %lf\n",mc.moveDistanceSteps,mc.rapidPitch,mc.pitch);
+  feeding_ccw = (bool)config["f"];
+  //el.error("warning, TOOD: this only is setup for one spindle direction");
+  updateStateDoc(); 
+  bouncing = true;
+  bounce_yasm.next(BounceMoveState,true);
 }
 
 void handleFeed(){
-   Serial.println("got bounce move command");
-  if (run_mode == RunMode::FEED_READY && processDoc())
-  {
-    Serial.printf("\nFeed ccw: %d config pitch %lf\n",mc.feeding_ccw,mc.movePitch);
-    //bool d = mc.setStops(gs.currentPosition());
-    gs.zstepper.setDirNow(mc.feeding_ccw);
-    gs.setELSFactor(mc.movePitch);
-    gs.init_gear(encoder.getCount());
-    mc.useStops = false;
-    syncWaiting = false;
-    updateStateDoc();
-    pos_feeding = true;
-  }else{
-    printf("problem with feed config or state\n");
-  }
+  JsonObject config = inDoc["config"];
+  mc.pitch = config["pitch"].as<double>();
+  feeding_ccw = (bool)config["f"]; 
+  Serial.printf("\nFeed ccw: %d pitch: %f config pitch %f\n",feeding_ccw,mc.pitch);
+  //bool d = mc.setStops(gs.currentPosition());
+  gs.zstepper.setDirNow(feeding_ccw);
+  gs.setELSFactor(mc.pitch);
+  gs.init_gear(encoder.getCount());
+  updateStateDoc();
+  mc.useStops = false;
+  syncWaiting = false;
+  pos_feeding = true;
 
 }
 
@@ -634,14 +595,25 @@ void handleSend()
   updateStateDoc();
 }
 void handleMoveConfig(){
-  if ((run_mode == RunMode::SLAVE_JOG_READY || run_mode == RunMode::FEED_READY) && processDoc()){
-
-    Serial.printf("Setting Accel to: %i",mc.accel);
-    gs.setAccel(mc.accel);
-    updateStateDoc();
-  }else{
-    printf("handleMoveConfig problem with state or doc\n");
+   JsonObject config = inDoc["config"];
+  Serial.println("MoveConfig: getting config");
+  Serial.print("got pitch: ");
+  double p = config["movePitch"];
+  if(p != mc.pitch){
+    Serial.println("new pitch");
+    mc.oldPitch = mc.pitch;
+    mc.pitch = p;
+    // not needed?
+    //gs.setELSFactor(mc.pitch);
   }
+  double r = config["rapidPitch"].as<double>();
+  if (r != mc.rapidPitch)
+  {
+    Serial.println("new rapid");
+    mc.rapidPitch = r;
+    Serial.printf("updating rapids: %lf",mc.rapidPitch);
+  }
+  updateStateDoc();
 }
 void handleNvConfig()
 {
@@ -659,7 +631,7 @@ void handleNvConfig()
     sendNvConfigDoc();
     // reset the den in case a param changed
 
-    gs.setELSFactor(mc.movePitch,true);
+    gs.setELSFactor(mc.pitch,true);
   }
   else
   {
@@ -722,7 +694,7 @@ void parseObj(AsyncWebSocketClient *client)
 
 
     // this must be reset for moveSync to work after running feed
-    mc.feeding_ccw = true;
+    feeding_ccw = true;
 
     // TODO: need rapid cancel
   }
@@ -730,9 +702,9 @@ void parseObj(AsyncWebSocketClient *client)
   {
     handleJogAbs();
   }
-  else if (strcmp(cmd, "moveSync") == 0)
+  else if (strcmp(cmd, "jog") == 0)
   {
-    handleMove();
+    handleJog();
   }
   else if (strcmp(cmd, "sendConfig") == 0)
   {
@@ -850,16 +822,14 @@ Ticker reconnectTimer;
 
 void connectToWifi() {
   Serial.println("reConnecting to Wi-Fi...");
-  //WiFi.begin(STR(WIFI_SSID), STR(WIFI_PASSWORD));
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  Serial.printf("SSID: %s :p %s\n",STR(WIFI_SSID),STR(WIFI_PASSWORD));
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print(".");
     delay(100);
   }
   WiFi.setTxPower(WIFI_POWER_19_5dBm);
   WiFi.setAutoReconnect(true);
-  //WiFi.persistent(true);
+  WiFi.persistent(true);
   WiFi.setSleep(false);
   Serial.print("Connected. IP=");
   Serial.println(WiFi.localIP());
@@ -903,6 +873,8 @@ void init_web()
   Serial.println("Setting up WiFi");
   WiFi.setHostname(HOSTNAME);
   WiFi.mode(WIFI_MODE_STA);
+  
+  //wifiConnectHandler = WiFi.onStationModeGotIP(onWifiConnect);
   
   WiFi.onEvent(onWifiConnect, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
   WiFiEventId_t eventID = WiFi.onEvent(onWifiDisconnect, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
@@ -960,6 +932,10 @@ void sendUpdates()
   // called in main loop
   if (update_timer.repeat())
   {
+    // only send state when it changes
+    // updateStateDoc();
+    // Serial.printf(" %d ",(int)run_mode);
+    Serial.printf(" %d %d %d ", (int)run_mode, gs.position, WiFi.RSSI());
     updateDebugStatusDoc();
     updateStatusDoc();
 

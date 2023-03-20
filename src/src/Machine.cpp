@@ -24,6 +24,7 @@ void init_machine(){
   motor_steps = (microsteps * native_steps) ;
   stepsPerMM = motor_steps / lead_screw_pitch;
   mmPerStep = (double) 1/stepsPerMM;
+  init_stepper();
 }
 
 
