@@ -1,5 +1,8 @@
 #pragma once
 #include <assert.h>
+// fights with many things including arduinoFake
+//#include <boost/rational.hpp>
+#include <numeric>
 
 
 

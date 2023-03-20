@@ -24,19 +24,20 @@ int GenStepper::State::den;
 int GenStepper::State::position;
 int32_t MoveConfig::State::moveTargetSteps ;
 int32_t MoveConfig::State::moveDistanceSteps ;
-bool MoveConfig::State::waitForSync ;
+bool MoveConfig::State::startSync;
 bool MoveConfig::State::moveDirection ;
 //int32_t MoveConfig::State::moveSyncTarget ;
 int MoveConfig::State::stopPos ;
 int MoveConfig::State::stopNeg ;
 bool MoveConfig::State::spindle_handedness ;
-double MoveConfig::State::pitch ;
+double MoveConfig::State::movePitch ;
 double MoveConfig::State::rapidPitch ;
 double MoveConfig::State::oldPitch ;
 //bool MoveConfig::State::syncMoveStart ;
 //bool MoveConfig::State::isAbs  ;
 int MoveConfig::State::accel;
 bool MoveConfig::State::useStops ;
+bool MoveConfig::State::feeding_ccw;
 int Gear::State::next;
 int Gear::State::prev;
 int Gear::State::last;
@@ -103,7 +104,7 @@ void test_genstepper()
 
     TEST_ASSERT(gs.c.dir == 0);
 
-    std::cout << "name: " << gs.c.name << " pitch: " << mc.pitch << "\n";
+    std::cout << "name: " << gs.c.name << " movePitch: " << mc.movePitch << "\n";
 
 
     gs.mygear.calc_jumps(100, true);

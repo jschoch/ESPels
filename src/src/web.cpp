@@ -850,8 +850,9 @@ Ticker reconnectTimer;
 
 void connectToWifi() {
   Serial.println("reConnecting to Wi-Fi...");
-  WiFi.begin(STR(WIFI_SSID), WIFI_PWD);
-  Serial.printf(": %s\n",WIFI_PWD);
+  //WiFi.begin(STR(WIFI_SSID), STR(WIFI_PASSWORD));
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  Serial.printf("SSID: %s :p %s\n",STR(WIFI_SSID),STR(WIFI_PASSWORD));
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print(".");
     delay(100);

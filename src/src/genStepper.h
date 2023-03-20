@@ -170,6 +170,7 @@ namespace GenStepper {
             state.diduseFAS = true;
         }
 #else
+#ifndef UNIT_TEST
         pinMode(Z_DIR_PIN, OUTPUT);
         pinMode(Z_STEP_PIN, OUTPUT);
 
@@ -182,6 +183,7 @@ namespace GenStepper {
 
         state.zstepper.init();
         state.diduseFAS = false;
+#endif
 #endif
         return state;
         
