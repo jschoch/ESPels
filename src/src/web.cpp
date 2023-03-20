@@ -989,7 +989,47 @@ void sendUpdates()
   if(sse_timer.repeat()){
     //if ( (webeventclient) && (webeventclient->connected()) ) {
       //if (webeventclient->packetsWaiting() < 2) {
-    eventDoc["rpm"] = rpm ;
+    // types the message as a status update for the UI
+    eventDoc["t"] = "status";
+
+    // Currently used for the UI DRO display,
+    // defined in util.h and helps UI figure out what to display
+    eventDoc["m"] = (int)run_mode;
+    // the position in steps
+    eventDoc["p"] = gs.position;
+
+    // encoder postion in cpr pulses
+    eventDoc["encoderPos"] = encoder.getCount();
+
+    // I think this is used for aboslute movements
+    // TODO: We should convert to steps in the UI and not have to do the conversion in the controller
+    eventDoc["targetSteps"] = mc.moveDistanceSteps;
+    // bool for constant run mode, TODO:  bad name though
+    //statusDoc["feeding"] = feeding;
+    // bools for sync movements, TODO:  bad name
+    eventDoc["jogging"] = jogging;
+    // bool for rapid sync movement TODO: bad name
+    eventDoc["rap"] = rapiding;
+    // flag for bouncing mode
+    eventDoc["bf"] = bouncing;
+    // main bool to turn movement on/off
+    eventDoc["pos_feed"] = pos_feeding;
+
+    // Wait for the spindle/ncoder "0" position
+    // this acts like a thread dial
+    eventDoc["sw"] = syncWaiting;
+    // generated in the encoder and displayed in the UI
+    // TODO: consider making the smoothing configurable or done in the browser
+    eventDoc["rpm"] = rpm;
+
+    // the virtual stop in the Z + direction, used to calculate "distance to go" in the UI
+    eventDoc["sp"] = mc.stopPos;
+    // the stop in the Z - direction
+    eventDoc["sn"] = mc.stopNeg;
+    eventDoc["r"] = WiFi.RSSI();
+
+    // this is used by "Distance to Go" in the UI to figure out the direction 
+    eventDoc["fd"] = mc.moveDirection;
     eventLen = serializeJson(eventDoc, eventBuf);
     //serializeMsgPack(eventDoc,eventBuf);
     //events.send("e",eventBuf,millis());
