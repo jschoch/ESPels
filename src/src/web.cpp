@@ -556,8 +556,6 @@ void handleBounce()
   if (run_mode == RunMode::SLAVE_JOG_READY && processDoc())
   {
     Serial.printf("Bounce config: distance: %i rapid: %lf move: %lf\n",mc.moveDistanceSteps,mc.rapidPitch,mc.movePitch);
-    //feeding_ccw = (bool)config["f"];
-    //el.error("warning, TOOD: this only is setup for one spindle direction");
     updateStateDoc(); 
     bouncing = true;
     bounce_yasm.next(BounceMoveState,true);
@@ -997,10 +995,11 @@ void sendUpdates()
 
     ws.cleanupClients();
   }
-  if(sse_timer.repeat()){
+  if(sse_timer.repeat() && (events.avgPacketsWaiting() < 2)){
     //if ( (webeventclient) && (webeventclient->connected()) ) {
       //if (webeventclient->packetsWaiting() < 2) {
     // types the message as a status update for the UI
+    
     eventDoc["t"] = "status";
 
     // Currently used for the UI DRO display,
@@ -1042,6 +1041,13 @@ void sendUpdates()
     // this is used by "Distance to Go" in the UI to figure out the direction 
     eventDoc["fd"] = mc.moveDirection;
 
+    // this reverses everything
+    eventDoc["fccw"] = mc.feeding_ccw;
+
+    #ifdef useFAS
+    eventDoc["fas_delta"] = gs.fzstepper->getCurrentPosition() - gs.position;
+    #endif
+
     // angle
     // do this in the UI!!!!
     //eventDoc["ngl"] = encoder.getAngle();
@@ -1050,16 +1056,13 @@ void sendUpdates()
     // unclear how to send binary data via events
     eventLen = serializeJson(eventDoc, eventBuf);
     //eventLen = serializeMsgPack(eventDoc,eventBuf);
+
+    
     
     // none of these seem to work
     //events.send("e",eventBuf,millis());
     //events.send("e",eventBuf,millis());
     //events.send(eventBuf,"e",millis());
-    if(eventLen > SSE_EVENT_SIZE){
-      Serial.print("*");
-    }else{
-      Serial.print(".");
-    }
     events.send(eventBuf);
   }
 }
