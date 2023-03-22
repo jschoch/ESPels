@@ -36,6 +36,8 @@ extern RunMode run_mode;
 
 extern double lead_screw_pitch;
 
+#define SSE_EVENT_SIZE 500
+
 
 // config stateDoc
 extern StaticJsonDocument<1000> stateDoc;
@@ -60,6 +62,9 @@ extern StaticJsonDocument<100> pingDoc;
 
 // for sending upated move config
 extern StaticJsonDocument<1000> moveConfigDoc;
+
+// for sending events
+extern StaticJsonDocument<SSE_EVENT_SIZE> eventDoc;
 
 extern char pongBuf[100];
 extern int pong_len;

@@ -178,7 +178,9 @@ Encoder::Encoder(int _encA, int _encB , double _ppr){
   quadrature = Quadrature::ON;
 }
 double Encoder::getAngle(){
+  // let the UI do this!!!
   return  natural_direction * _2PI * (pulse_counter) / ((double)cpr);
+  //return natural_direction * _2PI * ((pulse_counter) % ((double)cpr); 
 }
 // initialize counter to zero
 // TODO: not implmeented, need some nottion of work coordinates developed
@@ -221,7 +223,9 @@ void Encoder::init(){
 
   // initial cpr = PPR
   // change it if the mode is quadrature
-  if(quadrature == Quadrature::ON) cpr = 4*cpr;
+  if(quadrature == Quadrature::ON) {
+    cpr = 4*cpr;
+  }
   start = cpr;
 
 }
@@ -243,6 +247,9 @@ int64_t  IRAM_ATTR Encoder::getCount(){
   // TODO: why not just read the value?
   return pulse_counter;
 }
+
+
+// benchmarking crap
 
 void IRAM_ATTR statTask(void *ptr){
   // do stuff

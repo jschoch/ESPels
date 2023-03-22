@@ -64,6 +64,8 @@ StaticJsonDocument<500> debugStatusDoc;
 StaticJsonDocument<1000> moveConfigDoc;
 
 StaticJsonDocument<100> pongDoc;
+
+StaticJsonDocument<SSE_EVENT_SIZE> eventDoc;
 char pongBuf[100];
 int pong_len = serializeMsgPack(pongDoc,pongBuf);
 

@@ -40,6 +40,10 @@ static const char* TAGweb = "Mc";
 // buffer for msgpack
 char outBuffer[6000];
 
+// for events
+int eventLen = 0;
+char eventBuf[SSE_EVENT_SIZE];
+
 size_t serialize_len = 0;
 
 // stores websocket data from asyncWebServer that gets fed to arduinoJSON
@@ -47,10 +51,12 @@ String wsData;
 
 // sends updates (statusDoc) to UI every interval
 Neotimer update_timer = Neotimer(1000);
+Neotimer sse_timer = Neotimer(100);
 Neotimer ota_timer = Neotimer(200);
 
 // TOOD: consider configs from config.h to update this stuff
 AsyncWebServer server(80);
+AsyncEventSource events("/events");
 AsyncWebSocket ws("/els");
 AsyncWebSocketClient *globalClient = NULL;
 
@@ -550,8 +556,6 @@ void handleBounce()
   if (run_mode == RunMode::SLAVE_JOG_READY && processDoc())
   {
     Serial.printf("Bounce config: distance: %i rapid: %lf move: %lf\n",mc.moveDistanceSteps,mc.rapidPitch,mc.movePitch);
-    //feeding_ccw = (bool)config["f"];
-    //el.error("warning, TOOD: this only is setup for one spindle direction");
     updateStateDoc(); 
     bouncing = true;
     bounce_yasm.next(BounceMoveState,true);
@@ -792,6 +796,17 @@ void parseObj(AsyncWebSocketClient *client)
     Serial.println("toggle send debug");
     sendDebug = !sendDebug;
   }
+  else if(strcmp(cmd,"update_stats_interval") == 0){
+    
+    int tmp = inDoc["value"].as<int>();
+    if( tmp != 0){
+      sse_timer.set(tmp);
+      sse_timer.repeatReset();
+      Serial.printf("update Stats interval %i",tmp);
+    }
+    
+
+  }
   else
   {
     Serial.println("unknown command");
@@ -876,8 +891,20 @@ void connectToWifi() {
   MDNS.setInstanceName(HOSTNAME);
   MDNS.addService("http", "tcp", 80);
 
+  events.onConnect([](AsyncEventSourceClient *client){
+    if(client->lastId()){
+      Serial.printf("Client reconnected! Last message ID that it got is: %u\n", client->lastId());
+    }
+    // send event with message "hello!", id current millis
+    // and set reconnect delay to 1 second
+    client->send("hello!", NULL, millis(), 10000);
+  });
+
   ws.onEvent(onWsEvent);
   server.addHandler(&ws);
+  server.addHandler(&events);
+  DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
+  DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "*");
   server.begin();
   Serial.println("HTTP websocket server started");
 
@@ -925,6 +952,8 @@ void init_web()
   {
     loadNvConfigDoc();
   }
+
+  
 }
 
 void init_ota()
@@ -955,6 +984,7 @@ void init_ota()
 
   ArduinoOTA.begin();
 }
+
 void sendUpdates()
 {
   // called in main loop
@@ -964,6 +994,76 @@ void sendUpdates()
     updateStatusDoc();
 
     ws.cleanupClients();
+  }
+  if(sse_timer.repeat() && (events.avgPacketsWaiting() < 2)){
+    //if ( (webeventclient) && (webeventclient->connected()) ) {
+      //if (webeventclient->packetsWaiting() < 2) {
+    // types the message as a status update for the UI
+    
+    eventDoc["t"] = "status";
+
+    // Currently used for the UI DRO display,
+    // defined in util.h and helps UI figure out what to display
+    eventDoc["m"] = (int)run_mode;
+    // the position in steps
+    eventDoc["p"] = gs.position;
+
+    // encoder postion in cpr pulses
+    eventDoc["encoderPos"] = encoder.getCount();
+
+    // I think this is used for aboslute movements
+    // TODO: We should convert to steps in the UI and not have to do the conversion in the controller
+    eventDoc["targetSteps"] = mc.moveDistanceSteps;
+    // bool for constant run mode, TODO:  bad name though
+    //statusDoc["feeding"] = feeding;
+    // bools for sync movements, TODO:  bad name
+    eventDoc["jogging"] = jogging;
+    // bool for rapid sync movement TODO: bad name
+    eventDoc["rap"] = rapiding;
+    // flag for bouncing mode
+    eventDoc["bf"] = bouncing;
+    // main bool to turn movement on/off
+    eventDoc["pos_feed"] = pos_feeding;
+
+    // Wait for the spindle/ncoder "0" position
+    // this acts like a thread dial
+    eventDoc["sw"] = syncWaiting;
+    // generated in the encoder and displayed in the UI
+    // TODO: consider making the smoothing configurable or done in the browser
+    eventDoc["rpm"] = rpm;
+
+    // the virtual stop in the Z + direction, used to calculate "distance to go" in the UI
+    eventDoc["sp"] = mc.stopPos;
+    // the stop in the Z - direction
+    eventDoc["sn"] = mc.stopNeg;
+    eventDoc["r"] = WiFi.RSSI();
+
+    // this is used by "Distance to Go" in the UI to figure out the direction 
+    eventDoc["fd"] = mc.moveDirection;
+
+    // this reverses everything
+    eventDoc["fccw"] = mc.feeding_ccw;
+
+    #ifdef useFAS
+    eventDoc["fas_delta"] = gs.fzstepper->getCurrentPosition() - gs.position;
+    #endif
+
+    // angle
+    // do this in the UI!!!!
+    //eventDoc["ngl"] = encoder.getAngle();
+
+
+    // unclear how to send binary data via events
+    eventLen = serializeJson(eventDoc, eventBuf);
+    //eventLen = serializeMsgPack(eventDoc,eventBuf);
+
+    
+    
+    // none of these seem to work
+    //events.send("e",eventBuf,millis());
+    //events.send("e",eventBuf,millis());
+    //events.send(eventBuf,"e",millis());
+    events.send(eventBuf);
   }
 }
 void do_web()
