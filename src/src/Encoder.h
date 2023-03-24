@@ -41,7 +41,7 @@ void startPrintTask(void);
 
 // sign function
 #define _sign(a) (((a) < 0) ? -1 : ((a) > 0))
-#define _round(x) ((x) >= 0 ? (long)((x) + 0.5) : (long)((x)-0.5))
+//#define _round(x) ((x) >= 0 ? (long)((x) + 0.5) : (long)((x)-0.5))
 #define _constrain(amt, low, high) ((amt) < (low) ? (low) : ((amt) > (high) ? (high) : (amt)))
 
 // utility defines

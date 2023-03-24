@@ -27,6 +27,7 @@
 #include "src/myperfmon.h"
 #include "src/Machine.h"
 #include "src/led.h"
+#include "src/Stepper.h"
 
 // init static members
 
@@ -34,7 +35,7 @@ Gear::State GenStepper::State::mygear;
 rmtStepper::State GenStepper::State::zstepper;
 int GenStepper::State::nom;
 int GenStepper::State::den;
-int GenStepper::State::position;
+int32_t GenStepper::State::position;
 bool GenStepper::State::diduseFAS;
 
 int32_t MoveConfig::State::moveDistanceSteps ;
@@ -85,7 +86,11 @@ void setup() {
   init_encoder(); 
 
 
+  initStepperTimer();
+
   Serial.println("setup done");
+  
+
 }
 
 void loop() {

@@ -4,7 +4,7 @@
 // breaks tests
 //#include <esp_log.h>
 
-static const char* TAGmc = "Mc";
+//static const char* TAGmc = "Mc";
 
 
 namespace MoveConfig{

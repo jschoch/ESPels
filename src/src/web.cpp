@@ -16,7 +16,6 @@
 #include "myperfmon.h"
 #include "display.h"
 #include "DebugMode.h"
-#include "Stepper.h"
 #include "motion.h"
 #include "hob.h"
 #include "moveConfig.h"
@@ -34,7 +33,7 @@
 #define  KILLNV 0
 
 bool web = true;
-static const char* TAGweb = "Mc";
+//static const char* TAGweb = "Mc";
 
 
 // buffer for msgpack
@@ -435,6 +434,35 @@ void handleJogAbs()
   */
 }
 
+void handleMoveAsync(){
+
+
+  Serial.println("got async move command");
+  if (run_mode == RunMode::SLAVE_JOG_READY && processDoc())
+  {
+    Serial.println("Async step test start");
+
+    //prepareMovement(int32_t currentPos, int32_t targetPos, uint32_t targetSpeed, 
+    //       uint32_t pullInSpeed, uint32_t pullOutSpeed, uint32_t accel) 
+
+    
+    //int32_t initial_speed = prepareMovement(gs.position, mc.moveDistanceSteps, 1000, 100,100,mc.accel);
+    // microseconds
+    /*
+    setStepFrequency(initial_speed);
+    stopStepperTimer();
+    */
+    Serial.println("step test stop");
+    
+  }
+  else
+  {
+    el.error("can't move, no moving mode is set ");
+  }
+
+  
+}
+
 //  Update the virtual encoder
 void handleVencSpeed()
 {
@@ -737,6 +765,9 @@ void parseObj(AsyncWebSocketClient *client)
   else if (strcmp(cmd, "moveSync") == 0)
   {
     handleMove();
+  }
+  else if (strcmp(cmd, "moveAsync") == 0){
+    handleMoveAsync();
   }
   else if (strcmp(cmd, "sendConfig") == 0)
   {
