@@ -45,6 +45,7 @@ int64_t vt_sqr = 0;
 uint32_t two_a = 0;
 int32_t accEnd = 0;
 int32_t  decStart = 0;
+volatile int32_t stepsDelta = 0;
 
 bool IRAM_ATTR stepperTimerISR(void* par){
     // stuff
@@ -56,7 +57,7 @@ bool IRAM_ATTR stepperTimerISR(void* par){
 bool IRAM_ATTR accelTimerISR(void * par){
 
 
-    //setStepFrequency(updateSpeed(gs.position));
+    setStepFrequency(updateSpeed(&gs));
 
     return true;
 }

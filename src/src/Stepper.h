@@ -24,6 +24,7 @@ extern uint32_t vstart, vend, vtarget;
 extern int64_t vs_sqr, ve_sqr, vt_sqr;
 extern uint32_t two_a;
 extern int32_t accEnd, decStart;
+extern  volatile int32_t stepsDelta;
 
 void startStepperTimer();
 void stopStepperTimer();
@@ -106,7 +107,7 @@ inline IRAM_ATTR int32_t updateSpeed(GenStepper::State *gs)
 {
 
     //stepsDelta = abs(s_0 - gs.position);
-    int32_t stepsDelta = abs(s_0 - gs->position);
+    stepsDelta = abs(s_0 - gs->position);
 
     // acceleration phase -------------------------------------
     if (stepsDelta < accEnd)

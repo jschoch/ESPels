@@ -140,7 +140,7 @@ namespace GenStepper {
             int stepsPerMM = c.motor_steps / c.lead_screw_pitch;
             int pitchInSteps = stepsPerMM * pitch;
             int max =  den;
-            printf("steps per mm: %i pitch in steps: %i max pitch was: %i",stepsPerMM,pitchInSteps,max);
+            printf("steps per mm: %i pitch in steps: %i max pitch was: %i\n",stepsPerMM,pitchInSteps,max);
             if(max > pitchInSteps){
                 return true;
             }

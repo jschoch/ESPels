@@ -440,18 +440,17 @@ void handleMoveAsync(){
   Serial.println("got async move command");
   if (run_mode == RunMode::SLAVE_JOG_READY && processDoc())
   {
-    Serial.println("Async step test start");
+    
 
     //prepareMovement(int32_t currentPos, int32_t targetPos, uint32_t targetSpeed, 
     //       uint32_t pullInSpeed, uint32_t pullOutSpeed, uint32_t accel) 
 
     
-    //int32_t initial_speed = prepareMovement(gs.position, mc.moveDistanceSteps, 1000, 100,100,mc.accel);
+    int32_t initial_speed = prepareMovement(gs.position, mc.moveDistanceSteps, 1000, 100,100,mc.accel);
+    Serial.printf("Async step test start: distance in steps: %i, initial speed: %i\n",mc.moveDistanceSteps,initial_speed);
     // microseconds
-    /*
     setStepFrequency(initial_speed);
-    stopStepperTimer();
-    */
+    //stopStepperTimer();
     Serial.println("step test stop");
     
   }
