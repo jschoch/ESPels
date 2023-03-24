@@ -26,10 +26,10 @@ volatile bool pos_feeding = false;
 #define TIMER_F 1000000ULL
 #define TICK_PER_S TIMER_F
 
+// trying anythign at this poitn
+portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
 
-timer_group_t timer_group;
-//timer_isr_t timer_idx;
-timer_idx_t timer_idx;
+
 
 //volatile int32_t stepsDelta = 0;
 volatile int32_t oldSpeed = 1;
@@ -48,35 +48,53 @@ int32_t  decStart = 0;
 volatile int32_t stepsDelta = 0;
 
 bool IRAM_ATTR stepperTimerISR(void* par){
+     BaseType_t high_task_awoken = pdFALSE;
     // stuff
     // figure out accel timer, how fast to run it? frequency 
-    gs.zstepper.step();
-    return true;
+    if(stepsDelta > 0){
+        gs.step();
+    }
+    return high_task_awoken == pdTRUE;
 }
 
 bool IRAM_ATTR accelTimerISR(void * par){
+    BaseType_t high_task_awoken = pdFALSE;
+    /*
+    if(stepsDelta > 0){
 
+        //setStepFrequency(updateSpeed(&gs));
+    }
+    */
 
-    setStepFrequency(updateSpeed(&gs));
-
-    return true;
+    return high_task_awoken == pdTRUE;
 }
 
 void startStepperTimer(){
-    timer_start(timer_group,timer_idx);
+    timer_start(TIMER_GROUP_0,TIMER_0);
 }
 
 void stopStepperTimer(){
-    timer_pause(timer_group, timer_idx);
+    timer_pause(TIMER_GROUP_0, TIMER_0);
 }
 
 void IRAM_ATTR setStepFrequency(int32_t f)
 {
+   //timer_spinlock_take(TIMER_GROUP_0);
    uint64_t alarm_value = (uint64_t)f;
-   timer_pause(timer_group,timer_idx);
-   timer_set_alarm_value(timer_group, timer_idx,alarm_value);
-   timer_set_alarm(timer_group,timer_idx,TIMER_ALARM_EN);
-   timer_start(timer_group,timer_idx);
+   timer_pause(TIMER_GROUP_0,TIMER_0);
+   timer_set_alarm_value(TIMER_GROUP_0, TIMER_0,alarm_value);
+   timer_set_alarm(TIMER_GROUP_0,TIMER_0,TIMER_ALARM_EN);
+   //timer_set_alarm
+   timer_start(TIMER_GROUP_0,TIMER_0);
+   //timer_spinlock_give(TIMER_GROUP_0);
+}
+
+void startAccelTimer(){
+    //timer_spinlock_take(TIMER_GROUP_1);
+    timer_set_alarm_value(TIMER_GROUP_0, TIMER_0,1);
+    timer_set_alarm(TIMER_GROUP_1,TIMER_1,TIMER_ALARM_EN);
+    timer_start(TIMER_GROUP_1,TIMER_1);
+    //timer_spinlock_give(TIMER_GROUP_1);
 }
 
 bool initStepperTimer(){
@@ -100,53 +118,30 @@ bool initStepperTimer(){
 
     timer_config_t accel_timer_conf = {
         .alarm_en = TIMER_ALARM_EN,         // we need alarm
-        .counter_en = TIMER_PAUSE,          // dont start now lol
+        .counter_en = TIMER_START,          // dont start now lol
         .intr_type = TIMER_INTR_LEVEL,      // interrupt
         .counter_dir = TIMER_COUNT_UP,      // count up duh
         .auto_reload = TIMER_AUTORELOAD_EN, // reload pls
-        .divider = 80
+        .divider = 360
     };
 
 
 
+    ESP_ERROR_CHECK(timer_init(TIMER_GROUP_0, TIMER_0, &timer_conf));                   // init the timer
+    ESP_ERROR_CHECK(timer_set_counter_value(TIMER_GROUP_0, TIMER_0, 0));                // set it to 0
+    ESP_ERROR_CHECK(timer_isr_callback_add(TIMER_GROUP_0, TIMER_0, stepperTimerISR, NULL, ESP_INTR_FLAG_IRAM)); // add callback fn to run when alarm is triggrd
 
-    if (timer_group != TIMER_GROUP_MAX && timer_idx != TIMER_MAX)
-    {
-        // timer was configured explixitly in config structure, we dont need to do it here
-        goto timer_avail;
-    }
+    //  Acceleration timer
+    /*
 
-    // try to find free timer
-    timer_config_t temp;
-    for (int i = 0; i < 1; i++)
-    {
-        for (int j = 0; j < 1; j++)
-        {
-            printf("timer found: idx: %i j: %i",i,j);
-            timer_get_config((timer_group_t)i, (timer_idx_t)j, &temp);
-            if (temp.alarm_en == TIMER_ALARM_DIS)
-            {
-                // if the alarm is disabled, chances are no other dendostepper instance is using it
-                timer_group = (timer_group_t)i;
-                timer_idx = (timer_idx_t)j;
-                goto timer_avail;
-            }
-        }
-    }
-
-    // if we got here it means that there isnt any free timer available
-    printf("can't get a timer");
-    return false;
-
-timer_avail:
-    ESP_ERROR_CHECK(timer_init(timer_group, timer_idx, &timer_conf));                   // init the timer
-    ESP_ERROR_CHECK(timer_set_counter_value(timer_group, timer_idx, 0));                // set it to 0
-    ESP_ERROR_CHECK(timer_isr_callback_add(timer_group, timer_idx, stepperTimerISR, NULL, ESP_INTR_FLAG_IRAM)); // add callback fn to run when alarm is triggrd
-
-
-    ESP_ERROR_CHECK(timer_init(timer_group, TIMER_1, &accel_timer_conf));                   // init the timer
-    ESP_ERROR_CHECK(timer_set_counter_value(timer_group, TIMER_1, 0));                // set it to 0
-    ESP_ERROR_CHECK(timer_isr_callback_add(timer_group, TIMER_1, accelTimerISR, NULL, ESP_INTR_FLAG_IRAM)); // add callback fn to run when alarm is triggrd
+    ESP_ERROR_CHECK(timer_init(TIMER_GROUP_1, TIMER_1, &accel_timer_conf));                   // init the timer
+    ESP_ERROR_CHECK(timer_set_counter_value(TIMER_GROUP_1, TIMER_1, 0));                // set it to 0
+    ESP_ERROR_CHECK(timer_set_alarm_value(TIMER_GROUP_1,TIMER_0,10));
+    //ESP_ERROR_CHECK(timer_isr_callback_add(TIMER_GROUP_1, TIMER_1, accelTimerISR, NULL, ESP_INTR_FLAG_IRAM)); // add callback fn to run when alarm is triggrd
+    ESP_ERROR_CHECK(timer_isr_callback_add(TIMER_GROUP_1, TIMER_1, accelTimerISR, NULL, 0)); // add callback fn to run when alarm is triggrd
+    */
+    
+ 
 
 return true;
 }

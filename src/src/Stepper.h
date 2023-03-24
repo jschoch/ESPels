@@ -30,6 +30,7 @@ void startStepperTimer();
 void stopStepperTimer();
 void IRAM_ATTR setStepFrequency(int32_t f);
 bool initStepperTimer();
+void startAccelTimer();
  
  
 
@@ -95,6 +96,7 @@ inline int32_t prepareMovement(int32_t currentPos, int32_t targetPos, uint32_t t
         // hack, call some error callback instead
         printf("ERROR\n");
     }
+
     return vstart;
 }
 
