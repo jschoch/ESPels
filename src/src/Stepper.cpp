@@ -10,6 +10,7 @@
 #include "driver/timer.h"
 #include <esp_log.h>
 #include "esp_timer.h"
+#include <functional>
 
 
 int microsteps = Z_MICROSTEPPING;
@@ -48,98 +49,88 @@ int32_t accEnd = 0;
 int32_t  decStart = 0;
 volatile int32_t stepsDelta = 0;
 volatile int64_t alarm_value = 0;
+volatile int32_t last_frequency = 0;
+volatile int32_t frequency = 1;
 
+	
+hw_timer_t * stepTimer = NULL;
+bool stepTimerIsRunning = false;
+
+/*
 bool IRAM_ATTR stepperTimerISR(void* par){
      BaseType_t high_task_awoken = pdFALSE;
     // stuff
     // figure out accel timer, how fast to run it? frequency 
-    if(stepsDelta > 0){
+    if(stepsDelta > 0 && stepTimerIsRunning){
         gs.step();
     }
     return high_task_awoken == pdTRUE;
 }
+*/
 
+void IRAM_ATTR stepTimerISR(){
+   if(stepsDelta > 0 && stepTimerIsRunning){
+        gs.step();
+    } 
+}
+
+/*
 bool IRAM_ATTR accelTimerISR(void * par){
     BaseType_t high_task_awoken = pdFALSE;
     if(stepsDelta > 0){
-
-        setStepFrequency(1000000 /updateSpeed(&gs));
+        alarm_value = 1000000 /updateSpeed(&gs);
+        setStepFrequency(alarm_value);
     }
 
     return high_task_awoken == pdTRUE;
 }
+*/
 
 void IRAM_ATTR accelTimerCallback(void *par){
     if(stepsDelta > 0){
-
-        setStepFrequency(updateSpeed(&gs));
+        frequency = updateSpeed(&gs);
+        //if(frequency != last_frequency){
+            setStepFrequency(frequency);
+            last_frequency = frequency;
+        //}
     }
 }
 
 void startStepperTimer(){
-    timer_start(TIMER_GROUP_0,TIMER_0);
+    stepTimerIsRunning = true;
+    timerAlarmEnable(stepTimer);
 }
 
-void stopStepperTimer(){
-    timer_pause(TIMER_GROUP_0, TIMER_0);
-}
+//void stopStepperTimer(){
+    //timer_pause(TIMER_GROUP_0, TIMER_0);
+//}
 
 void IRAM_ATTR setStepFrequency(int32_t f)
 {
-   //timer_spinlock_take(TIMER_GROUP_0);
-   alarm_value = (uint64_t)f;
-   timer_pause(TIMER_GROUP_0,TIMER_0);
-   timer_set_alarm_value(TIMER_GROUP_0, TIMER_0,alarm_value);
-   timer_set_alarm(TIMER_GROUP_0,TIMER_0,TIMER_ALARM_EN);
-   //timer_set_alarm
-   timer_start(TIMER_GROUP_0,TIMER_0);
-   //timer_spinlock_give(TIMER_GROUP_0);
+    if(f != 0){
+        alarm_value = (uint64_t)1000000 / f;
+        timerAlarmWrite(stepTimer, alarm_value,true);
+    }else{
+
+        timerAlarmDisable(stepTimer);
+    }
 }
 
 void startAccelTimer(){
     /*
-    //timer_spinlock_take(TIMER_GROUP_1);
-    timer_set_alarm_value(TIMER_GROUP_0, TIMER_0,1);
-    timer_set_alarm(TIMER_GROUP_1,TIMER_1,TIMER_ALARM_EN);
-    timer_start(TIMER_GROUP_1,TIMER_1);
-    //timer_spinlock_give(TIMER_GROUP_1);
     */
 }
 
 bool initStepperTimer(){
 
-    /*
-    uint64_t timer_val = timerRead(timer);
-    uint16_t div = timerGetDivider(timer);
-    return timer_val * div / (getApbFrequency() / 1000000); 
-    */
-    timer_config_t timer_conf = {
-        .alarm_en = TIMER_ALARM_EN,         // we need alarm
-        .counter_en = TIMER_PAUSE,          // dont start now lol
-        .intr_type = TIMER_INTR_LEVEL,      // interrupt
-        .counter_dir = TIMER_COUNT_UP,      // count up duh
-        .auto_reload = TIMER_AUTORELOAD_EN, // reload pls
-        //.divider = 80000000ULL / TIMER_F,   // ns resolution
-        //.divider = 1000 * (getApbFrequency() / 1000000) 
-        .divider = 80
-    };
+    // STepper timer
+    stepTimerIsRunning = false; 
+    stepTimer = timerBegin(0, 80, true);
+    timerAttachInterrupt(stepTimer, &stepTimerISR, false);
+    timerAlarmEnable(stepTimer);
 
 
-    timer_config_t accel_timer_conf = {
-        .alarm_en = TIMER_ALARM_EN,         // we need alarm
-        .counter_en = TIMER_START,          // dont start now lol
-        .intr_type = TIMER_INTR_LEVEL,      // interrupt
-        .counter_dir = TIMER_COUNT_UP,      // count up duh
-        .auto_reload = TIMER_AUTORELOAD_EN, // reload pls
-        .divider = 360
-    };
-
-
-
-    ESP_ERROR_CHECK(timer_init(TIMER_GROUP_0, TIMER_0, &timer_conf));                   // init the timer
-    ESP_ERROR_CHECK(timer_set_counter_value(TIMER_GROUP_0, TIMER_0, 0));                // set it to 0
-    ESP_ERROR_CHECK(timer_isr_callback_add(TIMER_GROUP_0, TIMER_0, stepperTimerISR, NULL, ESP_INTR_FLAG_IRAM)); // add callback fn to run when alarm is triggrd
-
+    
     // trying the other api
 
     const esp_timer_create_args_t periodic_timer_args = {
@@ -151,19 +142,8 @@ bool initStepperTimer(){
     esp_timer_handle_t periodic_timer;
     ESP_ERROR_CHECK(esp_timer_create(&periodic_timer_args, &periodic_timer));
     /* The timer has been created but is not running yet */
-     ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, 500000));
+     ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, 50000));
 
-    //  Acceleration timer
-    /*
-
-    ESP_ERROR_CHECK(timer_init(TIMER_GROUP_1, TIMER_1, &accel_timer_conf));                   // init the timer
-    ESP_ERROR_CHECK(timer_set_counter_value(TIMER_GROUP_1, TIMER_1, 0));                // set it to 0
-    ESP_ERROR_CHECK(timer_set_alarm_value(TIMER_GROUP_1,TIMER_0,10));
-    //ESP_ERROR_CHECK(timer_isr_callback_add(TIMER_GROUP_1, TIMER_1, accelTimerISR, NULL, ESP_INTR_FLAG_IRAM)); // add callback fn to run when alarm is triggrd
-    ESP_ERROR_CHECK(timer_isr_callback_add(TIMER_GROUP_1, TIMER_1, accelTimerISR, NULL, 0)); // add callback fn to run when alarm is triggrd
-    */
-    
- 
 
 return true;
 }

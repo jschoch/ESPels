@@ -370,6 +370,7 @@ bool processDoc(){
               mc.movePitch = mcdoc.movePitch;
               mc.rapidPitch = mcdoc.rapidPitch;
               mc.feeding_ccw = mcdoc.feeding_ccw;
+              mc.accel = mcdoc.accel;
               updateMoveConfigDoc();
               return true;
             }else{
@@ -445,15 +446,16 @@ void handleMoveAsync(){
     //prepareMovement(int32_t currentPos, int32_t targetPos, uint32_t targetSpeed, 
     //       uint32_t pullInSpeed, uint32_t pullOutSpeed, uint32_t accel) 
 
-    int32_t initial_speed = prepareMovement(gs.position, mc.moveDistanceSteps, 1000, 100,100,100);
+    int32_t initial_speed = prepareMovement(gs.position, mc.moveDistanceSteps, 1000, 100,100,mc.accel);
     Serial.printf("Async step test start: distance in steps: %i, initial speed: %i\n",mc.moveDistanceSteps,initial_speed);
     Serial.printf("accel: %i\n ",mc.accel);
     // microseconds
     //startAccelTimer();
     setStepFrequency(initial_speed);
+    startStepperTimer();
     stepsDelta = mc.moveDistanceSteps;
     //stopStepperTimer();
-    Serial.println("step test stop");
+    Serial.println("step ran");
     
   }
   else

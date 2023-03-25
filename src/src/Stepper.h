@@ -114,28 +114,23 @@ inline IRAM_ATTR int32_t updateSpeed(GenStepper::State *gs)
 #endif
 {
 
-    //stepsDelta = abs(s_0 - gs.position);
     stepsDelta = abs(s_0 - gs->position);
 
     // acceleration phase -------------------------------------
     if (stepsDelta < accEnd)
     {
-        // digitalWriteFast(3, HIGH);
-        // digitalWriteFast(5, HIGH);
         return sqrt((double)two_a * stepsDelta + vs_sqr);
     }
 
     // constant speed phase ------------------------------------
     if (stepsDelta < decStart)
     {
-        //digitalWriteFast(3, LOW);
         return vtarget;
     }
 
     //deceleration phase --------------------------------------
     if (stepsDelta < move_distance)
     {
-        // digitalWriteFast(5, LOW);
         return sqrt((double)two_a * (move_distance - stepsDelta - 1) + ve_sqr);
     }
 
