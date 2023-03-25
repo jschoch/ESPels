@@ -18,7 +18,7 @@ extern int microsteps;
 
 extern int native_steps;
 extern int motor_steps;
-extern int32_t s_0;
+extern int32_t move_start_position_0;
 extern int32_t move_distance;
 extern uint32_t vstart, vend, vtarget;
 extern int64_t vs_sqr, ve_sqr, vt_sqr;
@@ -26,8 +26,9 @@ extern uint32_t two_a;
 extern int32_t accEnd, decStart;
 extern  volatile int32_t stepsDelta;
 extern volatile int64_t alarm_value;
+extern volatile bool stepTimerIsRunning;
 
-void startStepperTimer();
+void startStepperTimer(int32_t initial_speed);
 void stopStepperTimer();
 
 #ifndef UNIT_TEST
@@ -37,22 +38,19 @@ void setStepFrequency(int32_t f);
 #endif
 bool initStepperTimer();
 void startAccelTimer();
- 
- 
 
-//extern int32_t stepsDelta;
+typedef enum AccelState{
+    ACCEL_OFF= 0,
+    ACCELERATING = 1,
+    COASTING = 2,
+    DECELERATING = 3,
+} AccelState;
 
-
-
-//int32_t updateSpeed(GenStepper::State *gs){
-//    return 0;
-//}
-
-
+extern AccelState accelState;
 
 // returns starting velocity
 //#ifdef UNIT_TEST
-inline int32_t prepareMovement(int32_t currentPos, int32_t targetPos, uint32_t targetSpeed, uint32_t pullInSpeed, uint32_t pullOutSpeed, uint32_t accel)
+inline int32_t prepareMovement(int32_t currentPos, int32_t moveDistance, uint32_t targetSpeed, uint32_t pullInSpeed, uint32_t pullOutSpeed, uint32_t accel)
 //#else
 //int32_t prepareMovement(int32_t currentPos, int32_t targetPos, uint32_t targetSpeed, uint32_t pullInSpeed, uint32_t pullOutSpeed, uint32_t accel)
 //#endif
@@ -62,8 +60,10 @@ inline int32_t prepareMovement(int32_t currentPos, int32_t targetPos, uint32_t t
     vend    = pullOutSpeed; // v_end
     two_a = 2 * accel;
 
-    s_0 = currentPos;
-    move_distance  = abs(targetPos - currentPos);
+    // reset starting zero position
+    move_start_position_0 = currentPos;
+    //move_distance  = abs(targetPos - currentPos);
+    move_distance = moveDistance;
 
     vs_sqr = (int64_t)vstart * vstart;
     ve_sqr = (int64_t)vend * vend;
@@ -114,27 +114,43 @@ inline IRAM_ATTR int32_t updateSpeed(GenStepper::State *gs)
 #endif
 {
 
-    stepsDelta = abs(s_0 - gs->position);
+    stepsDelta = abs(move_start_position_0 - gs->position);
+
+
+    // Initially stepsDelta is zero, and we early return in each conditional
+    // as stepsDelta grows due the the stepper timer running along at 
+    // the calculated frequency
 
     // acceleration phase -------------------------------------
     if (stepsDelta < accEnd)
     {
+        if(accelState != ACCELERATING){
+            accelState = ACCELERATING;
+        }
         return sqrt((double)two_a * stepsDelta + vs_sqr);
     }
 
     // constant speed phase ------------------------------------
     if (stepsDelta < decStart)
     {
+        if(accelState != COASTING){
+            accelState = COASTING;
+        }
         return vtarget;
     }
 
     //deceleration phase --------------------------------------
     if (stepsDelta < move_distance)
     {
+        if(accelState != DECELERATING){
+            accelState = DECELERATING;
+        }
         return sqrt((double)two_a * (move_distance - stepsDelta - 1) + ve_sqr);
     }
 
-    //we are done, make sure to return 0 to stop the step timer
+    //we are done, clean up
+    accelState = ACCEL_OFF;
+    stepTimerIsRunning = false;
     stepsDelta = 0;
     return 0;
 }

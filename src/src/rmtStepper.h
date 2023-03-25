@@ -33,6 +33,7 @@ namespace rmtStepper {
         rmt_config_t rconfig;
         int64_t dir_change_timer;
         bool dir_has_changed = false;
+        bool olddir = false;
 
         void step(){
             RMT.conf_ch[config.channel].conf1.mem_rd_rst = 1;
@@ -45,7 +46,7 @@ namespace rmtStepper {
         }
         bool setDir(bool newdir){
             //ESP_LOGE("thing","setDir called current dir: %d  arg dir: %d",dir,newdir);
-            bool olddir = dir;
+            olddir = dir;
             if(dir != newdir){
 
 
@@ -61,13 +62,17 @@ namespace rmtStepper {
             }
             return olddir == newdir;
         }
-
+        // return true means we changed it and need to wait
         bool setDirNow(bool newdir){
-#ifndef useFAS
-            digitalWrite(config.dirPin, newdir);
-#endif
-            dir = newdir;
-            return dir;
+            if(dir == newdir){
+                return false;
+            }else{
+
+                digitalWrite(config.dirPin, newdir);
+                olddir = dir;
+                dir = newdir;
+                return true;
+            }
         }
 
         void init(){

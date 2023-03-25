@@ -36,7 +36,7 @@ portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
 //volatile int32_t stepsDelta = 0;
 volatile int32_t oldSpeed = 1;
 volatile int32_t theSpeed = 0;
-int32_t s_0 = 0;
+int32_t move_start_position_0 = 0;
 int32_t move_distance = 0;
 uint32_t vstart = 0;
 uint32_t vend = 0;
@@ -51,43 +51,23 @@ volatile int32_t stepsDelta = 0;
 volatile int64_t alarm_value = 0;
 volatile int32_t last_frequency = 0;
 volatile int32_t frequency = 1;
+AccelState accelState = ACCEL_OFF;
 
 	
 hw_timer_t * stepTimer = NULL;
-bool stepTimerIsRunning = false;
+volatile bool stepTimerIsRunning = false;
 
-/*
-bool IRAM_ATTR stepperTimerISR(void* par){
-     BaseType_t high_task_awoken = pdFALSE;
-    // stuff
-    // figure out accel timer, how fast to run it? frequency 
-    if(stepsDelta > 0 && stepTimerIsRunning){
-        gs.step();
-    }
-    return high_task_awoken == pdTRUE;
-}
-*/
 
 void IRAM_ATTR stepTimerISR(){
-   if(stepsDelta > 0 && stepTimerIsRunning){
+   if(stepTimerIsRunning){
         gs.step();
     } 
 }
 
-/*
-bool IRAM_ATTR accelTimerISR(void * par){
-    BaseType_t high_task_awoken = pdFALSE;
-    if(stepsDelta > 0){
-        alarm_value = 1000000 /updateSpeed(&gs);
-        setStepFrequency(alarm_value);
-    }
 
-    return high_task_awoken == pdTRUE;
-}
-*/
 
 void IRAM_ATTR accelTimerCallback(void *par){
-    if(stepsDelta > 0){
+    if(stepTimerIsRunning){
         frequency = updateSpeed(&gs);
         //if(frequency != last_frequency){
             setStepFrequency(frequency);
@@ -96,14 +76,20 @@ void IRAM_ATTR accelTimerCallback(void *par){
     }
 }
 
-void startStepperTimer(){
+void startStepperTimer(int32_t initial_speed){
+    if(!timerAlarmEnabled(stepTimer)){
+        Serial.println("\nStepper timer was not enabled, this seems like an error");
+        timerAlarmEnable(stepTimer);
+    }
+
     stepTimerIsRunning = true;
-    timerAlarmEnable(stepTimer);
+    setStepFrequency(initial_speed);
 }
 
-//void stopStepperTimer(){
-    //timer_pause(TIMER_GROUP_0, TIMER_0);
-//}
+void stopStepperTimer(){
+    timerAlarmDisable(stepTimer);
+    stepTimerIsRunning = false;
+}
 
 void IRAM_ATTR setStepFrequency(int32_t f)
 {
@@ -111,7 +97,7 @@ void IRAM_ATTR setStepFrequency(int32_t f)
         alarm_value = (uint64_t)1000000 / f;
         timerAlarmWrite(stepTimer, alarm_value,true);
     }else{
-
+        stepTimerIsRunning = false;
         //timerAlarmDisable(stepTimer);
     }
 }

@@ -439,24 +439,28 @@ void handleMoveAsync(){
 
 
   Serial.println("got async move command");
-  if (run_mode == RunMode::SLAVE_JOG_READY && processDoc())
+  if (run_mode == RunMode::SLAVE_JOG_READY  && processDoc())
   {
     
-
+    if(stepTimerIsRunning){
+      Serial.printf("Stepper was running, can't issue new move command");
+      return;
+    }
     //prepareMovement(int32_t currentPos, int32_t targetPos, uint32_t targetSpeed, 
     //       uint32_t pullInSpeed, uint32_t pullOutSpeed, uint32_t accel) 
 
-    int32_t initial_speed = prepareMovement(gs.position, mc.moveDistanceSteps, 1000, 100,100,mc.accel);
+    
+    // microseconds
+    bool d = gs.zstepper.setDirNow(mc.feeding_ccw);
+    if(d){
+      Serial.println("changing dir");
+      delay(5);
+    }
+    int32_t initial_speed = prepareMovement(gs.position, abs(mc.moveDistanceSteps), 1000, 100,100,mc.accel);
     Serial.printf("Async step test start: distance in steps: %i, initial speed: %i\n",mc.moveDistanceSteps,initial_speed);
     Serial.printf("accel: %i\n ",mc.accel);
-    // microseconds
-    //startAccelTimer();
-    setStepFrequency(initial_speed);
-    startStepperTimer();
-    stepsDelta = mc.moveDistanceSteps;
-    //stopStepperTimer();
-    Serial.println("step ran");
-    
+    //setStepFrequency(initial_speed);
+    startStepperTimer(initial_speed);
   }
   else
   {
@@ -754,6 +758,7 @@ void parseObj(AsyncWebSocketClient *client)
     jogging = false;
     rapiding = false;
     bouncing = false;
+    stopStepperTimer();
 
 
     // this must be reset for moveSync to work after running feed
@@ -1081,6 +1086,8 @@ void sendUpdates()
     // the delta in steps to go for moveAsync
     eventDoc["asd"] = stepsDelta;
     eventDoc["av"] = alarm_value;
+    eventDoc["sr"] = stepTimerIsRunning;
+    eventDoc["as"] = (uint8_t)accelState;
 
     #ifdef useFAS
     eventDoc["fas_delta"] = gs.fzstepper->getCurrentPosition() - gs.position;
@@ -1095,12 +1102,11 @@ void sendUpdates()
     eventLen = serializeJson(eventDoc, eventBuf);
     //eventLen = serializeMsgPack(eventDoc,eventBuf);
 
-    
-    
     // none of these seem to work
     //events.send("e",eventBuf,millis());
     //events.send("e",eventBuf,millis());
     //events.send(eventBuf,"e",millis());
+
     events.send(eventBuf);
   }
 }
