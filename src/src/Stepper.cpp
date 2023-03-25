@@ -112,7 +112,7 @@ void IRAM_ATTR setStepFrequency(int32_t f)
         timerAlarmWrite(stepTimer, alarm_value,true);
     }else{
 
-        timerAlarmDisable(stepTimer);
+        //timerAlarmDisable(stepTimer);
     }
 }
 
@@ -142,7 +142,7 @@ bool initStepperTimer(){
     esp_timer_handle_t periodic_timer;
     ESP_ERROR_CHECK(esp_timer_create(&periodic_timer_args, &periodic_timer));
     /* The timer has been created but is not running yet */
-     ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, 50000));
+     ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, 5000));
 
 
 return true;
