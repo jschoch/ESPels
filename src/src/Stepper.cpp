@@ -9,6 +9,7 @@
 #include <cstdint>
 #include "driver/timer.h"
 #include <esp_log.h>
+#include "esp_timer.h"
 
 
 int microsteps = Z_MICROSTEPPING;
@@ -46,6 +47,7 @@ uint32_t two_a = 0;
 int32_t accEnd = 0;
 int32_t  decStart = 0;
 volatile int32_t stepsDelta = 0;
+volatile int64_t alarm_value = 0;
 
 bool IRAM_ATTR stepperTimerISR(void* par){
      BaseType_t high_task_awoken = pdFALSE;
@@ -59,14 +61,19 @@ bool IRAM_ATTR stepperTimerISR(void* par){
 
 bool IRAM_ATTR accelTimerISR(void * par){
     BaseType_t high_task_awoken = pdFALSE;
-    /*
     if(stepsDelta > 0){
 
-        //setStepFrequency(updateSpeed(&gs));
+        setStepFrequency(1000000 /updateSpeed(&gs));
     }
-    */
 
     return high_task_awoken == pdTRUE;
+}
+
+void IRAM_ATTR accelTimerCallback(void *par){
+    if(stepsDelta > 0){
+
+        setStepFrequency(updateSpeed(&gs));
+    }
 }
 
 void startStepperTimer(){
@@ -80,7 +87,7 @@ void stopStepperTimer(){
 void IRAM_ATTR setStepFrequency(int32_t f)
 {
    //timer_spinlock_take(TIMER_GROUP_0);
-   uint64_t alarm_value = (uint64_t)f;
+   alarm_value = (uint64_t)f;
    timer_pause(TIMER_GROUP_0,TIMER_0);
    timer_set_alarm_value(TIMER_GROUP_0, TIMER_0,alarm_value);
    timer_set_alarm(TIMER_GROUP_0,TIMER_0,TIMER_ALARM_EN);
@@ -90,11 +97,13 @@ void IRAM_ATTR setStepFrequency(int32_t f)
 }
 
 void startAccelTimer(){
+    /*
     //timer_spinlock_take(TIMER_GROUP_1);
     timer_set_alarm_value(TIMER_GROUP_0, TIMER_0,1);
     timer_set_alarm(TIMER_GROUP_1,TIMER_1,TIMER_ALARM_EN);
     timer_start(TIMER_GROUP_1,TIMER_1);
     //timer_spinlock_give(TIMER_GROUP_1);
+    */
 }
 
 bool initStepperTimer(){
@@ -130,6 +139,19 @@ bool initStepperTimer(){
     ESP_ERROR_CHECK(timer_init(TIMER_GROUP_0, TIMER_0, &timer_conf));                   // init the timer
     ESP_ERROR_CHECK(timer_set_counter_value(TIMER_GROUP_0, TIMER_0, 0));                // set it to 0
     ESP_ERROR_CHECK(timer_isr_callback_add(TIMER_GROUP_0, TIMER_0, stepperTimerISR, NULL, ESP_INTR_FLAG_IRAM)); // add callback fn to run when alarm is triggrd
+
+    // trying the other api
+
+    const esp_timer_create_args_t periodic_timer_args = {
+            .callback = &accelTimerCallback,
+            /* name is optional, but may help identify the timer when debugging */
+            .name = "periodic"
+    };
+
+    esp_timer_handle_t periodic_timer;
+    ESP_ERROR_CHECK(esp_timer_create(&periodic_timer_args, &periodic_timer));
+    /* The timer has been created but is not running yet */
+     ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, 500000));
 
     //  Acceleration timer
     /*

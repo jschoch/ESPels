@@ -445,9 +445,9 @@ void handleMoveAsync(){
     //prepareMovement(int32_t currentPos, int32_t targetPos, uint32_t targetSpeed, 
     //       uint32_t pullInSpeed, uint32_t pullOutSpeed, uint32_t accel) 
 
-    
-    int32_t initial_speed = prepareMovement(gs.position, mc.moveDistanceSteps, 1000, 100,100,mc.accel);
+    int32_t initial_speed = prepareMovement(gs.position, mc.moveDistanceSteps, 1000, 100,100,100);
     Serial.printf("Async step test start: distance in steps: %i, initial speed: %i\n",mc.moveDistanceSteps,initial_speed);
+    Serial.printf("accel: %i\n ",mc.accel);
     // microseconds
     //startAccelTimer();
     setStepFrequency(initial_speed);
@@ -1078,6 +1078,7 @@ void sendUpdates()
 
     // the delta in steps to go for moveAsync
     eventDoc["asd"] = stepsDelta;
+    eventDoc["av"] = alarm_value;
 
     #ifdef useFAS
     eventDoc["fas_delta"] = gs.fzstepper->getCurrentPosition() - gs.position;

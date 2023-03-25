@@ -25,10 +25,16 @@ extern int64_t vs_sqr, ve_sqr, vt_sqr;
 extern uint32_t two_a;
 extern int32_t accEnd, decStart;
 extern  volatile int32_t stepsDelta;
+extern volatile int64_t alarm_value;
 
 void startStepperTimer();
 void stopStepperTimer();
+
+#ifndef UNIT_TEST
 void IRAM_ATTR setStepFrequency(int32_t f);
+#else
+void setStepFrequency(int32_t f);
+#endif
 bool initStepperTimer();
 void startAccelTimer();
  
@@ -134,6 +140,7 @@ inline IRAM_ATTR int32_t updateSpeed(GenStepper::State *gs)
     }
 
     //we are done, make sure to return 0 to stop the step timer
+    stepsDelta = 0;
     return 0;
 }
 

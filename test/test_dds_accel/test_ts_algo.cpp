@@ -26,6 +26,7 @@ int64_t vt_sqr = 0;
 uint32_t two_a = 0;
 int32_t accEnd = 0;
 int32_t  decStart = 0;
+int32_t volatile stepsDelta = 0;
 
 
 // static init
@@ -77,11 +78,15 @@ void test_the_algo(){
     int start_vel = prepareMovement(0,test_distance,1000,10,10,100);
     std::cout << "start velocity was: " << start_vel << "\n";
     int i = updateSpeed(&gs);
+    int g = 0;
 
     for (auto i = 0;i < test_distance;i++){
         gs.position++;
         auto n = updateSpeed(&gs);
-        std::cout << "i was" << i <<  " n was: " << n <<"\n";
+        if (n != 0){
+            g= 1000000 / n;
+        }
+        std::cout << "i was" << i <<  " n was: " << n << " for timer: " << g <<"\n";
     }
 
 
