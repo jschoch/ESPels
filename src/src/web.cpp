@@ -460,8 +460,8 @@ void handleMoveAsync(){
       delay(5);
     }
     //int32_t targetPos = gs.position - mc.moveDistanceSteps;
-    int32_t targetPos = mc.moveDistanceSteps - gs.position;
-    int32_t initial_speed = prepareMovement(gs.position, targetPos, mc.moveSpeed, 100,100,mc.accel);
+    //int32_t targetPos = mc.moveDistanceSteps - gs.position;
+    int32_t initial_speed = prepareMovement(gs.position, mc.moveDistanceSteps, mc.moveSpeed, 100,100,mc.accel);
     Serial.printf("Async step test start: distance in steps: %i, initial speed: %i\n",mc.moveDistanceSteps,initial_speed);
     Serial.printf("accel: %i speed: %i\n ",mc.accel,mc.moveSpeed);
     //setStepFrequency(initial_speed);

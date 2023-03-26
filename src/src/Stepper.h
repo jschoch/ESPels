@@ -45,7 +45,6 @@ typedef enum AccelState{
     COASTING = 2,
     DECELERATING = 3,
 } AccelState;
-
 extern AccelState accelState;
 
 // returns starting velocity
@@ -64,8 +63,9 @@ inline int32_t prepareMovement(int32_t currentPos, int32_t targetPos, uint32_t t
     move_start_position_0 = currentPos;
 
     // this make no sense
-    move_distance  = abs(targetPos - currentPos);
+    //move_distance  = abs(targetPos - currentPos);
     //move_distance = abs(moveDistance);
+    move_distance = abs(targetPos);
 
     /*
     vs_sqr = (int64_t)vstart * vstart;
@@ -110,6 +110,9 @@ inline int32_t prepareMovement(int32_t currentPos, int32_t targetPos, uint32_t t
         // hack, call some error callback instead
         printf("ERROR\n");
     }
+
+
+
 
     return vstart;
 }

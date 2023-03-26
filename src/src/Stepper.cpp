@@ -134,7 +134,7 @@ bool initStepperTimer(){
     ESP_ERROR_CHECK(esp_timer_create(&periodic_timer_args, &periodic_timer));
 
     //start the timer 
-    ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, 5000));
+    ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, 10));
 
 
 return true;
