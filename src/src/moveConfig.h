@@ -31,6 +31,8 @@ namespace MoveConfig{
         static int accel;
         static int dwell;
 
+        static int moveSpeed;
+
         // this shoudl be true for normal operation
         // chaning this should reverse all operations
         // hard to describe

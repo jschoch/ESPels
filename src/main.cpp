@@ -53,6 +53,7 @@ int MoveConfig::State::dwell;
 bool MoveConfig::State::feeding_ccw;
 //bool MoveConfig::State::isAbs  ;
 bool MoveConfig::State::useStops ;
+int MoveConfig::State::moveSpeed;
 int Gear::State::next;
 int Gear::State::prev;
 int Gear::State::last;

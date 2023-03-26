@@ -38,6 +38,7 @@ bool MoveConfig::State::feeding_ccw;
 //bool MoveConfig::State::isAbs  ;
 int MoveConfig::State::accel;
 bool MoveConfig::State::useStops ;
+int MoveConfig::State::moveSpeed;
 int Gear::State::next;
 int Gear::State::prev;
 int Gear::State::last;

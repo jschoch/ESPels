@@ -21,6 +21,7 @@ struct MCDOC {
     bool f = true;
     bool startSync = true;
     bool feeding_ccw = true;
+    int moveSpeed = 0;
     bool valid = false;
 } ;
 
@@ -33,13 +34,14 @@ inline bool operator==(const MCDOC& lhs, const MCDOC& rhs)
            lhs.moveSteps == rhs.moveSteps&&
            lhs.startSync == rhs.startSync &&
            lhs.feeding_ccw == rhs.feeding_ccw &&
+           lhs.moveSpeed == rhs.moveSpeed &&
            lhs.f == rhs.f;
 }
 
 void printMCDOC(MCDOC& d){
     std::cout << "doc: movePitch: \n\t"<< d.movePitch << " rapidPitch: " << d.rapidPitch << "\n";
     std::cout << "\t accel: " << d.accel << " dwell: " << d.dwell << " movesteps: " << d.moveSteps<< "\n";
-    std::cout << "\t f: " << d.f  << " feeding_ccw: " << d.feeding_ccw << " startSync: " << d.startSync << "\n";
+    std::cout << "\t f: " << d.f  << " moveSpeed: " << d.moveSpeed<<" feeding_ccw: " << d.feeding_ccw << " startSync: " << d.startSync << "\n";
 }
 
 
@@ -131,9 +133,19 @@ MCDOC validateMoveConfig(JsonObject& doc){
         printf("moveConfig doc: no startSync param\n");
         return m;
     }else if(doc["startSync"].is<bool>()){
-        m.dwell = doc["startSync"].as<bool>();
+        m.startSync = doc["startSync"].as<bool>();
     }else{
         printf("moveConfig doc: startSync param type error\n");
+        return m;
+    }
+
+    if(!doc.containsKey("moveSpeed") ){
+        printf("moveConfig doc: no moveSpeed param\n");
+        return m;
+    }else if(doc["moveSpeed"].is<int>()){
+        m.moveSpeed= doc["moveSpeed"].as<int>();
+    }else{
+        printf("moveConfig doc: moveSpeed param type error\n");
         return m;
     }
 

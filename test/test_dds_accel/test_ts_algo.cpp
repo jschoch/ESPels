@@ -51,6 +51,7 @@ double MoveConfig::State::oldPitch ;
 int MoveConfig::State::accel;
 bool MoveConfig::State::useStops ;
 bool MoveConfig::State::feeding_ccw;
+int MoveConfig::State::moveSpeed;
 int Gear::State::next;
 int Gear::State::prev;
 int Gear::State::last;

@@ -183,6 +183,8 @@ void updateMoveConfigDoc(){
   moveConfigDoc["moveDirection"] = mc.moveDirection;
   moveConfigDoc["dwell"] = mc.dwell;
   moveConfigDoc["startSync"] = mc.startSync;
+  moveConfigDoc["feeding_ccw"] = mc.feeding_ccw;
+  moveConfigDoc["moveSpeed"] = mc.moveSpeed;
   sendDoc(moveConfigDoc);
 }
 
@@ -371,6 +373,7 @@ bool processDoc(){
               mc.rapidPitch = mcdoc.rapidPitch;
               mc.feeding_ccw = mcdoc.feeding_ccw;
               mc.accel = mcdoc.accel;
+              mc.moveSpeed = mcdoc.moveSpeed;
               updateMoveConfigDoc();
               return true;
             }else{
@@ -450,21 +453,23 @@ void handleMoveAsync(){
     //       uint32_t pullInSpeed, uint32_t pullOutSpeed, uint32_t accel) 
 
     
-    // microseconds
-    bool d = gs.zstepper.setDirNow(mc.feeding_ccw);
+    // set true (Z+) if moveDistanceSteps is > 0
+    bool d = gs.zstepper.setDirNow((mc.moveDistanceSteps > 0 ? 1 : 0));
     if(d){
       Serial.println("changing dir");
       delay(5);
     }
-    int32_t initial_speed = prepareMovement(gs.position, abs(mc.moveDistanceSteps), 1000, 100,100,mc.accel);
+    //int32_t targetPos = gs.position - mc.moveDistanceSteps;
+    int32_t targetPos = mc.moveDistanceSteps - gs.position;
+    int32_t initial_speed = prepareMovement(gs.position, targetPos, mc.moveSpeed, 100,100,mc.accel);
     Serial.printf("Async step test start: distance in steps: %i, initial speed: %i\n",mc.moveDistanceSteps,initial_speed);
-    Serial.printf("accel: %i\n ",mc.accel);
+    Serial.printf("accel: %i speed: %i\n ",mc.accel,mc.moveSpeed);
     //setStepFrequency(initial_speed);
     startStepperTimer(initial_speed);
   }
   else
   {
-    el.error("can't move, no moving mode is set ");
+    el.error("can't move, no moving mode is set or bad doc");
   }
 
   

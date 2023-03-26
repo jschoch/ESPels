@@ -50,7 +50,7 @@ extern AccelState accelState;
 
 // returns starting velocity
 //#ifdef UNIT_TEST
-inline int32_t prepareMovement(int32_t currentPos, int32_t moveDistance, uint32_t targetSpeed, uint32_t pullInSpeed, uint32_t pullOutSpeed, uint32_t accel)
+inline int32_t prepareMovement(int32_t currentPos, int32_t targetPos, uint32_t targetSpeed, uint32_t pullInSpeed, uint32_t pullOutSpeed, uint32_t accel)
 //#else
 //int32_t prepareMovement(int32_t currentPos, int32_t targetPos, uint32_t targetSpeed, uint32_t pullInSpeed, uint32_t pullOutSpeed, uint32_t accel)
 //#endif
@@ -62,12 +62,20 @@ inline int32_t prepareMovement(int32_t currentPos, int32_t moveDistance, uint32_
 
     // reset starting zero position
     move_start_position_0 = currentPos;
-    //move_distance  = abs(targetPos - currentPos);
-    move_distance = moveDistance;
 
+    // this make no sense
+    move_distance  = abs(targetPos - currentPos);
+    //move_distance = abs(moveDistance);
+
+    /*
     vs_sqr = (int64_t)vstart * vstart;
     ve_sqr = (int64_t)vend * vend;
     vt_sqr = (int64_t)vtarget * vtarget;
+    */
+    vs_sqr = (int32_t)vstart * vstart;
+    ve_sqr = (int32_t)vend * vend;
+    vt_sqr = (int32_t)vtarget * vtarget;
+
 
     int32_t sm = ((ve_sqr - vs_sqr) / two_a + move_distance) / 2; // position where acc and dec curves meet
 

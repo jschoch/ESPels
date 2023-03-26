@@ -69,21 +69,26 @@ void IRAM_ATTR stepTimerISR(){
 void IRAM_ATTR accelTimerCallback(void *par){
     if(stepTimerIsRunning){
         frequency = updateSpeed(&gs);
-        //if(frequency != last_frequency){
+        if(frequency != last_frequency){
             setStepFrequency(frequency);
             last_frequency = frequency;
-        //}
+        }
     }
 }
 
 void startStepperTimer(int32_t initial_speed){
+    if(!timerStarted(stepTimer)){
+        Serial.println("Step timer not started, starting....");
+        timerStart(stepTimer);
+    }
     if(!timerAlarmEnabled(stepTimer)){
         Serial.println("\nStepper timer was not enabled, this seems like an error");
         timerAlarmEnable(stepTimer);
     }
-
+    //timerAlarmEnable(stepTimer);
     stepTimerIsRunning = true;
     setStepFrequency(initial_speed);
+
 }
 
 void stopStepperTimer(){
@@ -102,10 +107,10 @@ void IRAM_ATTR setStepFrequency(int32_t f)
     }
 }
 
+/*
 void startAccelTimer(){
-    /*
-    */
 }
+*/
 
 bool initStepperTimer(){
 
@@ -113,9 +118,9 @@ bool initStepperTimer(){
     stepTimerIsRunning = false; 
     stepTimer = timerBegin(0, 80, true);
     timerAttachInterrupt(stepTimer, &stepTimerISR, false);
+    timerStart(stepTimer);
     timerAlarmEnable(stepTimer);
-
-
+    
     
     // trying the other api
 
@@ -127,8 +132,9 @@ bool initStepperTimer(){
 
     esp_timer_handle_t periodic_timer;
     ESP_ERROR_CHECK(esp_timer_create(&periodic_timer_args, &periodic_timer));
-    /* The timer has been created but is not running yet */
-     ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, 5000));
+
+    //start the timer 
+    ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, 5000));
 
 
 return true;
