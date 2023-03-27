@@ -50,7 +50,7 @@ String wsData;
 
 // sends updates (statusDoc) to UI every interval
 Neotimer update_timer = Neotimer(1000);
-Neotimer sse_timer = Neotimer(100);
+Neotimer sse_timer = Neotimer(300);
 Neotimer ota_timer = Neotimer(200);
 
 // TOOD: consider configs from config.h to update this stuff
@@ -729,6 +729,7 @@ void parseObj(AsyncWebSocketClient *client)
     }
     else
     {
+      Serial.printf("Bad version: my version %s ui version: %s",vsn,uiVsn);
       el.halt("bad version");
       client->close();
     }

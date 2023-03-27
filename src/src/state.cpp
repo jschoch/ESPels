@@ -8,7 +8,7 @@
 //Initialize the starting memory.
 
 // TODO: can this be automagical somehow?
-const char* vsn = "0.0.5";
+const char* vsn = "0.0.4";
 
 //common variables used by multipe things
 volatile int rpm = 0;
