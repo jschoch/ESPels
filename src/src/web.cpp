@@ -97,17 +97,6 @@ void initNvConfigDoc()
   // the communication version, used to detect UI compatability
   nvConfigDoc["vsn"] = vsn;
 
-  // TODO list of things to add
-  /*
-
-  UI_update_rate
-  last_pitch ?  do I want to do that?
-  motor acceleration
-  motor max_speed
-
-  */
-  // nvConfigDoc[""] = ;
-
   saveNvConfigDoc();
 }
 
@@ -703,7 +692,11 @@ void handleNvConfig()
     sendNvConfigDoc();
     // reset the den in case a param changed
 
-    gs.setELSFactor(mc.movePitch,true);
+    // TODO consider testing a pitch and rolling back and erroring if it doesn't work
+    // this resets the denominator based on the updated nvconfig
+    int old = mc.movePitch;
+    gs.setELSFactor(0.1,true);
+    mc.movePitch = 0;
   }
   else
   {
