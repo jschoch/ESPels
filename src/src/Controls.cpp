@@ -3,7 +3,7 @@
 #include "config.h"
 
 #define BOUNCE_LOCK_OUT
-#include <Bounce2.h>
+//#include <Bounce2.h>
 #include "neotimer.h"
 #include <yasm.h>
 #include "rmtStepper.h"

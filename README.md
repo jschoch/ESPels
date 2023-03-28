@@ -92,5 +92,13 @@ Initially I was planning on making a pcb with buttons to control everything.  Th
 
 This is currently using a version of the "didge" algorythm here (https://github.com/prototypicall/Didge/blob/master/doc/How.md_).  The slope can't be > 1 so you may need to reduce your micro stepping to facilitate large thread pitches.
 
+## Development
+
+to run the tests, for example just a single test matching the glob "*fsm*"  run 
+
+```
+pio test -e ESPelsTest --filter "*fsm*"
+```
+
 
 

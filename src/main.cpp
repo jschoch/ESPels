@@ -14,7 +14,7 @@
 
 #include "src/state.h"
 #include "src/Encoder.h"
-#include "Bounce2.h"
+//#include "Bounce2.h"
 #include "esp_err.h"
 #include "esp_log.h"
 #include "yasm.h"

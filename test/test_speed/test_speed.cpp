@@ -6,15 +6,16 @@
 #include <iostream>
 #include <elslog.h>
 
-#define Z_NATIVE_STEPS_PER_REV 200
-#define Z_MICROSTEPPING 8
+//#define Z_NATIVE_STEPS_PER_REV 200
+//#define Z_MICROSTEPPING 8
+#include <test_lib_helper.h>
 
 
 #include "src/genStepper.h"
 #include "src/moveConfig.h"
 #include "src/mocks.h"
 
-
+/*
 // brittle
 
 Gear::State GenStepper::State::mygear;
@@ -48,6 +49,7 @@ using namespace fakeit;
 
 // run using `pio test -e ESPelsTest -v`
 // debug `pio debug -e ESPelsTest --interface gdb -x .pioinit`
+*/
 
 #define UNITY_INCLUDE_EXEC_TIME
 
