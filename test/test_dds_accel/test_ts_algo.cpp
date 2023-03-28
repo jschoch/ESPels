@@ -68,6 +68,10 @@ GenStepper::Config gconf = {
 GenStepper::State gs = GenStepper::init("z",lm,gconf);
 MoveConfig::State mc = MoveConfig::init();
 
+//bool stepTimerIsRunning = false;
+volatile bool stepTimerIsRunning = false;
+AccelState accelState;
+int move_start_position_0 = 0;
 
 
 void test_the_algo(){

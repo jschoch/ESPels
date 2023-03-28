@@ -41,6 +41,7 @@ void test_validate()
         true, // f
         true, // startSync
         true, // feeding_ccw
+        0, // moveSpeed
         false
     };
 
@@ -99,6 +100,7 @@ void test_validate()
     c["moveSteps"] = start_struct.moveSteps;
     c["feeding_ccw"] = start_struct.feeding_ccw;
     c["startSync"] = start_struct.startSync;
+    c["moveSpeed"] = start_struct.moveSpeed;
 
     
     serializeJsonPretty(c,buff);
