@@ -16,7 +16,6 @@
 #include "myperfmon.h"
 #include "display.h"
 #include "DebugMode.h"
-#include "Stepper.h"
 #include "motion.h"
 #include "hob.h"
 #include "moveConfig.h"
@@ -34,7 +33,7 @@
 #define  KILLNV 0
 
 bool web = true;
-static const char* TAGweb = "Mc";
+//static const char* TAGweb = "Mc";
 
 
 // buffer for msgpack
@@ -51,7 +50,7 @@ String wsData;
 
 // sends updates (statusDoc) to UI every interval
 Neotimer update_timer = Neotimer(1000);
-Neotimer sse_timer = Neotimer(100);
+Neotimer sse_timer = Neotimer(300);
 Neotimer ota_timer = Neotimer(200);
 
 // TOOD: consider configs from config.h to update this stuff
@@ -97,17 +96,6 @@ void initNvConfigDoc()
 
   // the communication version, used to detect UI compatability
   nvConfigDoc["vsn"] = vsn;
-
-  // TODO list of things to add
-  /*
-
-  UI_update_rate
-  last_pitch ?  do I want to do that?
-  motor acceleration
-  motor max_speed
-
-  */
-  // nvConfigDoc[""] = ;
 
   saveNvConfigDoc();
 }
@@ -184,6 +172,8 @@ void updateMoveConfigDoc(){
   moveConfigDoc["moveDirection"] = mc.moveDirection;
   moveConfigDoc["dwell"] = mc.dwell;
   moveConfigDoc["startSync"] = mc.startSync;
+  moveConfigDoc["feeding_ccw"] = mc.feeding_ccw;
+  moveConfigDoc["moveSpeed"] = mc.moveSpeed;
   sendDoc(moveConfigDoc);
 }
 
@@ -371,6 +361,8 @@ bool processDoc(){
               mc.movePitch = mcdoc.movePitch;
               mc.rapidPitch = mcdoc.rapidPitch;
               mc.feeding_ccw = mcdoc.feeding_ccw;
+              mc.accel = mcdoc.accel;
+              mc.moveSpeed = mcdoc.moveSpeed;
               updateMoveConfigDoc();
               return true;
             }else{
@@ -433,6 +425,43 @@ void handleJogAbs()
     updateStatusDoc();
   }
   */
+}
+
+void handleMoveAsync(){
+
+
+  Serial.println("got async move command");
+  if (run_mode == RunMode::SLAVE_JOG_READY  && processDoc())
+  {
+    
+    if(stepTimerIsRunning){
+      Serial.printf("Stepper was running, can't issue new move command");
+      return;
+    }
+    //prepareMovement(int32_t currentPos, int32_t targetPos, uint32_t targetSpeed, 
+    //       uint32_t pullInSpeed, uint32_t pullOutSpeed, uint32_t accel) 
+
+    
+    // set true (Z+) if moveDistanceSteps is > 0
+    bool d = gs.zstepper.setDirNow((mc.moveDistanceSteps > 0 ? 1 : 0));
+    if(d){
+      Serial.println("changing dir");
+      delay(5);
+    }
+    //int32_t targetPos = gs.position - mc.moveDistanceSteps;
+    //int32_t targetPos = mc.moveDistanceSteps - gs.position;
+    int32_t initial_speed = prepareMovement(gs.position, mc.moveDistanceSteps, mc.moveSpeed, 100,100,mc.accel);
+    Serial.printf("Async step test start: distance in steps: %i, initial speed: %i\n",mc.moveDistanceSteps,initial_speed);
+    Serial.printf("accel: %i speed: %i\n ",mc.accel,mc.moveSpeed);
+    //setStepFrequency(initial_speed);
+    startStepperTimer(initial_speed);
+  }
+  else
+  {
+    el.error("can't move, no moving mode is set or bad doc");
+  }
+
+  
 }
 
 //  Update the virtual encoder
@@ -663,7 +692,11 @@ void handleNvConfig()
     sendNvConfigDoc();
     // reset the den in case a param changed
 
-    gs.setELSFactor(mc.movePitch,true);
+    // TODO consider testing a pitch and rolling back and erroring if it doesn't work
+    // this resets the denominator based on the updated nvconfig
+    int old = mc.movePitch;
+    gs.setELSFactor(0.1,true);
+    mc.movePitch = 0;
   }
   else
   {
@@ -696,6 +729,7 @@ void parseObj(AsyncWebSocketClient *client)
     }
     else
     {
+      Serial.printf("Bad version: my version %s ui version: %s",vsn,uiVsn);
       el.halt("bad version");
       client->close();
     }
@@ -723,6 +757,7 @@ void parseObj(AsyncWebSocketClient *client)
     jogging = false;
     rapiding = false;
     bouncing = false;
+    stopStepperTimer();
 
 
     // this must be reset for moveSync to work after running feed
@@ -737,6 +772,9 @@ void parseObj(AsyncWebSocketClient *client)
   else if (strcmp(cmd, "moveSync") == 0)
   {
     handleMove();
+  }
+  else if (strcmp(cmd, "moveAsync") == 0){
+    handleMoveAsync();
   }
   else if (strcmp(cmd, "sendConfig") == 0)
   {
@@ -1044,6 +1082,12 @@ void sendUpdates()
     // this reverses everything
     eventDoc["fccw"] = mc.feeding_ccw;
 
+    // the delta in steps to go for moveAsync
+    eventDoc["asd"] = stepsDelta;
+    eventDoc["av"] = alarm_value;
+    eventDoc["sr"] = stepTimerIsRunning;
+    eventDoc["as"] = (uint8_t)accelState;
+
     #ifdef useFAS
     eventDoc["fas_delta"] = gs.fzstepper->getCurrentPosition() - gs.position;
     #endif
@@ -1057,12 +1101,11 @@ void sendUpdates()
     eventLen = serializeJson(eventDoc, eventBuf);
     //eventLen = serializeMsgPack(eventDoc,eventBuf);
 
-    
-    
     // none of these seem to work
     //events.send("e",eventBuf,millis());
     //events.send("e",eventBuf,millis());
     //events.send(eventBuf,"e",millis());
+
     events.send(eventBuf);
   }
 }

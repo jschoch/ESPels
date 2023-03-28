@@ -7,12 +7,19 @@
 #include "mocks.h"
 #else
 #include "rmtStepper.h"
-#define SUPPORT_ESP32_RMT
-#include "FastAccelStepper.h"
-#endif
 
 // use fast accel stepper
+
+#endif // unit_test
+
 //#define useFAS
+
+#ifdef useFAS
+
+#define SUPPORT_ESP32_RMT
+#include "FastAccelStepper.h"
+
+#endif // useFAS
 
 
 
@@ -40,8 +47,10 @@ namespace GenStepper {
         static Gear::State mygear;
         Log::Msg lm;
         static rmtStepper::State zstepper;
+#ifdef useFAS
         FastAccelStepper *fzstepper = NULL;
         FastAccelStepperEngine engine = FastAccelStepperEngine();
+#endif
         static bool diduseFAS ;
         
 
@@ -131,7 +140,7 @@ namespace GenStepper {
             int stepsPerMM = c.motor_steps / c.lead_screw_pitch;
             int pitchInSteps = stepsPerMM * pitch;
             int max =  den;
-            printf("steps per mm: %i pitch in steps: %i max pitch was: %i",stepsPerMM,pitchInSteps,max);
+            printf("steps per mm: %i pitch in steps: %i max pitch was: %i\n",stepsPerMM,pitchInSteps,max);
             if(max > pitchInSteps){
                 return true;
             }
@@ -151,8 +160,8 @@ namespace GenStepper {
          
         state.setELSFactor(init_pitch,true);
         state.init_gear(0);
-        int stepper_speed = 80000;
-        int accel = 50000;
+        //int stepper_speed = 80000;
+        //int accel = 50000;
 #ifdef useFAS
         state.engine.init();
         state.fzstepper = state.engine.stepperConnectToPin(Z_STEP_PIN);

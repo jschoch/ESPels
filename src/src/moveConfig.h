@@ -4,14 +4,14 @@
 // breaks tests
 //#include <esp_log.h>
 
-static const char* TAGmc = "Mc";
+//static const char* TAGmc = "Mc";
 
 
 namespace MoveConfig{
 
     struct State{
         // was jog_mm
-        int default_accel = 200000;
+        int default_accel = 50000;
         static int32_t moveDistanceSteps ;
         static bool startSync;
         // was z_feeding_direction
@@ -30,6 +30,8 @@ namespace MoveConfig{
         static int moveTargetSteps;
         static int accel;
         static int dwell;
+
+        static int moveSpeed;
 
         // this shoudl be true for normal operation
         // chaning this should reverse all operations

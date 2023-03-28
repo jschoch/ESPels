@@ -16,7 +16,7 @@
 //#define LOG_LOCAL_LEVEL ESP_LOG_INFO
 #include <esp_log.h>
 
-static const char* TAG = "Mo";
+//static const char* TAG = "Mo";
 
 
 // actual error is max_error * 2 since this is a range around the tool potion + and -

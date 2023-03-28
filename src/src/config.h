@@ -4,7 +4,6 @@
 
 // TODO: need a way to tie versions of the firmware to compatable versions of the UI
 // also need to have a compiled UI version linked in firmware releases
-#define VSN "0.0.2"
 
 #ifndef configured
 #error WARNING: no config.ini detected. Please copy config.ini.template to config.ini and customize it.
@@ -40,9 +39,10 @@
 #error Set your Z_DIR_PIN in your config.ini
 #endif
 
-#ifndef Z_EN_PIN
-#error Set the enable pin in the config.ini
-#endif
+// TODO: add this 
+//#ifndef Z_EN_PIN
+//#error Set the enable pin in the config.ini
+//#endif
 
 //I don't think this is needed, we can infer this by microstepping and native steps per rev
 #define MOTOR_TYPE 1 // 1 is 1.8 degree, 2 is .9 degree
