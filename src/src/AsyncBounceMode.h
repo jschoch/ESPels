@@ -17,5 +17,11 @@ void AsyncBounceMoveState(){
         Serial.println("Move Done, starting rapid");
     };
     }
-void AsyncBounceIdleState();
+void AsyncBounceIdleState(){
+    if(async_bounce_yasm.isFirstRun()){
+        printf("asyncbounce idle first \n");
+        return;
+    }
+    printf("async bounce idle....\n");
+};
 void AsyncBounceRapidState();

@@ -1,4 +1,5 @@
 #include <test_lib_helper.h>
+#include <yasm.h>
 #include "../../src/src/mocks.h"
 #include "../../src/src/genStepper.h"
 #include "../../src/src/moveConfig.h"

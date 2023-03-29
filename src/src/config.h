@@ -5,7 +5,7 @@
 // TODO: need a way to tie versions of the firmware to compatable versions of the UI
 // also need to have a compiled UI version linked in firmware releases
 
-#ifndef configured
+#ifndef CONFIG_CONFIGURED 
 #error WARNING: no config.ini detected. Please copy config.ini.template to config.ini and customize it.
 #endif
 /************* Machine Configuration *************/

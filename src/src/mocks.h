@@ -19,10 +19,11 @@ namespace rmtStepper{
 }
 
 
-
+/*  should be setup with test_config.ini 
 #define Z_STEP_PIN 1
 #define Z_DIR_PIN 2
 #define Z_EN_PIN 3
+*/
 class FastAccelStepper {
     public: 
 
