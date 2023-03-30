@@ -2,10 +2,18 @@
 
 #include "genStepper.h"
 #include "moveConfig.h"
+
 //Initialize the starting memory. 
 //TODO: move this into a class constructor
 #include "ArduinoJson.h"
 //Initialize the starting memory.
+
+
+#ifndef UNIT_TEST
+// for dwell ticker
+#include <Ticker.h>
+extern Ticker vTcker
+#endif
 
 // TODO: can this be automagical somehow?
 const char* vsn = "0.0.5";
@@ -24,6 +32,7 @@ bool syncStart = true;
 bool syncWaiting = false;
 volatile bool jogging = false;
 volatile bool rapiding = false;
+extern Ticker vTcker;
 
 
 RunMode run_mode = RunMode::STARTUP;

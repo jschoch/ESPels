@@ -3,6 +3,7 @@
 #include "../../src/src/mocks.h"
 #include "../../src/src/genStepper.h"
 #include "../../src/src/moveConfig.h"
+#include "../../src/src/AsyncBounceMode.h"
 
 
 
@@ -50,3 +51,9 @@ GenStepper::Config gconf = {
     };
 GenStepper::State gs = GenStepper::init("z",lm,gconf);
 MoveConfig::State mc = MoveConfig::init();
+
+//void vTck::O::startTimer;
+//void vTck::O
+
+volatile bool pos_feeding = false;
+bool vTck::O::running = false;

@@ -1,3 +1,8 @@
+// hack for uncaught_exception deprication warnings
+#undef _GLIBCXX_DEPRECATED
+
+
+
 
 #include <unity.h>
 #include <iostream>
@@ -7,17 +12,10 @@
 #include <test_lib_helper.h>
 #include "src/AsyncBounceMode.h"
 #include <ctime>
-//#include <chrono>
-//#include "src/mocks.h"
 
 using namespace fakeit;
 
 
-void now(){
-    //std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
-    //auto foo = std::chrono::high_resolution_clock::now();
-
-}
 
 void setUp(void) {
     // set stuff up here
@@ -29,11 +27,15 @@ void tearDown(void) {
     // clean stuff up here
 }
 
-static int thetime = 1;
+volatile bool async_bouncing = false;
+
 
 void fsm_async_bounce(){
+    long unsigned int thetime = 0;
     printf("starting fsm_async_bounce..\n");
-    When(Method(ArduinoFake(), millis)).Return(thetime++);
+    //When(Method(ArduinoFake(), millis)).Return(thetime++);
+    //When(Method(ArduinoFake(),millis)).Do([](long unsigned int a) -> long unsigned int{a++;});
+    When(Method(ArduinoFake(),millis)).AlwaysDo([&thetime]() mutable -> long unsigned int{return thetime++;});
 
     async_bounce_yasm.run();
 
@@ -46,6 +48,45 @@ void fsm_async_bounce(){
 
     async_bounce_yasm.run();
 
+    // start bounce
+
+    async_bouncing = true;
+    
+    async_bounce_yasm.run();
+    async_bounce_yasm.run();
+    async_bounce_yasm.run();
+    // stop move
+    pos_feeding = false;
+    async_bounce_yasm.run();
+    async_bounce_yasm.run();
+    // dwell
+    
+    async_bounce_yasm.run();
+    async_bounce_yasm.run();
+
+    // move back
+    async_bounce_yasm.run();
+    async_bounce_yasm.run();
+
+    // start again
+
+    async_bounce_yasm.run();
+    async_bounce_yasm.run();
+
+    pos_feeding = false;
+    async_bounce_yasm.run();
+    async_bounce_yasm.run();
+
+    //stop
+    printf("test_fsm: setting bouncing false\n");
+    async_bouncing = false;
+    async_bounce_yasm.run();
+    printf("2nd run next\n");
+    async_bounce_yasm.run();
+
+    // run
+
+    // halt
 
     printf("done fsm_async_bounce\n");
 
@@ -67,3 +108,7 @@ int main( int argc, char **argv) {
     UNITY_END();
     return 0;
 }
+
+
+
+#define _GLIBCXX_DEPRECATED // end hack
