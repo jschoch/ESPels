@@ -90,6 +90,8 @@ void setup() {
   initStepperTimer();
 
   Serial.println("setup done");
+  auto freq = getCpuFrequencyMhz();
+  Serial.printf("CPU: %llu",freq);
   
 
 }

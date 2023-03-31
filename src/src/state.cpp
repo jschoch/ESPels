@@ -12,7 +12,7 @@
 #ifndef UNIT_TEST
 // for dwell ticker
 #include <Ticker.h>
-extern Ticker vTcker
+extern Ticker vTcker;
 #endif
 
 // TODO: can this be automagical somehow?
