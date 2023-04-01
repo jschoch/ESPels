@@ -13,14 +13,7 @@ YASM bounce_yasm;
 volatile bool bouncing = false;
 int old_moveDistanceSteps = 0;
 
-Neotimer state_timer(200);
 
-void do_state(){
-    if(state_timer.repeat()){
-        bounce_yasm.run();
-    }
-    
-}
 
 void start_move(){
     Serial.println("Bounce Start Move Called");

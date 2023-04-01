@@ -23,7 +23,7 @@
 #include "src/display.h"
 #include "src/motion.h"
 #include "src/Controls.h"
-#include "src/BounceMode.h"
+#include "src/state.h"
 #include "src/myperfmon.h"
 #include "src/Machine.h"
 #include "src/led.h"
@@ -82,7 +82,7 @@ void setup() {
     Serial.println("perfmon failed to start ");
     Serial.println(e);
   }
-  bounce_yasm.next(BounceIdleState);
+  init_state(); 
 
   init_encoder(); 
 
@@ -91,7 +91,7 @@ void setup() {
 
   Serial.println("setup done");
   auto freq = getCpuFrequencyMhz();
-  Serial.printf("CPU: %llu",freq);
+  Serial.printf("CPU: %u",freq);
   
 
 }

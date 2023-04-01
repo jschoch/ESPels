@@ -1,8 +1,3 @@
-// hack for uncaught_exception deprication warnings
-#undef _GLIBCXX_DEPRECATED
-
-
-
 
 #include <unity.h>
 #include <iostream>
@@ -36,6 +31,13 @@ void fsm_async_bounce(){
     //When(Method(ArduinoFake(), millis)).Return(thetime++);
     //When(Method(ArduinoFake(),millis)).Do([](long unsigned int a) -> long unsigned int{a++;});
     When(Method(ArduinoFake(),millis)).AlwaysDo([&thetime]() mutable -> long unsigned int{return thetime++;});
+
+    printf("wtf is up with mc?  %i\n",mc.dwell);
+    mc.dwell =50;
+    mc.moveDirection = 1;
+    mc.moveDistanceSteps = 100;
+    mc.accel = 5000;
+    mc.moveSpeed = 1000;
 
     async_bounce_yasm.run();
 
@@ -111,4 +113,3 @@ int main( int argc, char **argv) {
 
 
 
-#define _GLIBCXX_DEPRECATED // end hack

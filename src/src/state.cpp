@@ -2,19 +2,32 @@
 
 #include "genStepper.h"
 #include "moveConfig.h"
+#include "BounceMode.h"
 
 //Initialize the starting memory. 
 //TODO: move this into a class constructor
 #include "ArduinoJson.h"
 //Initialize the starting memory.
 
+#include "AsyncBounceMode.h"
 
-#ifndef UNIT_TEST
-// for dwell ticker
-#include <Ticker.h>
-extern Ticker vTcker;
-#endif
 
+
+
+Neotimer state_timer(200);
+
+void init_state(){
+    bounce_yasm.next(BounceIdleState);
+    async_bounce_yasm.next(AsyncBounceIdleState);
+}
+
+void do_state(){
+    if(state_timer.repeat()){
+        async_bounce_yasm.run();
+        bounce_yasm.run();
+    }
+    
+}
 // TODO: can this be automagical somehow?
 const char* vsn = "0.0.5";
 

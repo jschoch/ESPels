@@ -14,6 +14,9 @@ extern const char* vsn;
 
 #include "ArduinoJson.h"
 
+
+void do_state();
+void init_state();
 //common variables used by multipe things
 extern volatile int rpm;
 extern double mmPerStep;

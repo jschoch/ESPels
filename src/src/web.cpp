@@ -21,6 +21,7 @@
 #include "moveConfig.h"
 #include <Ticker.h>
 #include "led.h"
+#include "AsyncBounceMode.h"
 
 // Stringify wifi stuff
 #define ST(A) #A
@@ -363,6 +364,7 @@ bool processDoc(){
               mc.feeding_ccw = mcdoc.feeding_ccw;
               mc.accel = mcdoc.accel;
               mc.moveSpeed = mcdoc.moveSpeed;
+              mc.dwell = mcdoc.dwell;
               updateMoveConfigDoc();
               return true;
             }else{
@@ -593,6 +595,20 @@ void handleBounce()
     printf("problem with bounce move config or state\n");
   }
 }
+void handleBounceAsync()
+{
+   Serial.println("got bounce move command");
+  if (run_mode == RunMode::SLAVE_JOG_READY && processDoc())
+  {
+    Serial.printf("Bounce config: distance: %i rapid: %lf move: %lf\n",mc.moveDistanceSteps,mc.rapidPitch,mc.movePitch);
+    updateStateDoc(); 
+    async_bouncing = true;
+    async_bounce_yasm.next(AsyncBounceMoveToState,true);
+  }
+  else{
+    printf("problem with bounce move config or state\n");
+  }
+}
 
 void handleFeed(){
    Serial.println("got bounce move command");
@@ -695,8 +711,15 @@ void handleNvConfig()
     // TODO consider testing a pitch and rolling back and erroring if it doesn't work
     // this resets the denominator based on the updated nvconfig
     int old = mc.movePitch;
-    gs.setELSFactor(0.1,true);
-    mc.movePitch = 0;
+    if( !gs.setELSFactor(0.1,true) ) {
+      printf("nvconfig may be bad, reverting move pitch");
+      mc.movePitch = old;
+    }
+    if(old != 0) {
+      mc.movePitch = old;
+      gs.setELSFactor(mc.movePitch);
+    }
+    
   }
   else
   {
@@ -757,6 +780,7 @@ void parseObj(AsyncWebSocketClient *client)
     jogging = false;
     rapiding = false;
     bouncing = false;
+    async_bouncing = false;
     stopStepperTimer();
 
 
@@ -816,6 +840,9 @@ void parseObj(AsyncWebSocketClient *client)
   else if (strcmp(cmd, "bounce") == 0)
   {
     handleBounce();
+  }
+  else if (strcmp(cmd,"bounceAsync")==0){
+    handleBounceAsync();
   }
   else if(strcmp(cmd,"feed") ==  0)
   {

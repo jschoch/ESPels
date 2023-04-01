@@ -36,6 +36,7 @@ int MoveConfig::State::accel;
 bool MoveConfig::State::useStops ;
 bool MoveConfig::State::feeding_ccw;
 int MoveConfig::State::moveSpeed;
+int MoveConfig::State::dwell;
 int Gear::State::next;
 int Gear::State::prev;
 int Gear::State::last;
