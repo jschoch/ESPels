@@ -126,14 +126,14 @@ inline void AsyncBounceMoveToState(){
         // set diorection
         bool z_dir = gs.zstepper.setDir(mc.moveDirection);
         int32_t initial_speed = prepareMovement(gs.position, mc.moveDistanceSteps, mc.moveSpeed, 100,100,mc.accel);
-        Serial.printf("Async TO step test start: distance in steps: %i, initial speed: %i\n",mc.moveDistanceSteps,initial_speed);
+        Serial.printf("Async step test start: distance in steps: %i, initial speed: %i\n",mc.moveDistanceSteps,initial_speed);
         Serial.printf("accel: %i speed: %i\n ",mc.accel,mc.moveSpeed);
         //setStepFrequency(initial_speed);
         startStepperTimer(initial_speed);
 
         return;
     }
-    printf("async bounce move to N run pos_feeding: %d\n",pos_feeding);
+    //printf("async bounce move to N run pos_feeding: %d\n",pos_feeding);
     if(stepTimerIsRunning == false){
         async_bounce_yasm.next(AsyncBounceDwellState,true);
     }

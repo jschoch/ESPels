@@ -781,6 +781,7 @@ void parseObj(AsyncWebSocketClient *client)
     rapiding = false;
     bouncing = false;
     async_bouncing = false;
+    vTck::O::running = false;
     stopStepperTimer();
 
 
