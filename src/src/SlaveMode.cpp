@@ -9,14 +9,14 @@
 
 
 void SlaveModeReadyState(){
-   if(bounce_yasm.isFirstRun()){
+   if(main_yasm.isFirstRun()){
     updateMode(RunMode::SLAVE_READY);
     web = true;
   }
 }
 
 void slaveStatusState(){
-    if(bounce_yasm.isFirstRun()){
+    if(main_yasm.isFirstRun()){
         updateMode(RunMode::RUNNING);
         // ?? this was off, why?
         web = true;
@@ -24,14 +24,14 @@ void slaveStatusState(){
 }
 
 void FeedModeReadyState(){
-    if(bounce_yasm.isFirstRun()){
+    if(main_yasm.isFirstRun()){
         updateMode(RunMode::FEED_READY);
 
     }
 }
 
 void slaveFeedingState(){
-    if(bounce_yasm.isFirstRun()){
+    if(main_yasm.isFirstRun()){
 
         // TODO: should check for RPM 0 for this state?
         updateMode(RunMode::RUNNING);

@@ -37,7 +37,7 @@ char stats[ 2048];
 
 
 void init_controls(){
-  bounce_yasm.next(startupState);  
+  main_yasm.next(startupState);  
 }
 
 
@@ -51,14 +51,14 @@ void updateMode(RunMode run){
 }
 
 void startupState(){
-  if(bounce_yasm.isFirstRun()){
+  if(main_yasm.isFirstRun()){
     updateMode(RunMode::STARTUP);
     web = true;
   }
 }
 
 void slaveJogReadyState(){
-  if(bounce_yasm.isFirstRun()){
+  if(main_yasm.isFirstRun()){
     updateMode(RunMode::SLAVE_JOG_READY);
     //setFactor();
     //gs.setELSFactor(pitch);
@@ -70,7 +70,7 @@ void slaveJogReadyState(){
 
 // This is "slave jog" status mode, "slave" status is in SlaveMode.cpp
 void slaveJogStatusState(){
-  if(bounce_yasm.isFirstRun()){
+  if(main_yasm.isFirstRun()){
     updateMode(RunMode::RUNNING);
     web = false;
   }

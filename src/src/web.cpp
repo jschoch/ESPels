@@ -15,7 +15,6 @@
 #include "SlaveMode.h"
 #include "myperfmon.h"
 #include "display.h"
-#include "DebugMode.h"
 #include "motion.h"
 #include "hob.h"
 #include "moveConfig.h"
@@ -285,25 +284,21 @@ void setRunMode(int mode)
 {
   switch (mode)
   {
-  case (int)RunMode::DEBUG_READY:
-    // NEed to be able to stop what is currently running
-    bounce_yasm.next(debugState);
-    break;
   case (int)RunMode::SLAVE_JOG_READY:
-    bounce_yasm.next(slaveJogReadyState);
+    main_yasm.next(slaveJogReadyState);
     break;
   case (int)RunMode::SLAVE_READY:
-    bounce_yasm.next(SlaveModeReadyState);
+    main_yasm.next(SlaveModeReadyState);
     break;
   case (int)RunMode::FEED_READY:
-    bounce_yasm.next(FeedModeReadyState);
+    main_yasm.next(FeedModeReadyState);
     break;
   case (int)RunMode::HOB_READY:
     // hob_yasm.next(HobReadyState);
     HobReadyState();
     break;
   default:
-    bounce_yasm.next(startupState);
+    main_yasm.next(startupState);
     break;
   }
 }
@@ -589,7 +584,7 @@ void handleBounce()
     Serial.printf("Bounce config: distance: %i rapid: %lf move: %lf\n",mc.moveDistanceSteps,mc.rapidPitch,mc.movePitch);
     updateStateDoc(); 
     bouncing = true;
-    bounce_yasm.next(BounceMoveState,true);
+    main_yasm.next(BounceMoveState,true);
   }
   else{
     printf("problem with bounce move config or state\n");
@@ -603,7 +598,7 @@ void handleBounceAsync()
     Serial.printf("Bounce config: distance: %i rapid: %lf move: %lf\n",mc.moveDistanceSteps,mc.rapidPitch,mc.movePitch);
     updateStateDoc(); 
     async_bouncing = true;
-    async_bounce_yasm.next(AsyncBounceMoveToState,true);
+    main_yasm.next(AsyncBounceMoveToState,true);
   }
   else{
     printf("problem with bounce move config or state\n");
@@ -783,6 +778,7 @@ void parseObj(AsyncWebSocketClient *client)
     async_bouncing = false;
     vTck::O::running = false;
     stopStepperTimer();
+    main_yasm.next(startupState);
 
 
     // this must be reset for moveSync to work after running feed

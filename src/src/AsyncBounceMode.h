@@ -20,7 +20,7 @@ namespace vTck {
             running = true;
             // attach is float seconds
             // attach_ms is uint32
-            vTcker.attach_ms(mc.dwell,stopTimer);
+            vTcker.once_ms(mc.dwell,stopTimer);
         }
         static void stopTimer(){
             printf("stopping timer\n");
@@ -54,7 +54,7 @@ namespace vTck {
 
 #endif
 
-extern YASM async_bounce_yasm;
+//extern YASM main_yasm;
 
 extern volatile bool async_bouncing;
 
@@ -65,7 +65,7 @@ inline bool maybeStop(){
     if(!async_bouncing){
         printf("stopping async move now\n");
         stepTimerIsRunning = false;
-        async_bounce_yasm.next(AsyncBounceIdleState,true);
+        main_yasm.next(AsyncBounceIdleState,true);
         return true;
     }
     return false;
@@ -74,7 +74,7 @@ inline bool maybeStop(){
 inline void AsyncBounceMoveFromState(){
     if( maybeStop())
         return;
-    if(async_bounce_yasm.isFirstRun()){
+    if(main_yasm.isFirstRun()){
         printf("async bounce move from first run\n");
         // setup mc to go back
         printf("moving %i steps at %i speed",mc.moveDistanceSteps,mc.moveSpeed);
@@ -84,8 +84,8 @@ inline void AsyncBounceMoveFromState(){
         bool z_dir = gs.zstepper.setDir(!mc.moveDirection);
         printf("z_dir was: %d\n",z_dir);
         int32_t initial_speed = prepareMovement(gs.position, mc.moveDistanceSteps, mc.moveSpeed, 100,100,mc.accel);
-        Serial.printf("Async FROM step test start: distance in steps: %i, initial speed: %i\n",mc.moveDistanceSteps,initial_speed);
-        Serial.printf("accel: %i speed: %i\n ",mc.accel,mc.moveSpeed);
+        printf("Async FROM step test start: distance in steps: %i, initial speed: %i\n",mc.moveDistanceSteps,initial_speed);
+        printf("accel: %i speed: %i\n ",mc.accel,mc.moveSpeed);
         //setStepFrequency(initial_speed);
         startStepperTimer(initial_speed);
         return;
@@ -94,14 +94,14 @@ inline void AsyncBounceMoveFromState(){
     if(stepTimerIsRunning == false){
         printf("asyncbouncemovefrom done move, going back again");
         printf("shouldn't I dwell here?");
-        async_bounce_yasm.next(AsyncBounceMoveToState,true);
+        main_yasm.next(AsyncBounceMoveToState,true);
     }
 };
 
 inline void AsyncBounceDwellState(){
     if( maybeStop())
         return;
-    if(async_bounce_yasm.isFirstRun()){
+    if(main_yasm.isFirstRun()){
         printf("async bounce dwell first run\n");
         vTck::O::startTimer();
         return;
@@ -109,14 +109,14 @@ inline void AsyncBounceDwellState(){
     printf("async bounce dwell N run %d\n",vTck::O::timerRunning());
     if(!vTck::O::timerRunning()){
         printf("timer done, moving back\n");
-        async_bounce_yasm.next(AsyncBounceMoveFromState,true);
+        main_yasm.next(AsyncBounceMoveFromState,true);
     }
 };
 
 inline void AsyncBounceMoveToState(){
     if( maybeStop())
         return;
-    if(async_bounce_yasm.isFirstRun()){
+    if(main_yasm.isFirstRun()){
         printf("async bounce move to first run\n");
 
         // setup
@@ -126,8 +126,8 @@ inline void AsyncBounceMoveToState(){
         // set diorection
         bool z_dir = gs.zstepper.setDir(mc.moveDirection);
         int32_t initial_speed = prepareMovement(gs.position, mc.moveDistanceSteps, mc.moveSpeed, 100,100,mc.accel);
-        Serial.printf("Async step test start: distance in steps: %i, initial speed: %i\n",mc.moveDistanceSteps,initial_speed);
-        Serial.printf("accel: %i speed: %i\n ",mc.accel,mc.moveSpeed);
+        printf("Async step test start: distance in steps: %i, initial speed: %i\n",mc.moveDistanceSteps,initial_speed);
+        printf("accel: %i speed: %i\n ",mc.accel,mc.moveSpeed);
         //setStepFrequency(initial_speed);
         startStepperTimer(initial_speed);
 
@@ -135,17 +135,17 @@ inline void AsyncBounceMoveToState(){
     }
     //printf("async bounce move to N run pos_feeding: %d\n",pos_feeding);
     if(stepTimerIsRunning == false){
-        async_bounce_yasm.next(AsyncBounceDwellState,true);
+        main_yasm.next(AsyncBounceDwellState,true);
     }
 };
 
 inline void AsyncBounceIdleState(){
-    if(async_bounce_yasm.isFirstRun()){
+    if(main_yasm.isFirstRun()){
         printf("asyncbounce idle first \n");
         return;
     }
     if(async_bouncing == true){
-        async_bounce_yasm.next(AsyncBounceMoveToState,true);
+        main_yasm.next(AsyncBounceMoveToState,true);
     }
 };
 

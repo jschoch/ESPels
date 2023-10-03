@@ -8,6 +8,7 @@
 #include "Controls.h"
 #include "genStepper.h"
 #include "moveConfig.h"
+#include <yasm.h>
 
 // TODO: can this be automagical somehow?
 extern const char* vsn;
@@ -24,6 +25,7 @@ extern int32_t stepsPerMM;
 extern int32_t relativePosition;
 extern int32_t absolutePosition;
 extern bool sendDebug;
+extern YASM main_yasm;
 
 
 extern GenStepper::State gs;

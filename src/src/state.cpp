@@ -11,20 +11,19 @@
 
 #include "AsyncBounceMode.h"
 
+YASM main_yasm;
 
 
 
 Neotimer state_timer(200);
 
 void init_state(){
-    bounce_yasm.next(BounceIdleState);
-    async_bounce_yasm.next(AsyncBounceIdleState);
+    main_yasm.next(startupState);
 }
 
 void do_state(){
     if(state_timer.repeat()){
-        async_bounce_yasm.run();
-        bounce_yasm.run();
+        main_yasm.run();
     }
     
 }

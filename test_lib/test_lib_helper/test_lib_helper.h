@@ -15,7 +15,10 @@
 
 
 
-extern YASM async_bounce_yasm;
+extern YASM main_yasm;
+
+
+void startStepperTimer(int i){};
 
 
 

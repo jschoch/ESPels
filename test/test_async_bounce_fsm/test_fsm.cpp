@@ -39,52 +39,52 @@ void fsm_async_bounce(){
     mc.accel = 5000;
     mc.moveSpeed = 1000;
 
-    async_bounce_yasm.run();
+    main_yasm.run();
 
     // start the fsm
-    async_bounce_yasm.next(AsyncBounceIdleState);
+    main_yasm.next(AsyncBounceIdleState);
     //my_fsm.next(S1);
     //my_fsm.run();
 
-    async_bounce_yasm.run();
+    main_yasm.run();
 
-    async_bounce_yasm.run();
+    main_yasm.run();
 
     // start bounce
 
     async_bouncing = true;
     
-    async_bounce_yasm.run();
-    async_bounce_yasm.run();
-    async_bounce_yasm.run();
+    main_yasm.run();
+    main_yasm.run();
+    main_yasm.run();
     // stop move
     pos_feeding = false;
-    async_bounce_yasm.run();
-    async_bounce_yasm.run();
+    main_yasm.run();
+    main_yasm.run();
     // dwell
     
-    async_bounce_yasm.run();
-    async_bounce_yasm.run();
+    main_yasm.run();
+    main_yasm.run();
 
     // move back
-    async_bounce_yasm.run();
-    async_bounce_yasm.run();
+    main_yasm.run();
+    main_yasm.run();
 
     // start again
 
-    async_bounce_yasm.run();
-    async_bounce_yasm.run();
+    main_yasm.run();
+    main_yasm.run();
 
     pos_feeding = false;
-    async_bounce_yasm.run();
-    async_bounce_yasm.run();
+    main_yasm.run();
+    main_yasm.run();
 
     //stop
     printf("test_fsm: setting bouncing false\n");
     async_bouncing = false;
-    async_bounce_yasm.run();
+    main_yasm.run();
     printf("2nd run next\n");
-    async_bounce_yasm.run();
+    main_yasm.run();
 
     // run
 

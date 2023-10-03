@@ -58,3 +58,6 @@ MoveConfig::State mc = MoveConfig::init();
 
 volatile bool pos_feeding = false;
 bool vTck::O::running = false;
+
+YASM main_yasm;
+volatile bool stepTimerIsRunning = false;
