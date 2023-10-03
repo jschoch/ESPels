@@ -60,7 +60,7 @@ void startPrintTask(void);
 class Encoder
 {
 public:
-    Encoder(int encA, int encB, double ppr);
+    Encoder(int encA, int encB );
 
     /** encoder initialise pins */
     void init();

@@ -523,7 +523,7 @@ void doMoveSync(){
       bool thedir = mc.setStops(gs.position);
       bool step_dir_response = gs.zstepper.setDirNow(thedir);
       Serial.printf("Response from stepper: %d stepper current direction: %d\n",step_dir_response,gs.zstepper.dir);
-      bool valid = gs.setELSFactor(mc.movePitch);
+      bool valid = gs.setELSFactor(mc.movePitch,true);
       if(valid){
          Serial.printf("doJog pitch: %lf target: %i\n",mc.movePitch,mc.moveDistanceSteps);
         Serial.printf("\t\tStops: stopNeg: %i stopPos: %i\n",mc.stopNeg,mc.stopPos);
@@ -701,6 +701,14 @@ void handleNvConfig()
     eepromStream.flush();
     loadNvConfigDoc();
     sendNvConfigDoc();
+
+    init_motion();
+    init_machine();
+    init_controls();
+    init_state(); 
+    init_encoder(); 
+    initStepperTimer();
+
     // reset the den in case a param changed
 
     // TODO consider testing a pitch and rolling back and erroring if it doesn't work
