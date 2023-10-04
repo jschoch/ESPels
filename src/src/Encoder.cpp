@@ -104,7 +104,7 @@ void IRAM_ATTR Encoder::handleB() {
         pulse_counter += dir ? 1 : -1;
         //pulse_timestamp = esp_timer_get_time();// _micros();
         B_active = B;
-        processMotion();
+        //processMotion();
       }
       break;
     case Quadrature::OFF:
@@ -112,7 +112,7 @@ void IRAM_ATTR Encoder::handleB() {
         pulse_counter--;
         dir = false;
         //pulse_timestamp =  esp_timer_get_time();//_micros();
-        processMotion();
+        //processMotion();
       }
       break;
   }
@@ -132,7 +132,7 @@ void IRAM_ATTR Encoder::handleA() {
         pulse_counter += dir ? 1 : -1;
         //pulse_timestamp = esp_timer_get_time();// _micros();
         A_active = A;
-        processMotion();
+        //processMotion();
       }
       break;
     case Quadrature::OFF:
@@ -140,7 +140,7 @@ void IRAM_ATTR Encoder::handleA() {
         pulse_counter++;
         dir = true;
         //pulse_timestamp = esp_timer_get_time();//_micros();
-        processMotion();
+        //processMotion();
       }
       break;
   }
@@ -243,7 +243,7 @@ void Encoder::enableInterrupts(void (*doA)(), void(*doB)()){
 void IRAM_ATTR Encoder::setCount(int64_t count){
   // TODO: why do you need these?
   pulse_counter = count;
-  processMotion();
+  //processMotion();
 }
 int64_t  IRAM_ATTR Encoder::getCount(){
   // TODO: why not just read the value?

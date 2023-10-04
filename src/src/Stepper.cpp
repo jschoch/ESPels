@@ -11,6 +11,7 @@
 #include <esp_log.h>
 #include "esp_timer.h"
 #include <functional>
+#include "motion.h"
 
 
 int microsteps = Z_MICROSTEPPING;
@@ -56,12 +57,19 @@ AccelState accelState = ACCEL_OFF;
 	
 hw_timer_t * stepTimer = NULL;
 volatile bool stepTimerIsRunning = false;
+int64_t last_pulse_count = 0;
 
 
 void IRAM_ATTR stepTimerISR(){
    if(stepTimerIsRunning){
         gs.step();
     } 
+    else{
+        if(last_pulse_count != encoder.getCount()){
+            processMotion();
+            last_pulse_count = encoder.getCount();
+        }
+    }
 }
 
 
@@ -114,19 +122,22 @@ void startAccelTimer(){
 
 bool initStepperTimer(){
 
+    Serial.println("\nStepper timer starting");
     // STepper timer
     stepTimerIsRunning = false; 
-    stepTimer = timerBegin(0, 80, true);
+    //stepTimer = timerBegin(0, 80, true);
+    stepTimer = timerBegin(0,200,true);
     timerAttachInterrupt(stepTimer, &stepTimerISR, false);
     timerStart(stepTimer);
     timerAlarmEnable(stepTimer);
     
     
     // trying the other api
+    /* fail
 
     const esp_timer_create_args_t periodic_timer_args = {
             .callback = &accelTimerCallback,
-            /* name is optional, but may help identify the timer when debugging */
+            // name is optional, but may help identify the timer when debugging 
             .name = "periodic"
     };
 
@@ -135,7 +146,8 @@ bool initStepperTimer(){
 
     //start the timer 
     ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, 10));
+    */
 
-
+    Serial.println("\nStepper timer init complete");
 return true;
 }

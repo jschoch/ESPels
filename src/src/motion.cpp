@@ -171,7 +171,7 @@ void do_pos_feeding(){
     // only read this once for the whole loop
     //
     //int64_t pulse_counter = encoder.getCount();
-    pulse_counter = encoder.pulse_counter;
+    pulse_counter = encoder.getCount();
 
     if(pulse_counter > (gs.mygear.next + max_error) || pulse_counter < (gs.mygear.prev - max_error)){
       sprintf(err,"Tool outside expected range.  encPos: %lld next: %i  pos %i ",
@@ -185,8 +185,10 @@ void do_pos_feeding(){
     }
 
     // Deal with direction changes
+
     // Encoder decrementing
     if(!encoder.dir){ // dir neg and not pausing for the direction change
+
       if(mc.feeding_ccw && mc.moveDirection && gs.zstepper.dir){
         gs.zstepper.setDir(false);
       }else if(mc.feeding_ccw && !mc.moveDirection && !gs.zstepper.dir){
@@ -200,9 +202,10 @@ void do_pos_feeding(){
         gs.zstepper.setDir(true);
       }
       updateGearForDir();
-    }else {
+    }
+    // Encoder incrementing (ccw?) 
+    else {
 
-    // encoder incrementing
       if(mc.feeding_ccw && mc.moveDirection && !gs.zstepper.dir){
         gs.zstepper.setDir(true);
       }else if(mc.feeding_ccw && !mc.moveDirection && gs.zstepper.dir){
@@ -219,44 +222,42 @@ void do_pos_feeding(){
     } // done with direction changes
 
 
-      // calculate jumps and delta
+    // calculate jumps and delta
 
       
-      if((pulse_counter == gs.mygear.next) || (pulse_counter== gs.mygear.prev)){
-        gs.step();
-        gs.mygear.calc_jumps(pulse_counter);
-        //startCalcTask();
-        
-      }
+    if((pulse_counter == gs.mygear.next) || (pulse_counter== gs.mygear.prev)){
+      gs.step();
+      gs.mygear.calc_jumps(pulse_counter);
+    }
 
-      // evaluate stops, no motion if motion would exceed stops
+    // evaluate stops, no motion if motion would exceed stops
 
-      if (mc.useStops && mc.moveDirection == true && gs.position >= mc.moveTargetSteps){
-        //ESP_LOGE(TAG,"reached target %d final position was: %d", mc.moveSyncTarget, gs.position);
-        finish_jog();
-        return;
-      }
-      if(mc.useStops && mc.moveDirection == false && gs.position <= mc.moveTargetSteps){
-        //ESP_LOGE(TAG,"reached -target %d final position was: %d", mc.moveSyncTarget, gs.position);
-        finish_jog();
-        return;
-      }
+    if (mc.useStops && mc.moveDirection == true && gs.position >= mc.moveTargetSteps){
+      //ESP_LOGE(TAG,"reached target %d final position was: %d", mc.moveSyncTarget, gs.position);
+      finish_jog();
+      return;
+    }
+    if(mc.useStops && mc.moveDirection == false && gs.position <= mc.moveTargetSteps){
+      //ESP_LOGE(TAG,"reached -target %d final position was: %d", mc.moveSyncTarget, gs.position);
+      finish_jog();
+      return;
+    }
 
-      if(mc.useStops && (mc.moveTargetSteps < mc.stopNeg)){
-        el.addMsg("Tool past stopNeg: HALT");
-        el.hasError = true;
-        finish_jog();
-        return;
-      }
+    if(mc.useStops && (mc.moveTargetSteps < mc.stopNeg)){
+      el.addMsg("Tool past stopNeg: HALT");
+      el.hasError = true;
+      finish_jog();
+      return;
+    }
 
-      if(mc.useStops && mc.moveTargetSteps > mc.stopPos){
-        el.addMsg("tool past stopPos: HALT");
-        el.hasError = true;
+    if(mc.useStops && mc.moveTargetSteps > mc.stopPos){
+      el.addMsg("tool past stopPos: HALT");
+      el.hasError = true;
 
-        // TODO: should we halt or just stop feeding?
-        finish_jog();
-        return;
-      }
+      // TODO: should we halt or just stop feeding?
+      finish_jog();
+      return;
+    }
 }
 
 
@@ -298,36 +299,6 @@ void IRAM_ATTR processMotion(){
 }
 
 
-// gs.mygear.calc_jumps(pulse_counter);
-// this is not producing smooth motion above 400 RPM spindle speed
-void calcTask(void *ptr){
-
-  gs.mygear.calc_jumps(pulse_counter);
-  
-  vTaskDelete(NULL);
-}
-
-void startPinnedCalcTask(){
-  xTaskCreatePinnedToCore(
-                    calcTask,             /* Task function. */
-                    "calcTask",           /* String with name of task. */
-                    10000,                     /* Stack size in words. */
-                    NULL,      /* Parameter passed as input of the task */
-                    (configMAX_PRIORITIES -1 ),                         /* Priority of the task. */
-                    NULL,
-                    1); 
-}
-
-void startCalcTask(){
-  xTaskCreate(
-                    calcTask,             /* Task function. */
-                    "calcTask",           /* String with name of task. */
-                    10000,                     /* Stack size in words. */
-                    NULL,      /* Parameter passed as input of the task */
-                    (configMAX_PRIORITIES -1 ),                         /* Priority of the task. */
-                    NULL
-                    ); 
-}
 
 // TOOD: is this needed?
 void init_motion(){

@@ -707,7 +707,7 @@ void handleNvConfig()
     init_controls();
     init_state(); 
     init_encoder(); 
-    initStepperTimer();
+    //initStepperTimer();
 
     // reset the den in case a param changed
 
