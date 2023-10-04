@@ -264,6 +264,17 @@ void do_pos_feeding(){
 //  
 void IRAM_ATTR processMotion(){
 
+/*
+  ---  Plan
+  undo the timer init comments in main and web
+  make a fork to test with
+
+  1. remove processMotion() and see if we can count enc pulses without error.
+  2. consider moving processMotion into high frequency timer ( the same one you use for async stepping in Stepper.h)
+  3. find something else to do
+
+  ---
+  */
   // check if we want to sync our start position
   if(syncWaiting && pos_feeding){
     // faster to pass this count here or store it in do_pos_feeding?
