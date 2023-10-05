@@ -126,10 +126,13 @@ bool initStepperTimer(){
     // STepper timer
     stepTimerIsRunning = false; 
     //stepTimer = timerBegin(0, 80, true);
-    stepTimer = timerBegin(0,200,true);
+    stepTimer = timerBegin(0,80,true);
     timerAttachInterrupt(stepTimer, &stepTimerISR, false);
+    
+    timerAlarmWrite(stepTimer, 4,true);
     timerStart(stepTimer);
     timerAlarmEnable(stepTimer);
+
     
     
     // trying the other api

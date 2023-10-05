@@ -132,6 +132,9 @@ void IRAM_ATTR Encoder::handleA() {
         pulse_counter += dir ? 1 : -1;
         //pulse_timestamp = esp_timer_get_time();// _micros();
         A_active = A;
+
+        // moved  processMotion to Stepper.cpp high frequency timer so the 
+        // encoder just has to do the pulse_count and dir
         //processMotion();
       }
       break;
@@ -140,6 +143,9 @@ void IRAM_ATTR Encoder::handleA() {
         pulse_counter++;
         dir = true;
         //pulse_timestamp = esp_timer_get_time();//_micros();
+        // moved processMotion  to sStepper.cpp timerhigh frequency timer so the 
+        // encoder just has to do the pulse _count and dir
+        
         //processMotion();
       }
       break;
