@@ -8,7 +8,20 @@ Here's a quick demo: TODO: demo
 
 If you want to get frisky you can hook up the pulse pin to a scope and watch them fire away!!!
 
-## Bench Install configureation
+## Step 1
+
+Install and configure PlatformIO and install the packages for esp32 arduino
+git clone this repo
+open the ESPels folder in platformIO
+
+## Step 2
+
+copy the config.ini.template.ini file in the base directory to config.ini
+edit the config with your settings.
+
+## step 3
+
+Build and flash
 
 
 ## Full config and board
