@@ -5,7 +5,7 @@
 
 extern volatile int vEncSpeed;
 extern volatile bool vEncStopped;
-extern int spindle_encoder_resolution;
+//extern int spindle_encoder_resolution;
 extern Neotimer rpm_timer;
 extern double avg_times;
 

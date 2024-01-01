@@ -10,11 +10,11 @@ Encoder encoder = Encoder(EA,EB);
 volatile int64_t spindlePos = 0;
 volatile int vEncSpeed = 0;
 volatile bool vEncStopped = true;
-int spindle_encoder_resolution = ENCODER_RESOLUTION ;
+//int spindle_encoder_resolution = ENCODER_RESOLUTION ;
 
 int64_t last_count = 0;
 
-Neotimer rpm_timer = Neotimer(300);
+Neotimer rpm_timer = Neotimer(1000);
 
 int virtEncoderCount = 0;
 bool virtEncoderEnable = false;
@@ -41,10 +41,13 @@ void init_encoder(){
 void do_rpm(){
   if(rpm_timer.repeat()){
     // TODO: put this in the webUI
-    long count_diff = abs(last_count - encoder.getCount());
-    double revolutions = (double) count_diff / spindle_encoder_resolution;
-    rpm = revolutions * 10 * 60;
-    last_count = encoder.getCount();
+    int64_t this_count = encoder.getCount();
+    int count_diff = abs(last_count - this_count);
+    //double revolutions = (double) count_diff / gs.c.spindle_encoder_resolution;
+    //rpm = revolutions * 60;
+    rpm = (count_diff * 60)/gs.c.spindle_encoder_resolution;
+    last_count = this_count;
+    Serial.printf(" rpms: %f count_diff: %d\n",rpm,count_diff);
   }
 }
 
@@ -233,7 +236,7 @@ void Encoder::init(){
     cpr = 4*cpr;
   }
   */
-  cpr = spindle_encoder_resolution;
+  cpr = gs.c.spindle_encoder_resolution;
   start = cpr;
 
 }

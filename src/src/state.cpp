@@ -31,7 +31,7 @@ void do_state(){
 const char* vsn = "0.0.5";
 
 //common variables used by multipe things
-volatile int rpm = 0;
+volatile float rpm = 0;
 double mmPerStep = 0;
 int32_t stepsPerMM = 0;
 int32_t relativePosition = 0;

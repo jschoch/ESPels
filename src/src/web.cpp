@@ -1,5 +1,7 @@
 #include <Arduino.h>
 #include "web.h"
+#include "WiFi.h"
+#include <esp_wifi.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 #include <ArduinoJson.h>
@@ -135,7 +137,7 @@ void loadNvConfigDoc()
     }
 
     if(nvConfigDoc.containsKey("spindle_encoder_resolution")){
-      spindle_encoder_resolution = nvConfigDoc["spindle_encoder_resolution"].as<int>();
+      gs.c.spindle_encoder_resolution = nvConfigDoc["spindle_encoder_resolution"].as<int>();
     }else{
       Serial.println("key missing: enc");
     }
@@ -155,7 +157,6 @@ void loadNvConfigDoc()
     gs.c.lead_screw_pitch = lead_screw_pitch;
     gs.c.motor_steps = motor_steps;
     gs.c.microsteps = microsteps;
-    gs.c.spindle_encoder_resolution = spindle_encoder_resolution;
     Serial.print("Loaded this NvConfig doc");
     serializeJsonPretty(nvConfigDoc, Serial);
     if(!gs.setELSFactor(mc.movePitch,true)){
@@ -220,6 +221,7 @@ void updateStatusDoc()
 
   // this is used by "Distance to Go" in the UI to figure out the direction 
   statusDoc["fd"] = mc.moveDirection;
+  statusDoc["es"] = encoder.start;
   sendStatus();
 }
 
@@ -945,6 +947,7 @@ void connectToWifi() {
   WiFi.setTxPower(WIFI_POWER_19_5dBm);
   WiFi.setAutoReconnect(true);
   //WiFi.persistent(true);
+  esp_wifi_set_ps(WIFI_PS_NONE);
   WiFi.setSleep(false);
   Serial.print("Connected. IP=");
   Serial.println(WiFi.localIP());
