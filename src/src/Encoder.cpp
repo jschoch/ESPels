@@ -10,7 +10,6 @@ Encoder encoder = Encoder(EA,EB);
 volatile int64_t spindlePos = 0;
 volatile int vEncSpeed = 0;
 volatile bool vEncStopped = true;
-//int spindle_encoder_resolution = ENCODER_RESOLUTION ;
 
 int64_t last_count = 0;
 
@@ -43,8 +42,6 @@ void do_rpm(){
     // TODO: put this in the webUI
     int64_t this_count = encoder.getCount();
     int count_diff = abs(last_count - this_count);
-    //double revolutions = (double) count_diff / gs.c.spindle_encoder_resolution;
-    //rpm = revolutions * 60;
     rpm = (count_diff * 60)/gs.c.spindle_encoder_resolution;
     last_count = this_count;
     Serial.printf(" rpms: %f count_diff: %d\n",rpm,count_diff);
@@ -98,14 +95,12 @@ void startVenc(){
 
 // B channel
 void IRAM_ATTR Encoder::handleB() {
-  //pulse_start = esp_timer_get_time();
   int B = digitalRead(pinB);
   switch (quadrature){
     case Quadrature::ON:
       if ( B != B_active ) {
         dir = (A_active != B_active);
         pulse_counter += dir ? 1 : -1;
-        //pulse_timestamp = esp_timer_get_time();// _micros();
         B_active = B;
         //processMotion();
       }
@@ -114,26 +109,21 @@ void IRAM_ATTR Encoder::handleB() {
       if(B && !digitalRead(pinA)){
         pulse_counter--;
         dir = false;
-        //pulse_timestamp =  esp_timer_get_time();//_micros();
         //processMotion();
       }
       break;
   }
-  //pulse_stop = esp_timer_get_time();
-  //startStatTask();
 }
 
 //  Encoder interrupt callback functions
 // A channel
 void IRAM_ATTR Encoder::handleA() {
-  //pulse_start = esp_timer_get_time();
   int A = digitalRead(pinA);
   switch (quadrature){
     case Quadrature::ON:
       if ( A != A_active ) {
         dir = (A_active == B_active);
         pulse_counter += dir ? 1 : -1;
-        //pulse_timestamp = esp_timer_get_time();// _micros();
         A_active = A;
 
         // moved  processMotion to Stepper.cpp high frequency timer so the 
@@ -145,7 +135,6 @@ void IRAM_ATTR Encoder::handleA() {
       if(A && !digitalRead(pinB)){
         pulse_counter++;
         dir = true;
-        //pulse_timestamp = esp_timer_get_time();//_micros();
         // moved processMotion  to sStepper.cpp timerhigh frequency timer so the 
         // encoder just has to do the pulse _count and dir
         
@@ -153,8 +142,6 @@ void IRAM_ATTR Encoder::handleA() {
       }
       break;
   }
-  //pulse_stop = esp_timer_get_time();
-  //startStatTask();
 }
 
 Encoder::Encoder(int _encA, int _encB ){
@@ -188,7 +175,6 @@ Encoder::Encoder(int _encA, int _encB ){
 double Encoder::getAngle(){
   // let the UI do this!!!
   return  natural_direction * _2PI * (pulse_counter) / ((double)cpr);
-  //return natural_direction * _2PI * ((pulse_counter) % ((double)cpr); 
 }
 // initialize counter to zero
 // TODO: not implmeented, need some nottion of work coordinates developed
@@ -229,13 +215,6 @@ void Encoder::init(){
   prev_timestamp_us = esp_timer_get_time();//_micros();
   dir = true;
 
-  /* yuck smell
-  // initial cpr = PPR
-  // change it if the mode is quadrature
-  if(quadrature == Quadrature::ON) {
-    cpr = 4*cpr;
-  }
-  */
   cpr = gs.c.spindle_encoder_resolution;
   start = cpr;
 
