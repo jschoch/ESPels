@@ -52,12 +52,6 @@ namespace rmtStepper {
 
                 // TODO need  to be able to invert
                 //digitalWrite(config.dirPin, newdir ^ config.invert_step_pin);
-#ifndef useFAS
-                // XOR the dir for the inversion bool
-                dir_has_changed = true;
-                digitalWrite(config.dirPin, newdir);
-                dir_change_timer = esp_timer_get_time();
-#endif
                 dir = newdir;
             }
             return olddir == newdir;

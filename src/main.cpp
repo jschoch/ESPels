@@ -36,7 +36,6 @@ rmtStepper::State GenStepper::State::zstepper;
 int GenStepper::State::nom;
 int GenStepper::State::den;
 int32_t GenStepper::State::position;
-bool GenStepper::State::diduseFAS;
 
 int32_t MoveConfig::State::moveDistanceSteps ;
 bool MoveConfig::State::startSync;

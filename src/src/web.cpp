@@ -1124,9 +1124,6 @@ void sendUpdates()
     eventDoc["sr"] = stepTimerIsRunning;
     eventDoc["as"] = (uint8_t)accelState;
 
-    #ifdef useFAS
-    eventDoc["fas_delta"] = gs.fzstepper->getCurrentPosition() - gs.position;
-    #endif
 
     // angle
     // do this in the UI!!!!

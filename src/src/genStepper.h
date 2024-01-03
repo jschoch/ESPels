@@ -12,14 +12,6 @@
 
 #endif // unit_test
 
-//#define useFAS
-
-#ifdef useFAS
-
-#define SUPPORT_ESP32_RMT
-#include "FastAccelStepper.h"
-
-#endif // useFAS
 
 
 
@@ -47,11 +39,6 @@ namespace GenStepper {
         static Gear::State mygear;
         Log::Msg lm;
         static rmtStepper::State zstepper;
-#ifdef useFAS
-        FastAccelStepper *fzstepper = NULL;
-        FastAccelStepperEngine engine = FastAccelStepperEngine();
-#endif
-        static bool diduseFAS ;
         
 
         // if returns true it worked
@@ -101,30 +88,16 @@ namespace GenStepper {
         }
 
         inline void stepPos(){
-#ifdef useFAS
-            int8_t r = fzstepper->move(1,false);
-#else
             zstepper.step();
-#endif
             position++;
         }
         inline void stepNeg(){
-#ifdef useFAS
-            int8_t r = fzstepper->move(-1,false);
-#else
             zstepper.step();
-#endif
             position--;
 
         }
 
         inline void setAccel(int val){
-#ifdef useFAS
-            fzstepper->setAcceleration(val);
-            fzstepper->applySpeedAcceleration();
-#else
-            // do nothing no acceleration
-#endif
         }
         inline void step(){
             if( zstepper.dir){
@@ -162,23 +135,6 @@ namespace GenStepper {
         state.init_gear(0);
         //int stepper_speed = 80000;
         //int accel = 50000;
-#ifdef useFAS
-        state.engine.init();
-        state.fzstepper = state.engine.stepperConnectToPin(Z_STEP_PIN);
-        if (state.fzstepper) {
-            state.fzstepper->setDirectionPin(Z_DIR_PIN,true,10);
-            state.fzstepper->setEnablePin(Z_EN_PIN);
-            state.fzstepper->setAutoEnable(true);
-
-            // If auto enable/disable need delays, just add (one or both):
-            //stepper->setDelayToEnable(15);
-
-            state.fzstepper->setSpeedInHz(stepper_speed);  // the parameter is us/step !!!
-            state.fzstepper->setAcceleration(accel);
-            state.fzstepper->applySpeedAcceleration();
-            state.diduseFAS = true;
-        }
-#else
 #ifndef UNIT_TEST
         pinMode(Z_DIR_PIN, OUTPUT);
         pinMode(Z_STEP_PIN, OUTPUT);
@@ -191,8 +147,6 @@ namespace GenStepper {
         state.zstepper.config.dirPin = (gpio_num_t) Z_DIR_PIN;
 
         state.zstepper.init();
-        state.diduseFAS = false;
-#endif
 #endif
         return state;
         

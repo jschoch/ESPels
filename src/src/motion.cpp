@@ -118,7 +118,7 @@ void dealWithDirChange(){
 
 // ensure we don't send steps after changing dir pin until the proper delay has expired
 void updateGearForDir(){
-  if(gs.zstepper.dir_has_changed && gs.diduseFAS == 0){
+  if(gs.zstepper.dir_has_changed ){
     while(gs.zstepper.dir_has_changed && ((gs.zstepper.dir_change_timer + 5) - esp_timer_get_time() > 0)){
        gs.zstepper.dir_has_changed = false;
        dealWithDirChange(); 
