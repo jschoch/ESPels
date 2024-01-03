@@ -978,6 +978,7 @@ void connectToWifi() {
   server.addHandler(&events);
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "*");
+  DefaultHeaders::Instance().addHeader("Access-Control-Allow-Private-Network", "true");
   server.begin();
   Serial.println("HTTP websocket server started");
 
