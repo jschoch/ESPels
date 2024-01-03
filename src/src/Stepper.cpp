@@ -15,7 +15,6 @@
 
 
 int microsteps = Z_MICROSTEPPING;
-
 int native_steps = Z_NATIVE_STEPS_PER_REV;
 int motor_steps = Z_MICROSTEPPING * Z_NATIVE_STEPS_PER_REV;
 
@@ -34,7 +33,6 @@ portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
 
 
 
-//volatile int32_t stepsDelta = 0;
 volatile int32_t oldSpeed = 1;
 volatile int32_t theSpeed = 0;
 int32_t move_start_position_0 = 0;
@@ -65,10 +63,14 @@ void IRAM_ATTR stepTimerISR(){
         gs.step();
     } 
     else{
+
+#ifdef MOTION_MODE_TIMER
         if(last_pulse_count != encoder.getCount()){
             processMotion();
             last_pulse_count = encoder.getCount();
         }
+#endif
+
     }
 }
 
@@ -93,7 +95,6 @@ void startStepperTimer(int32_t initial_speed){
         Serial.println("\nStepper timer was not enabled, this seems like an error");
         timerAlarmEnable(stepTimer);
     }
-    //timerAlarmEnable(stepTimer);
     stepTimerIsRunning = true;
     setStepFrequency(initial_speed);
 
@@ -111,46 +112,21 @@ void IRAM_ATTR setStepFrequency(int32_t f)
         timerAlarmWrite(stepTimer, alarm_value,true);
     }else{
         stepTimerIsRunning = false;
-        //timerAlarmDisable(stepTimer);
     }
 }
 
-/*
-void startAccelTimer(){
-}
-*/
 
 bool initStepperTimer(){
 
     Serial.println("\nStepper timer starting");
     // STepper timer
     stepTimerIsRunning = false; 
-    //stepTimer = timerBegin(0, 80, true);
     stepTimer = timerBegin(0,80,true);
     timerAttachInterrupt(stepTimer, &stepTimerISR, false);
     
     timerAlarmWrite(stepTimer, 4,true);
     timerStart(stepTimer);
     timerAlarmEnable(stepTimer);
-
-    
-    
-    // trying the other api
-    /* fail
-
-    const esp_timer_create_args_t periodic_timer_args = {
-            .callback = &accelTimerCallback,
-            // name is optional, but may help identify the timer when debugging 
-            .name = "periodic"
-    };
-
-    esp_timer_handle_t periodic_timer;
-    ESP_ERROR_CHECK(esp_timer_create(&periodic_timer_args, &periodic_timer));
-
-    //start the timer 
-    ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, 10));
-    */
-
     Serial.println("\nStepper timer init complete");
 return true;
 }

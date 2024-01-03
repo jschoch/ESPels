@@ -91,6 +91,13 @@ void startVenc(){
 
 }
 
+void maybeProcessMotion(){
+  #ifdef MOTION_MODE_INTERRUPT
+    processMotion();
+
+  #endif
+}
+
 
 
 // B channel
@@ -102,14 +109,14 @@ void IRAM_ATTR Encoder::handleB() {
         dir = (A_active != B_active);
         pulse_counter += dir ? 1 : -1;
         B_active = B;
-        //processMotion();
+        maybeProcessMotion();
       }
       break;
     case Quadrature::OFF:
       if(B && !digitalRead(pinA)){
         pulse_counter--;
         dir = false;
-        //processMotion();
+        maybeProcessMotion();
       }
       break;
   }
@@ -126,19 +133,14 @@ void IRAM_ATTR Encoder::handleA() {
         pulse_counter += dir ? 1 : -1;
         A_active = A;
 
-        // moved  processMotion to Stepper.cpp high frequency timer so the 
-        // encoder just has to do the pulse_count and dir
-        //processMotion();
+        maybeProcessMotion();
       }
       break;
     case Quadrature::OFF:
       if(A && !digitalRead(pinB)){
         pulse_counter++;
         dir = true;
-        // moved processMotion  to sStepper.cpp timerhigh frequency timer so the 
-        // encoder just has to do the pulse _count and dir
-        
-        //processMotion();
+        maybeProcessMotion();
       }
       break;
   }
@@ -231,7 +233,7 @@ void Encoder::enableInterrupts(void (*doA)(), void(*doB)()){
 void IRAM_ATTR Encoder::setCount(int64_t count){
   // TODO: why do you need these?
   pulse_counter = count;
-  //processMotion();
+  maybeProcessMotion();
 }
 int64_t  IRAM_ATTR Encoder::getCount(){
   // TODO: why not just read the value?
