@@ -4,15 +4,16 @@
 #include "config.h"
 #include "state.h"
 
-Encoder encoder = Encoder(EA, EB, 600);
+//Encoder encoder = Encoder(EA, EB, 600);
+// Removing PPR, confusing...
+Encoder encoder = Encoder(EA,EB);
 volatile int64_t spindlePos = 0;
 volatile int vEncSpeed = 0;
 volatile bool vEncStopped = true;
-int spindle_encoder_resolution = ENCODER_RESOLUTION ;
 
 int64_t last_count = 0;
 
-Neotimer rpm_timer = Neotimer(100);
+Neotimer rpm_timer = Neotimer(1000);
 
 int virtEncoderCount = 0;
 bool virtEncoderEnable = false;
@@ -39,10 +40,11 @@ void init_encoder(){
 void do_rpm(){
   if(rpm_timer.repeat()){
     // TODO: put this in the webUI
-    long count_diff = abs(last_count - encoder.pulse_counter);
-    double revolutions = (double) count_diff / spindle_encoder_resolution;
-    rpm = revolutions * 10 * 60;
-    last_count = encoder.pulse_counter;    
+    int64_t this_count = encoder.getCount();
+    int count_diff = abs(last_count - this_count);
+    rpm = (count_diff * 60)/gs.c.spindle_encoder_resolution;
+    last_count = this_count;
+    //Serial.printf(" rpms: %f count_diff: %d\n",rpm,count_diff);
   }
 }
 
@@ -89,68 +91,62 @@ void startVenc(){
 
 }
 
+void maybeProcessMotion(){
+  #ifdef MOTION_MODE_INTERRUPT
+    processMotion();
+
+  #endif
+}
+
 
 
 // B channel
 void IRAM_ATTR Encoder::handleB() {
-  //pulse_start = esp_timer_get_time();
   int B = digitalRead(pinB);
   switch (quadrature){
     case Quadrature::ON:
-  //     // CPR = 4xPPR
       if ( B != B_active ) {
         dir = (A_active != B_active);
         pulse_counter += dir ? 1 : -1;
-        pulse_timestamp = esp_timer_get_time();// _micros();
         B_active = B;
-        processMotion();
+        maybeProcessMotion();
       }
       break;
     case Quadrature::OFF:
-      // CPR = PPR
       if(B && !digitalRead(pinA)){
         pulse_counter--;
         dir = false;
-        pulse_timestamp =  esp_timer_get_time();//_micros();
-        processMotion();
+        maybeProcessMotion();
       }
       break;
   }
-  //pulse_stop = esp_timer_get_time();
-  //startStatTask();
 }
 
 //  Encoder interrupt callback functions
 // A channel
 void IRAM_ATTR Encoder::handleA() {
-  pulse_start = esp_timer_get_time();
   int A = digitalRead(pinA);
   switch (quadrature){
     case Quadrature::ON:
-      // CPR = 4xPPR
       if ( A != A_active ) {
         dir = (A_active == B_active);
         pulse_counter += dir ? 1 : -1;
-        pulse_timestamp = esp_timer_get_time();// _micros();
         A_active = A;
-        processMotion();
+
+        maybeProcessMotion();
       }
       break;
     case Quadrature::OFF:
-      // CPR = PPR
       if(A && !digitalRead(pinB)){
         pulse_counter++;
         dir = true;
-        pulse_timestamp = esp_timer_get_time();//_micros();
-        processMotion();
+        maybeProcessMotion();
       }
       break;
   }
-  pulse_stop = esp_timer_get_time();
-  //startStatTask();
 }
 
-Encoder::Encoder(int _encA, int _encB , double _ppr){
+Encoder::Encoder(int _encA, int _encB ){
 
   // Encoder measurement structure init
   // hardware pins
@@ -163,7 +159,6 @@ Encoder::Encoder(int _encA, int _encB , double _ppr){
   dir = true;
   start = 1;
 
-  cpr = _ppr;
   A_active = 0;
   B_active = 0;
 
@@ -173,21 +168,22 @@ Encoder::Encoder(int _encA, int _encB , double _ppr){
   prev_pulse_counter = 100;
   prev_timestamp_us = esp_timer_get_time();//_micros();
 
-  pullup = ENCODER_PULLUP;
+  //pullup = ENCODER_PULLUP;
+  pullup = EXTERN;
   // enable quadrature encoder by default
   quadrature = Quadrature::ON;
 }
+
 double Encoder::getAngle(){
   // let the UI do this!!!
   return  natural_direction * _2PI * (pulse_counter) / ((double)cpr);
-  //return natural_direction * _2PI * ((pulse_counter) % ((double)cpr); 
 }
 // initialize counter to zero
 // TODO: not implmeented, need some nottion of work coordinates developed
 double Encoder::initRelativeZero(){
   long angle_offset = -pulse_counter;
   pulse_counter = 0;
-  pulse_timestamp = esp_timer_get_time();//_micros();
+  //pulse_timestamp = esp_timer_get_time();//_micros();
   return _2PI * (angle_offset) / ((double )cpr);
 }
 
@@ -221,11 +217,7 @@ void Encoder::init(){
   prev_timestamp_us = esp_timer_get_time();//_micros();
   dir = true;
 
-  // initial cpr = PPR
-  // change it if the mode is quadrature
-  if(quadrature == Quadrature::ON) {
-    cpr = 4*cpr;
-  }
+  cpr = gs.c.spindle_encoder_resolution;
   start = cpr;
 
 }
@@ -241,7 +233,7 @@ void Encoder::enableInterrupts(void (*doA)(), void(*doB)()){
 void IRAM_ATTR Encoder::setCount(int64_t count){
   // TODO: why do you need these?
   pulse_counter = count;
-  processMotion();
+  maybeProcessMotion();
 }
 int64_t  IRAM_ATTR Encoder::getCount(){
   // TODO: why not just read the value?

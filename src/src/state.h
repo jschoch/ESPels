@@ -8,19 +8,21 @@
 #include "Controls.h"
 #include "genStepper.h"
 #include "moveConfig.h"
+#include <yasm.h>
 
 // TODO: can this be automagical somehow?
 extern const char* vsn;
 
 #include "ArduinoJson.h"
 
+
+void do_state();
+void init_state();
 //common variables used by multipe things
-extern volatile int rpm;
-extern double mmPerStep;
-extern int32_t stepsPerMM;
-extern int32_t relativePosition;
-extern int32_t absolutePosition;
+extern volatile float rpm;
+
 extern bool sendDebug;
+extern YASM main_yasm;
 
 
 extern GenStepper::State gs;
@@ -34,9 +36,7 @@ extern volatile bool rapiding;
 
 extern RunMode run_mode;
 
-extern double lead_screw_pitch;
-
-#define SSE_EVENT_SIZE 500
+#define SSE_EVENT_SIZE 1000
 
 
 // config stateDoc
@@ -66,7 +66,7 @@ extern StaticJsonDocument<1000> moveConfigDoc;
 // for sending events
 extern StaticJsonDocument<SSE_EVENT_SIZE> eventDoc;
 
-extern char pongBuf[100];
-extern int pong_len;
+//extern char pongBuf[100];
+//extern int pong_len;
 
 

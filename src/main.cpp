@@ -14,7 +14,7 @@
 
 #include "src/state.h"
 #include "src/Encoder.h"
-#include "Bounce2.h"
+//#include "Bounce2.h"
 #include "esp_err.h"
 #include "esp_log.h"
 #include "yasm.h"
@@ -23,7 +23,7 @@
 #include "src/display.h"
 #include "src/motion.h"
 #include "src/Controls.h"
-#include "src/BounceMode.h"
+#include "src/state.h"
 #include "src/myperfmon.h"
 #include "src/Machine.h"
 #include "src/led.h"
@@ -36,7 +36,6 @@ rmtStepper::State GenStepper::State::zstepper;
 int GenStepper::State::nom;
 int GenStepper::State::den;
 int32_t GenStepper::State::position;
-bool GenStepper::State::diduseFAS;
 
 int32_t MoveConfig::State::moveDistanceSteps ;
 bool MoveConfig::State::startSync;
@@ -82,7 +81,7 @@ void setup() {
     Serial.println("perfmon failed to start ");
     Serial.println(e);
   }
-  bounce_yasm.next(BounceIdleState);
+  init_state(); 
 
   init_encoder(); 
 
@@ -90,6 +89,8 @@ void setup() {
   initStepperTimer();
 
   Serial.println("setup done");
+  auto freq = getCpuFrequencyMhz();
+  Serial.printf("CPU: %u",freq);
   
 
 }

@@ -3,30 +3,21 @@
 #include "config.h"
 
 #define BOUNCE_LOCK_OUT
-#include <Bounce2.h>
-#include "neotimer.h"
+//#include <Bounce2.h>
 #include <yasm.h>
-#include "rmtStepper.h"
-#include "gear.h"
-#include "Machine.h"
-#include "Encoder.h"
-#include <elslog.h>
-#include "state.h"
-#include "Stepper.h"
-#include "display.h"
-#include "web.h"
-#include "genStepper.h"
-#include "motion.h"
 #include "BounceMode.h"
+#include "web.h"
+#include "state.h"
 
-Neotimer button_print_timer = Neotimer(2000);
-Neotimer dro_timer = Neotimer(600);
-
-
-uint8_t menu = 3; 
-int pitch_menu= 1;
+//Neotimer button_print_timer = Neotimer(2000);
+//Neotimer dro_timer = Neotimer(600);
 
 
+//uint8_t menu = 3; 
+//int pitch_menu= 1;
+
+
+/*/
 #ifdef DEBUG_CPU_STATS
 char stats[ 2048];
 #undef configGENERATE_RUN_TIME_STATS
@@ -34,10 +25,11 @@ char stats[ 2048];
 #undef configUSE_STATS_FORMATTING_FUNCTIONS
 #define configUSE_STATS_FORMATTING_FUNCTIONS 1
 #endif
+*/
 
 
 void init_controls(){
-  bounce_yasm.next(startupState);  
+  main_yasm.next(startupState);  
 }
 
 
@@ -51,17 +43,15 @@ void updateMode(RunMode run){
 }
 
 void startupState(){
-  if(bounce_yasm.isFirstRun()){
+  if(main_yasm.isFirstRun()){
     updateMode(RunMode::STARTUP);
     web = true;
   }
 }
 
 void slaveJogReadyState(){
-  if(bounce_yasm.isFirstRun()){
+  if(main_yasm.isFirstRun()){
     updateMode(RunMode::SLAVE_JOG_READY);
-    //setFactor();
-    //gs.setELSFactor(pitch);
     web = true;
     return;
   }
@@ -70,7 +60,7 @@ void slaveJogReadyState(){
 
 // This is "slave jog" status mode, "slave" status is in SlaveMode.cpp
 void slaveJogStatusState(){
-  if(bounce_yasm.isFirstRun()){
+  if(main_yasm.isFirstRun()){
     updateMode(RunMode::RUNNING);
     web = false;
   }
@@ -78,7 +68,11 @@ void slaveJogStatusState(){
 
 
 
-/* replace with genStepper impl
+/* 
+
+TODO: move state stuff out of here, this is very old from when there were physical controls
+
+replace with genStepper impl
 void setHobbFactor(){
   int den = lead_screw_pitch * motor_steps;
   int nom = spindle_encoder_resolution * pitch;

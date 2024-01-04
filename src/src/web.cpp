@@ -1,5 +1,7 @@
 #include <Arduino.h>
 #include "web.h"
+#include "WiFi.h"
+#include <esp_wifi.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 #include <ArduinoJson.h>
@@ -15,12 +17,12 @@
 #include "SlaveMode.h"
 #include "myperfmon.h"
 #include "display.h"
-#include "DebugMode.h"
 #include "motion.h"
 #include "hob.h"
 #include "moveConfig.h"
 #include <Ticker.h>
 #include "led.h"
+#include "AsyncBounceMode.h"
 
 // Stringify wifi stuff
 #define ST(A) #A
@@ -116,46 +118,36 @@ void loadNvConfigDoc()
   {
 
     if(nvConfigDoc.containsKey("lead_screw_pitch")){
-      lead_screw_pitch = nvConfigDoc["lead_screw_pitch"].as<float>();
+      gs.c.lead_screw_pitch = nvConfigDoc["lead_screw_pitch"].as<float>();
     }else{
       Serial.println("key missing: lead");
     }
 
 
     if(nvConfigDoc.containsKey("native_steps")){
-      native_steps = nvConfigDoc["native_steps"].as<int>();
+      gs.c.native_steps = nvConfigDoc["native_steps"].as<int>();
     }else{
       Serial.println("key missing: nat step");
     }
 
     if(nvConfigDoc.containsKey("microsteps")){
-      microsteps = nvConfigDoc["microsteps"].as<int>();
+      gs.c.microsteps = nvConfigDoc["microsteps"].as<int>();
     }else{
       Serial.println("key missing: microstesp");
     }
 
     if(nvConfigDoc.containsKey("spindle_encoder_resolution")){
-      spindle_encoder_resolution = nvConfigDoc["spindle_encoder_resolution"].as<int>();
+      gs.c.spindle_encoder_resolution = nvConfigDoc["spindle_encoder_resolution"].as<int>();
     }else{
       Serial.println("key missing: enc");
     }
 
-    motor_steps = native_steps * microsteps;
-    nvConfigDoc["motor_steps"] = motor_steps;
+    gs.c.motor_steps = gs.c.native_steps * gs.c.microsteps;
+    nvConfigDoc["motor_steps"] = gs.c.motor_steps;
 
-     /* TODO: all of these shouldn't be global and need to switch to gs.c
-    motor_steps = nvConfigDoc["motor_steps"];
-    native_steps = nvConfigDoc["native_steps"];
-    microsteps = nvConfigDoc["microsteps"];
-    spindle_encoder_resolution = nvConfigDoc["spindle_encoder_resolution"];
-    */
-    Serial.printf("Loaded Configuration com version %s lead screw pitch: %lf\n", vsn, lead_screw_pitch);
+    Serial.printf("Loaded Configuration com version %s lead screw pitch: %lf\n", vsn, gs.c.lead_screw_pitch);
     init_machine();
     // setFactor();
-    gs.c.lead_screw_pitch = lead_screw_pitch;
-    gs.c.motor_steps = motor_steps;
-    gs.c.microsteps = microsteps;
-    gs.c.spindle_encoder_resolution = spindle_encoder_resolution;
     Serial.print("Loaded this NvConfig doc");
     serializeJsonPretty(nvConfigDoc, Serial);
     if(!gs.setELSFactor(mc.movePitch,true)){
@@ -179,48 +171,10 @@ void updateMoveConfigDoc(){
 
 void updateStatusDoc()
 {
-  // types the message as a status update for the UI
-  statusDoc["t"] = "status";
+  
+  // consolidating statusDoc and eventDoc
 
-  // Currently used for the UI DRO display,
-  // defined in util.h and helps UI figure out what to display
-  statusDoc["m"] = (int)run_mode;
-  // the position in steps
-  statusDoc["p"] = gs.position;
-
-  // encoder postion in cpr pulses
-  statusDoc["encoderPos"] = encoder.getCount();
-
-  // I think this is used for aboslute movements
-  // TODO: We should convert to steps in the UI and not have to do the conversion in the controller
-  statusDoc["targetSteps"] = mc.moveDistanceSteps;
-  // bool for constant run mode, TODO:  bad name though
-  //statusDoc["feeding"] = feeding;
-  // bools for sync movements, TODO:  bad name
-  statusDoc["jogging"] = jogging;
-  // bool for rapid sync movement TODO: bad name
-  statusDoc["rap"] = rapiding;
-  // flag for bouncing mode
-  statusDoc["bf"] = bouncing;
-  // main bool to turn movement on/off
-  statusDoc["pos_feed"] = pos_feeding;
-
-  // Wait for the spindle/ncoder "0" position
-  // this acts like a thread dial
-  statusDoc["sw"] = syncWaiting;
-  // generated in the encoder and displayed in the UI
-  // TODO: consider making the smoothing configurable or done in the browser
-  statusDoc["rpm"] = rpm;
-
-  // the virtual stop in the Z + direction, used to calculate "distance to go" in the UI
-  statusDoc["sp"] = mc.stopPos;
-  // the stop in the Z - direction
-  statusDoc["sn"] = mc.stopNeg;
-  statusDoc["r"] = WiFi.RSSI();
-
-  // this is used by "Distance to Go" in the UI to figure out the direction 
-  statusDoc["fd"] = mc.moveDirection;
-  sendStatus();
+  //sendStatus();
 }
 
 void updateDebugStatusDoc()
@@ -284,25 +238,21 @@ void setRunMode(int mode)
 {
   switch (mode)
   {
-  case (int)RunMode::DEBUG_READY:
-    // NEed to be able to stop what is currently running
-    bounce_yasm.next(debugState);
-    break;
   case (int)RunMode::SLAVE_JOG_READY:
-    bounce_yasm.next(slaveJogReadyState);
+    main_yasm.next(slaveJogReadyState);
     break;
   case (int)RunMode::SLAVE_READY:
-    bounce_yasm.next(SlaveModeReadyState);
+    //main_yasm.next(SlaveModeReadyState);
     break;
   case (int)RunMode::FEED_READY:
-    bounce_yasm.next(FeedModeReadyState);
+    main_yasm.next(FeedModeReadyState);
     break;
   case (int)RunMode::HOB_READY:
     // hob_yasm.next(HobReadyState);
     HobReadyState();
     break;
   default:
-    bounce_yasm.next(startupState);
+    main_yasm.next(startupState);
     break;
   }
 }
@@ -363,6 +313,7 @@ bool processDoc(){
               mc.feeding_ccw = mcdoc.feeding_ccw;
               mc.accel = mcdoc.accel;
               mc.moveSpeed = mcdoc.moveSpeed;
+              mc.dwell = mcdoc.dwell;
               updateMoveConfigDoc();
               return true;
             }else{
@@ -526,7 +477,7 @@ void doMoveSync(){
       bool thedir = mc.setStops(gs.position);
       bool step_dir_response = gs.zstepper.setDirNow(thedir);
       Serial.printf("Response from stepper: %d stepper current direction: %d\n",step_dir_response,gs.zstepper.dir);
-      bool valid = gs.setELSFactor(mc.movePitch);
+      bool valid = gs.setELSFactor(mc.movePitch,true);
       if(valid){
          Serial.printf("doJog pitch: %lf target: %i\n",mc.movePitch,mc.moveDistanceSteps);
         Serial.printf("\t\tStops: stopNeg: %i stopPos: %i\n",mc.stopNeg,mc.stopPos);
@@ -587,7 +538,21 @@ void handleBounce()
     Serial.printf("Bounce config: distance: %i rapid: %lf move: %lf\n",mc.moveDistanceSteps,mc.rapidPitch,mc.movePitch);
     updateStateDoc(); 
     bouncing = true;
-    bounce_yasm.next(BounceMoveState,true);
+    main_yasm.next(BounceMoveState,true);
+  }
+  else{
+    printf("problem with bounce move config or state\n");
+  }
+}
+void handleBounceAsync()
+{
+   Serial.println("got bounce move command");
+  if (run_mode == RunMode::SLAVE_JOG_READY && processDoc())
+  {
+    Serial.printf("Bounce config: distance: %i rapid: %lf move: %lf\n",mc.moveDistanceSteps,mc.rapidPitch,mc.movePitch);
+    updateStateDoc(); 
+    async_bouncing = true;
+    main_yasm.next(AsyncBounceMoveToState,true);
   }
   else{
     printf("problem with bounce move config or state\n");
@@ -690,13 +655,28 @@ void handleNvConfig()
     eepromStream.flush();
     loadNvConfigDoc();
     sendNvConfigDoc();
+
+    init_motion();
+    init_machine();
+    init_controls();
+    init_state(); 
+    init_encoder(); 
+    //initStepperTimer();
+
     // reset the den in case a param changed
 
     // TODO consider testing a pitch and rolling back and erroring if it doesn't work
     // this resets the denominator based on the updated nvconfig
     int old = mc.movePitch;
-    gs.setELSFactor(0.1,true);
-    mc.movePitch = 0;
+    if( !gs.setELSFactor(0.1,true) ) {
+      printf("nvconfig may be bad, reverting move pitch");
+      mc.movePitch = old;
+    }
+    if(old != 0) {
+      mc.movePitch = old;
+      gs.setELSFactor(mc.movePitch);
+    }
+    
   }
   else
   {
@@ -757,7 +737,10 @@ void parseObj(AsyncWebSocketClient *client)
     jogging = false;
     rapiding = false;
     bouncing = false;
+    async_bouncing = false;
+    vTck::O::running = false;
     stopStepperTimer();
+    main_yasm.next(startupState);
 
 
     // this must be reset for moveSync to work after running feed
@@ -817,18 +800,25 @@ void parseObj(AsyncWebSocketClient *client)
   {
     handleBounce();
   }
+  else if (strcmp(cmd,"bounceAsync")==0){
+    handleBounceAsync();
+  }
   else if(strcmp(cmd,"feed") ==  0)
   {
     handleFeed();
   }
   else if(strcmp(cmd,"ping") == 0){
     Serial.print("^");
+    /*  TODO:  this doesn't seem to actually be used at all
+                get rid of it!
+
     // need to pong to keep alive?
     if(client->canSend()){
       ws.binary(client->id(),pongBuf,pong_len);
     }else{
       Serial.print("#");
     }
+    */
   }
   else if(strcmp(cmd,"sendDebug") == 0){
     Serial.println("toggle send debug");
@@ -913,6 +903,7 @@ void connectToWifi() {
   WiFi.setTxPower(WIFI_POWER_19_5dBm);
   WiFi.setAutoReconnect(true);
   //WiFi.persistent(true);
+  esp_wifi_set_ps(WIFI_PS_NONE);
   WiFi.setSleep(false);
   Serial.print("Connected. IP=");
   Serial.println(WiFi.localIP());
@@ -943,6 +934,7 @@ void connectToWifi() {
   server.addHandler(&events);
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "*");
+  DefaultHeaders::Instance().addHeader("Access-Control-Allow-Private-Network", "true");
   server.begin();
   Serial.println("HTTP websocket server started");
 
@@ -970,7 +962,9 @@ void init_web()
   WiFi.mode(WIFI_MODE_STA);
   
   WiFi.onEvent(onWifiConnect, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
-  WiFiEventId_t eventID = WiFi.onEvent(onWifiDisconnect, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+
+  //WiFiEventId_t eventID = WiFi.onEvent(onWifiDisconnect, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+  WiFi.onEvent(onWifiDisconnect, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);  
 
   connectToWifi();
 
@@ -990,8 +984,6 @@ void init_web()
   {
     loadNvConfigDoc();
   }
-
-  
 }
 
 void init_ota()
@@ -1029,7 +1021,7 @@ void sendUpdates()
   if (update_timer.repeat())
   {
     updateDebugStatusDoc();
-    updateStatusDoc();
+    //updateStatusDoc();
 
     ws.cleanupClients();
   }
@@ -1081,6 +1073,7 @@ void sendUpdates()
 
     // this reverses everything
     eventDoc["fccw"] = mc.feeding_ccw;
+    eventDoc["es"] = encoder.start;
 
     // the delta in steps to go for moveAsync
     eventDoc["asd"] = stepsDelta;
@@ -1088,9 +1081,6 @@ void sendUpdates()
     eventDoc["sr"] = stepTimerIsRunning;
     eventDoc["as"] = (uint8_t)accelState;
 
-    #ifdef useFAS
-    eventDoc["fas_delta"] = gs.fzstepper->getCurrentPosition() - gs.position;
-    #endif
 
     // angle
     // do this in the UI!!!!

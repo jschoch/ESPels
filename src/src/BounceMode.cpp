@@ -8,19 +8,12 @@
 #include "motion.h"
 #include "genStepper.h"
 #include "moveConfig.h"
+#include "AsyncBounceMode.h"
 
-YASM bounce_yasm;
 volatile bool bouncing = false;
 int old_moveDistanceSteps = 0;
 
-Neotimer state_timer(200);
 
-void do_state(){
-    if(state_timer.repeat()){
-        bounce_yasm.run();
-    }
-    
-}
 
 void start_move(){
     Serial.println("Bounce Start Move Called");
@@ -29,7 +22,7 @@ void start_move(){
 }
 
 void BounceIdleState(){
-   if(bounce_yasm.isFirstRun()){
+   if(main_yasm.isFirstRun()){
     //updateMode(SLAVE_READY,RunMode::SLAVE_READY);
     //run_mode = RunMode::BounceIdle;
     updateStateDoc();
@@ -42,7 +35,9 @@ void BounceIdleState(){
 }
 
 void BounceMoveState(){
-    if(bounce_yasm.isFirstRun()){
+    if( maybeStopBounce())
+        return;
+    if(main_yasm.isFirstRun()){
         printf("Entering Bounce Move Mode pitch: %f\n",mc.movePitch);
         bool d = mc.setStops(gs.position);
         bool z_dir = gs.zstepper.setDir(d);
@@ -50,18 +45,46 @@ void BounceMoveState(){
         gs.setELSFactor(mc.movePitch);
         start_move();
         updateMode(RunMode::BounceMove);
-        //bounce_yasm.next(BounceMoveState);
+        //main_yasm.next(BounceMoveState);
         return;
     }
     else if(!jogging){
         updateStateDoc();
         Serial.println("Move Done, starting rapid");
-        bounce_yasm.next(BounceRapidState);
+        //main_yasm.next(BounceRapidState);
+        main_yasm.next(BounceMoveDwellState,true);
     }
 }
+bool maybeStopBounce(){
+    if(!bouncing){
+        printf("stopping bounce move now\n");
+        stepTimerIsRunning = false;
+        main_yasm.next(BounceIdleState,true);
+        return true;
+    }
+    return false;
+}
+
+void BounceMoveDwellState(){
+    if( maybeStopBounce())
+        return;
+    if(main_yasm.isFirstRun()){
+        printf("bounce dwell first run\n");
+        vTck::O::startTimer();
+        return;
+    }
+    printf("bounce dwell N run %d\n",vTck::O::timerRunning());
+    if(!vTck::O::timerRunning()){
+        printf("timer done, moving back\n");
+        //main_yasm.next(AsyncBounceMoveFromState,true);
+        main_yasm.next(BounceRapidState);
+    }
+};
 
 void BounceRapidState(){
-    if(bounce_yasm.isFirstRun()){
+    if( maybeStopBounce())
+        return;
+    if(main_yasm.isFirstRun()){
         printf(" Entering Rapid Mode pitch: %f",mc.rapidPitch);
         // TODO: yuck refactor this
         mc.oldPitch = mc.movePitch;
@@ -82,11 +105,11 @@ void BounceRapidState(){
         jogging = false;
         
         // not sure how isFirstRun works !?
-        //bounce_yasm.next(BounceIdleState);
-        //bounce_yasm.next(slaveJogReadyState);
+        //main_yasm.next(BounceIdleState);
+        //main_yasm.next(slaveJogReadyState);
         //RunMode(SLAVE_JOG_READY);
         //updateStateDoc();
-        //bounce_yasm.next(slaveJogReadyState,true);
+        //main_yasm.next(slaveJogReadyState,true);
         setRunMode((int)RunMode::SLAVE_JOG_READY);
         Serial.println("Bounce Mode done");
         return;

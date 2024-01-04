@@ -2,28 +2,48 @@
 
 #include "genStepper.h"
 #include "moveConfig.h"
+#include "BounceMode.h"
+
 //Initialize the starting memory. 
 //TODO: move this into a class constructor
 #include "ArduinoJson.h"
 //Initialize the starting memory.
 
+#include "AsyncBounceMode.h"
+
+YASM main_yasm;
+
+
+
+Neotimer state_timer(200);
+
+void init_state(){
+    main_yasm.next(startupState);
+}
+
+void do_state(){
+    if(state_timer.repeat()){
+        main_yasm.run();
+    }
+    
+}
 // TODO: can this be automagical somehow?
-const char* vsn = "0.0.5";
+const char* vsn = "0.0.6";
+
+
+
+
+// TODO:  put all these globals in a  struct or somethign
 
 //common variables used by multipe things
-volatile int rpm = 0;
-double mmPerStep = 0;
-int32_t stepsPerMM = 0;
-int32_t relativePosition = 0;
-int32_t absolutePosition = 0;
+volatile float rpm = 0;
 bool sendDebug = true;
-
-
 //State Machine stuff
 bool syncStart = true;
 bool syncWaiting = false;
 volatile bool jogging = false;
 volatile bool rapiding = false;
+extern Ticker vTcker;
 
 
 RunMode run_mode = RunMode::STARTUP;
@@ -38,7 +58,8 @@ GenStepper::Config gconf = {
         Z_MICROSTEPPING, // microsteps
         (Z_NATIVE_STEPS_PER_REV * Z_MICROSTEPPING) // motorsteps
     };
-GenStepper::State gs = GenStepper::init("Z",el,gconf);
+
+GenStepper::State gs = GenStepper::init("Z",&el,gconf);
 MoveConfig::State mc = MoveConfig::init();
 // json docs
 
@@ -48,11 +69,11 @@ StaticJsonDocument<1000> stateDoc;
 //  items to store in NV ram/EEPROM
 StaticJsonDocument<1000> nvConfigDoc;
 
-// Used for msgs from UI
+// Used for msgs sent from UI
 StaticJsonDocument<1000> inDoc;
 
 // used to send status to UI
-StaticJsonDocument<600> statusDoc;
+//StaticJsonDocument<600> statusDoc;
 
 // Used to log to UI
 StaticJsonDocument<5000> logDoc;
@@ -63,9 +84,9 @@ StaticJsonDocument<500> debugStatusDoc;
 // for sending updates to move config
 StaticJsonDocument<1000> moveConfigDoc;
 
-StaticJsonDocument<100> pongDoc;
 
 StaticJsonDocument<SSE_EVENT_SIZE> eventDoc;
-char pongBuf[100];
-int pong_len = serializeMsgPack(pongDoc,pongBuf);
+
+//char pongBuf[100];
+//int pong_len = serializeMsgPack(pongDoc,pongBuf);
 

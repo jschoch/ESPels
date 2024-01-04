@@ -14,12 +14,12 @@
 // TOOD: move to a machine state struct
 extern volatile bool pos_feeding;
 
-extern int microsteps;
-
-extern int native_steps;
-extern int motor_steps;
+// TODO: seems like this could be done better
 extern int32_t move_start_position_0;
 extern int32_t move_distance;
+
+
+
 extern uint32_t vstart, vend, vtarget;
 extern int64_t vs_sqr, ve_sqr, vt_sqr;
 extern uint32_t two_a;
@@ -47,12 +47,7 @@ typedef enum AccelState{
 } AccelState;
 extern AccelState accelState;
 
-// returns starting velocity
-//#ifdef UNIT_TEST
 inline int32_t prepareMovement(int32_t currentPos, int32_t targetPos, uint32_t targetSpeed, uint32_t pullInSpeed, uint32_t pullOutSpeed, uint32_t accel)
-//#else
-//int32_t prepareMovement(int32_t currentPos, int32_t targetPos, uint32_t targetSpeed, uint32_t pullInSpeed, uint32_t pullOutSpeed, uint32_t accel)
-//#endif
 {
     vtarget    = targetSpeed;   
     vstart    = pullInSpeed;  // v_start
@@ -67,11 +62,6 @@ inline int32_t prepareMovement(int32_t currentPos, int32_t targetPos, uint32_t t
     //move_distance = abs(moveDistance);
     move_distance = abs(targetPos);
 
-    /*
-    vs_sqr = (int64_t)vstart * vstart;
-    ve_sqr = (int64_t)vend * vend;
-    vt_sqr = (int64_t)vtarget * vtarget;
-    */
     vs_sqr = (int32_t)vstart * vstart;
     ve_sqr = (int32_t)vend * vend;
     vt_sqr = (int32_t)vtarget * vtarget;
@@ -79,13 +69,9 @@ inline int32_t prepareMovement(int32_t currentPos, int32_t targetPos, uint32_t t
 
     int32_t sm = ((ve_sqr - vs_sqr) / two_a + move_distance) / 2; // position where acc and dec curves meet
 
-    // Serial.printf("ve: %d\n", ve);
-    printf("vend: %d\n", vend);
-    // Serial.printf("vs: %d\n", vs);
-    printf("vstart: %d\n", vstart);
-    // Serial.printf("ds: %d\n", ds);
+    printf("vend: %u\n", vend);
+    printf("vstart: %u\n", vstart);
     printf("move_distance: %d\n", move_distance);
-    // Serial.printf("sm: %i\n", sm);
     printf("sm: %i\n", sm);
 
     if (sm >= 0 && sm <= move_distance) // we can directly reach the target with the given values vor v0, vend and a
@@ -95,13 +81,11 @@ inline int32_t prepareMovement(int32_t currentPos, int32_t targetPos, uint32_t t
         {
             accEnd   = sa;
             decStart = sm + (sm - sa);
-            //Serial.printf("reachable accEnd: %i decStart:%i\n", accEnd, decStart);
             printf("reachable accEnd: %i decStart:%i\n", accEnd, decStart);
         }
         else
         {
             accEnd = decStart = sm;
-            //Serial.printf("limit accEnd: %i decStart:%i\n", accEnd, decStart);
             printf("limit accEnd: %i decStart:%i\n", accEnd, decStart);
         }
     }

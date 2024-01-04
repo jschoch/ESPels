@@ -6,48 +6,15 @@
 #include <iostream>
 #include <elslog.h>
 
-#define Z_NATIVE_STEPS_PER_REV 200
-#define Z_MICROSTEPPING 8
+//#define Z_NATIVE_STEPS_PER_REV 200
+//#define Z_MICROSTEPPING 8
+#include <test_lib_helper.h>
 
 
 #include "src/genStepper.h"
 #include "src/moveConfig.h"
 #include "src/mocks.h"
 
-
-// brittle
-
-Gear::State GenStepper::State::mygear;
-rmtStepper::State GenStepper::State::zstepper;
-int GenStepper::State::nom;
-int GenStepper::State::den;
-int GenStepper::State::position;
-int32_t MoveConfig::State::moveTargetSteps ;
-int32_t MoveConfig::State::moveDistanceSteps ;
-bool MoveConfig::State::startSync;
-bool MoveConfig::State::moveDirection ;
-//int32_t MoveConfig::State::moveSyncTarget ;
-int MoveConfig::State::stopPos ;
-int MoveConfig::State::stopNeg ;
-bool MoveConfig::State::spindle_handedness ;
-double MoveConfig::State::movePitch ;
-double MoveConfig::State::rapidPitch ;
-double MoveConfig::State::oldPitch ;
-bool MoveConfig::State::feeding_ccw;
-//bool MoveConfig::State::syncMoveStart ;
-//bool MoveConfig::State::isAbs  ;
-int MoveConfig::State::accel;
-bool MoveConfig::State::useStops ;
-int MoveConfig::State::moveSpeed;
-int Gear::State::next;
-int Gear::State::prev;
-int Gear::State::last;
-
-
-using namespace fakeit;
-
-// run using `pio test -e ESPelsTest -v`
-// debug `pio debug -e ESPelsTest --interface gdb -x .pioinit`
 
 #define UNITY_INCLUDE_EXEC_TIME
 
@@ -82,7 +49,7 @@ void test_venc_moveSync(){
         8 // microsteps
     };
 
-    GenStepper::State gs = GenStepper::init("Z",lm,gconf);
+    GenStepper::State gs = GenStepper::init("Z",&lm,gconf);
     MoveConfig::State mc = MoveConfig::init();
     gs.c.spindle_encoder_resolution = 1000;
     gs.c.lead_screw_pitch = 1.0;

@@ -6,6 +6,13 @@
 #include "motion.h"
 #include <elslog.h>
 
+
+/*
+
+This is a work in progress and has never been tested.
+
+*/
+
 void HobReadyState(){
     if(run_mode != RunMode::HOB_RUN){
         Serial.println("Enter HobReadyState");

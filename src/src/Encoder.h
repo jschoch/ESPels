@@ -5,7 +5,7 @@
 
 extern volatile int vEncSpeed;
 extern volatile bool vEncStopped;
-extern int spindle_encoder_resolution;
+//extern int spindle_encoder_resolution;
 extern Neotimer rpm_timer;
 extern double avg_times;
 
@@ -60,7 +60,7 @@ void startPrintTask(void);
 class Encoder
 {
 public:
-    Encoder(int encA, int encB, double ppr);
+    Encoder(int encA, int encB );
 
     /** encoder initialise pins */
     void init();
@@ -76,7 +76,7 @@ public:
     double initAbsoluteZero();
     int pinA; //!< encoder hardware pin A
     int pinB; //!< encoder hardware pin B
-    int cpr;
+    int cpr = 0;
     Pullup pullup;
     int quadrature;
     int natural_direction = Direction::CW;
