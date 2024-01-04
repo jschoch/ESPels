@@ -848,12 +848,16 @@ void parseObj(AsyncWebSocketClient *client)
   }
   else if(strcmp(cmd,"ping") == 0){
     Serial.print("^");
+    /*  TODO:  this doesn't seem to actually be used at all
+                get rid of it!
+
     // need to pong to keep alive?
     if(client->canSend()){
       ws.binary(client->id(),pongBuf,pong_len);
     }else{
       Serial.print("#");
     }
+    */
   }
   else if(strcmp(cmd,"sendDebug") == 0){
     Serial.println("toggle send debug");
