@@ -10,6 +10,8 @@
 
 
 #ifndef UNIT_TEST
+
+// mock for testing bounce dwell
 #include <Ticker.h>
 extern Ticker vTcker;
 namespace vTck {
@@ -32,7 +34,11 @@ namespace vTck {
         }
     };
 }
+
+
 #else
+
+// this is the pause timer, if you are threading and want a bit of time to wind the cutter out
 namespace vTck {
     struct O{
         static bool running;
@@ -53,8 +59,6 @@ namespace vTck {
 }
 
 #endif
-
-//extern YASM main_yasm;
 
 extern volatile bool async_bouncing;
 

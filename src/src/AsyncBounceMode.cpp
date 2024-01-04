@@ -3,7 +3,7 @@
 #include "genStepper.h"
 #include "moveConfig.h"
 
-//YASM async_bounce_yasm;
+// the flag for the bounce
 volatile bool async_bouncing = false;
 
 #include <Ticker.h>
