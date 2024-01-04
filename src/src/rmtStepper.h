@@ -45,7 +45,6 @@ namespace rmtStepper {
             }
         }
         bool setDir(bool newdir){
-            //ESP_LOGE("thing","setDir called current dir: %d  arg dir: %d",dir,newdir);
             olddir = dir;
             if(dir != newdir){
 

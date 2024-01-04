@@ -59,7 +59,7 @@ GenStepper::Config gconf = {
         Z_MICROSTEPPING, // microsteps
         (Z_NATIVE_STEPS_PER_REV * Z_MICROSTEPPING) // motorsteps
     };
-GenStepper::State gs = GenStepper::init("Z",el,gconf);
+GenStepper::State gs = GenStepper::init("Z",&el,gconf);
 MoveConfig::State mc = MoveConfig::init();
 // json docs
 

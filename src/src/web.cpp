@@ -1026,8 +1026,6 @@ void init_web()
   {
     loadNvConfigDoc();
   }
-
-  
 }
 
 void init_ota()

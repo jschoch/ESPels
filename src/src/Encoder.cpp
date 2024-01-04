@@ -44,7 +44,7 @@ void do_rpm(){
     int count_diff = abs(last_count - this_count);
     rpm = (count_diff * 60)/gs.c.spindle_encoder_resolution;
     last_count = this_count;
-    Serial.printf(" rpms: %f count_diff: %d\n",rpm,count_diff);
+    //Serial.printf(" rpms: %f count_diff: %d\n",rpm,count_diff);
   }
 }
 

@@ -21,9 +21,10 @@ void init_machine(){
     native_steps = 400;    
     
   // motor steps per mm
-  motor_steps = (microsteps * native_steps) ;
-  stepsPerMM = motor_steps / lead_screw_pitch;
-  mmPerStep = (double) 1/stepsPerMM;
+  // this should all be in gs.c now
+  //motor_steps = (microsteps * native_steps) ;
+  //stepsPerMM = motor_steps / lead_screw_pitch;
+  //mmPerStep = (double) 1/stepsPerMM;
 }
 
 

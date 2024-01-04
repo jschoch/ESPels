@@ -67,11 +67,6 @@ inline int32_t prepareMovement(int32_t currentPos, int32_t targetPos, uint32_t t
     //move_distance = abs(moveDistance);
     move_distance = abs(targetPos);
 
-    /*
-    vs_sqr = (int64_t)vstart * vstart;
-    ve_sqr = (int64_t)vend * vend;
-    vt_sqr = (int64_t)vtarget * vtarget;
-    */
     vs_sqr = (int32_t)vstart * vstart;
     ve_sqr = (int32_t)vend * vend;
     vt_sqr = (int32_t)vtarget * vtarget;
@@ -80,9 +75,9 @@ inline int32_t prepareMovement(int32_t currentPos, int32_t targetPos, uint32_t t
     int32_t sm = ((ve_sqr - vs_sqr) / two_a + move_distance) / 2; // position where acc and dec curves meet
 
     // Serial.printf("ve: %d\n", ve);
-    printf("vend: %d\n", vend);
+    printf("vend: %u\n", vend);
     // Serial.printf("vs: %d\n", vs);
-    printf("vstart: %d\n", vstart);
+    printf("vstart: %u\n", vstart);
     // Serial.printf("ds: %d\n", ds);
     printf("move_distance: %d\n", move_distance);
     // Serial.printf("sm: %i\n", sm);
