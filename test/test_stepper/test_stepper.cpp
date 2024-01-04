@@ -65,7 +65,7 @@ void test_genstepper()
         false
     };
 
-    GenStepper::State gs = GenStepper::init("Z", lm,gconf);
+    GenStepper::State gs = GenStepper::init("Z", &lm,gconf);
 
     TEST_ASSERT(gs.c.dir == 0);
 
@@ -139,7 +139,7 @@ void test_fakePosFeeding()
         8, // microsteps
         1600 // motor_steps  this should be calculated from native steps and microsteps
     };
-    GenStepper::State gs = GenStepper::init("Z", lm,gconf);
+    GenStepper::State gs = GenStepper::init("Z", &lm,gconf);
     MoveConfig::State mc = MoveConfig::init();
 
     //  record current encoder position
@@ -207,7 +207,7 @@ void test_venc_moveSync()
         8, // microsteps
         1600 // motorsteps
     };
-    GenStepper::State gs = GenStepper::init("Z", lm,gconf);
+    GenStepper::State gs = GenStepper::init("Z", &lm,gconf);
     MoveConfig::State mc = MoveConfig::init();
     gs.c.spindle_encoder_resolution = 1000;
     gs.c.lead_screw_pitch = 1.0;
@@ -250,7 +250,7 @@ void test_bad_config(){
         8 // microsteps
         // **** missing motor_steps
     };
-    GenStepper::State gs = GenStepper::init("Z", lm,gconf);
+    GenStepper::State gs = GenStepper::init("Z", &lm,gconf);
     MoveConfig::State mc = MoveConfig::init();
 
 

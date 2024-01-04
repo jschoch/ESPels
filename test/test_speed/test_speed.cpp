@@ -49,7 +49,7 @@ void test_venc_moveSync(){
         8 // microsteps
     };
 
-    GenStepper::State gs = GenStepper::init("Z",lm,gconf);
+    GenStepper::State gs = GenStepper::init("Z",&lm,gconf);
     MoveConfig::State mc = MoveConfig::init();
     gs.c.spindle_encoder_resolution = 1000;
     gs.c.lead_screw_pitch = 1.0;

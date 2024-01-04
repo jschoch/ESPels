@@ -50,7 +50,7 @@ GenStepper::Config gconf = {
         200, // native steps
         8 // microsteps
     };
-GenStepper::State gs = GenStepper::init("z",lm,gconf);
+GenStepper::State gs = GenStepper::init("z",&lm,gconf);
 MoveConfig::State mc = MoveConfig::init();
 
 //void vTck::O::startTimer;
