@@ -7,16 +7,6 @@ namespace Log{
     class Msg;
 };
 
-enum display_mode_t {
-  STARTUP,
-  CONFIGURE,
-  DSTATUS,
-  READY,
-  FEEDING,
-  SLAVE_READY,
-  DEBUG_READY
-} ;
-
 enum class RunMode{
   STARTUP,
   SLAVE_READY,
@@ -35,28 +25,3 @@ enum class RunMode{
   FEED_READY, // 14
   THREAD_READY // 15
 };
-
-enum feed_mode_t {
-  RAPID_FEED,
-  FEED,
-  THREAD
-} ;
-
-
-#define zPos  1
-#define zNeg  0
-
-#ifdef HAS_BUTTONS
-// button data definition
-
-struct Bd{
-  uint8_t pin;
-  const char* name;
-  bool changed;
-  bool change_read;
-  bool state;
-  Bounce *deb;
-  uint8_t idx;
-};
-
-#endif

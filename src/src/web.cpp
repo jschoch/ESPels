@@ -142,7 +142,7 @@ void loadNvConfigDoc()
       Serial.println("key missing: enc");
     }
 
-    gs.c.motor_steps = native_steps * microsteps;
+    gs.c.motor_steps = gs.c.native_steps * gs.c.microsteps;
     nvConfigDoc["motor_steps"] = gs.c.motor_steps;
 
     Serial.printf("Loaded Configuration com version %s lead screw pitch: %lf\n", vsn, gs.c.lead_screw_pitch);

@@ -14,9 +14,6 @@
 #include "motion.h"
 
 
-int microsteps = Z_MICROSTEPPING;
-int native_steps = Z_NATIVE_STEPS_PER_REV;
-int motor_steps = Z_MICROSTEPPING * Z_NATIVE_STEPS_PER_REV;
 
 
 
@@ -32,11 +29,14 @@ volatile bool pos_feeding = false;
 portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
 
 
-
+// Much of this is derrived from the 
 volatile int32_t oldSpeed = 1;
 volatile int32_t theSpeed = 0;
+
 int32_t move_start_position_0 = 0;
 int32_t move_distance = 0;
+
+
 uint32_t vstart = 0;
 uint32_t vend = 0;
 uint32_t vtarget = 0;

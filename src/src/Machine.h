@@ -1,6 +1,6 @@
 #pragma once
 
-//I suggest making a leadscrew class that owns things like this, leadscrew measurement system, etc...
+// TODO: get rid of this , machine.h and machine.cpp dont' do much
 
 extern double backlash;
 

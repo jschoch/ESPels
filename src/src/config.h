@@ -10,8 +10,6 @@
 #endif
 /************* Machine Configuration *************/
 
-// TODO: no buttons will work, need to fixor this if anyone wants buttons
-//#define HAS_BUTTONS
 
 //web interface hostname
 #ifndef HOSTNAME
