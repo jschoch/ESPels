@@ -1,10 +1,6 @@
 #pragma once
 #include <Arduino.h>
 
-// breaks tests
-//#include <esp_log.h>
-
-//static const char* TAGmc = "Mc";
 
 
 namespace MoveConfig{
@@ -14,7 +10,6 @@ namespace MoveConfig{
         int default_accel = 50000;
         static int32_t moveDistanceSteps ;
         static bool startSync;
-        // was z_feeding_direction
         static bool moveDirection ;
 
         static int stopPos ;
@@ -24,8 +19,6 @@ namespace MoveConfig{
         static double movePitch;
         static double rapidPitch ;
         static double oldPitch ;
-        //static bool syncMoveStart ;
-        //static bool isAbs  ;
         static bool useStops ;
         static int moveTargetSteps;
         static int accel;
@@ -43,15 +36,6 @@ namespace MoveConfig{
         // returns a bool to be used by stepper.setDir
         inline bool setStops(int32_t current_position){
            useStops = true;
-           /*
-           if(!isAbs){
-             //moveSyncTarget = moveDistanceSteps;
-             //ESP_LOGE(TAGmc,"Absolute move:\n");
-           }else {
-            //ESP_LOGE(TAGmc,"Relative move: \n");
-             //moveSyncTarget =  current_position + moveDistanceSteps;
-           }
-           */
            if( moveDistanceSteps < 0){
             
              moveDirection = false;
@@ -82,7 +66,6 @@ namespace MoveConfig{
         state.spindle_handedness = true;
         state.rapidPitch = 0.1;
         state.oldPitch = state.movePitch;
-        //state.isAbs = false;
         state.accel = state.default_accel;
         state.useStops = true;
         state.feeding_ccw = true;

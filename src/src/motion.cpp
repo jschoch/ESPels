@@ -16,7 +16,6 @@
 //#define LOG_LOCAL_LEVEL ESP_LOG_INFO
 #include <esp_log.h>
 
-//static const char* TAG = "Mo";
 
 
 // actual error is max_error * 2 since this is a range around the tool potion + and -
@@ -38,7 +37,6 @@ void init_pos_feed(){
         mc.moveTargetSteps,
         mc.moveDistanceSteps,
         mc.stopNeg, mc.stopPos,gs.nom, gs.den);
-      //gs.init_gear(encoder.getCount());
       syncWaiting = true;
       pos_feeding = true;
     }
@@ -46,7 +44,6 @@ void init_pos_feed(){
       // this resets the "start" but i'm not sure if it works correctly
       // TODO:  should warn that turning off sync will  loose the "start"
       Serial.println("jog without spindle sync");
-      //gs.init_gear(encoder.getCount());
       pos_feeding = true;
     }
   }else{
@@ -254,7 +251,6 @@ void do_pos_feeding(){
       el.addMsg("tool past stopPos: HALT");
       el.hasError = true;
 
-      // TODO: should we halt or just stop feeding?
       finish_jog();
       return;
     }
@@ -265,17 +261,6 @@ void do_pos_feeding(){
 //  
 void IRAM_ATTR processMotion(){
 
-/*
-  ---  Plan
-  undo the timer init comments in main and web
-  make a fork to test with
-
-  1. remove processMotion() and see if we can count enc pulses without error.
-  2. consider moving processMotion into high frequency timer ( the same one you use for async stepping in Stepper.h)
-  3. find something else to do
-
-  ---
-  */
   // check if we want to sync our start position
   if(syncWaiting && pos_feeding){
     // faster to pass this count here or store it in do_pos_feeding?

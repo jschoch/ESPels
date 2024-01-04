@@ -47,15 +47,15 @@ namespace rmtStepper {
         bool setDir(bool newdir){
             olddir = dir;
             if(dir != newdir){
-
-
-                // TODO need  to be able to invert
-                //digitalWrite(config.dirPin, newdir ^ config.invert_step_pin);
+                dir_has_changed = true;
+                digitalWrite(config.dirPin, newdir ^ config.invert_step_pin);
+                dir_change_timer = esp_timer_get_time();
                 dir = newdir;
             }
+            // return true means we changed it and need to wait
             return olddir == newdir;
         }
-        // return true means we changed it and need to wait
+        
         bool setDirNow(bool newdir){
             if(dir == newdir){
                 return false;
@@ -64,6 +64,7 @@ namespace rmtStepper {
                 digitalWrite(config.dirPin, newdir);
                 olddir = dir;
                 dir = newdir;
+                // return true means we changed it and need to wait
                 return true;
             }
         }
