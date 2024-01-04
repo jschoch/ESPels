@@ -123,11 +123,11 @@ inline void AsyncBounceMoveToState(){
 
         printf("moving %i steps at %i speed",mc.moveDistanceSteps,mc.moveSpeed);
         // set direction?
-        // set diorection
         bool z_dir = gs.zstepper.setDir(mc.moveDirection);
+        // Do i need to check the z_dir value?
         int32_t initial_speed = prepareMovement(gs.position, mc.moveDistanceSteps, mc.moveSpeed, 100,100,mc.accel);
         printf("Async step test start: distance in steps: %i, initial speed: %i\n",mc.moveDistanceSteps,initial_speed);
-        printf("accel: %i speed: %i\n ",mc.accel,mc.moveSpeed);
+        printf("accel: %i speed: %i dir: %d \n ",mc.accel,mc.moveSpeed,(int)z_dir);
         //setStepFrequency(initial_speed);
         startStepperTimer(initial_speed);
 

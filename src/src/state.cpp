@@ -32,8 +32,8 @@ const char* vsn = "0.0.5";
 
 //common variables used by multipe things
 volatile float rpm = 0;
-double mmPerStep = 0;
-int32_t stepsPerMM = 0;
+//double mmPerStep = 0;
+//int32_t stepsPerMM = 0;
 int32_t relativePosition = 0;
 int32_t absolutePosition = 0;
 bool sendDebug = true;

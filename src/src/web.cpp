@@ -290,7 +290,7 @@ void setRunMode(int mode)
     main_yasm.next(slaveJogReadyState);
     break;
   case (int)RunMode::SLAVE_READY:
-    main_yasm.next(SlaveModeReadyState);
+    //main_yasm.next(SlaveModeReadyState);
     break;
   case (int)RunMode::FEED_READY:
     main_yasm.next(FeedModeReadyState);
@@ -1006,7 +1006,9 @@ void init_web()
   WiFi.mode(WIFI_MODE_STA);
   
   WiFi.onEvent(onWifiConnect, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
-  WiFiEventId_t eventID = WiFi.onEvent(onWifiDisconnect, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+
+  //WiFiEventId_t eventID = WiFi.onEvent(onWifiDisconnect, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+  WiFi.onEvent(onWifiDisconnect, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);  
 
   connectToWifi();
 

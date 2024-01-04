@@ -76,7 +76,7 @@ public:
     double initAbsoluteZero();
     int pinA; //!< encoder hardware pin A
     int pinB; //!< encoder hardware pin B
-    int cpr;
+    int cpr = 0;
     Pullup pullup;
     int quadrature;
     int natural_direction = Direction::CW;

@@ -1,7 +1,14 @@
+/*
+
+TODO:  This seems 100% not used
+        get rid of it if so
+*/
+
 #include <Arduino.h>
 #include "config.h"
 #include <yasm.h>
 #include "state.h"
+/*
 #include "web.h"
 #include "Controls.h"
 #include "motion.h"
@@ -22,6 +29,7 @@ void slaveStatusState(){
         web = true;
     }
 }
+*/
 
 void FeedModeReadyState(){
     if(main_yasm.isFirstRun()){
@@ -29,6 +37,8 @@ void FeedModeReadyState(){
 
     }
 }
+
+/*
 
 void slaveFeedingState(){
     if(main_yasm.isFirstRun()){
@@ -40,3 +50,4 @@ void slaveFeedingState(){
     }
 
 }
+*/

@@ -20,8 +20,8 @@ void do_state();
 void init_state();
 //common variables used by multipe things
 extern volatile float rpm;
-extern double mmPerStep;
-extern int32_t stepsPerMM;
+//extern double mmPerStep;
+//extern int32_t stepsPerMM;
 extern int32_t relativePosition;
 extern int32_t absolutePosition;
 extern bool sendDebug;

@@ -29,7 +29,7 @@ void my_wifi_task(void * parameter){
 }
 
 void startErrorTask(){
-    char task1Param[12] = "taskParam";
+    //char task1Param[12] = "taskParam";
   /* we create a new task here */
   xTaskCreate(
       error_task,           /* Task function. */
