@@ -36,7 +36,7 @@ extern volatile bool rapiding;
 
 extern RunMode run_mode;
 
-#define SSE_EVENT_SIZE 500
+#define SSE_EVENT_SIZE 1000
 
 
 // config stateDoc

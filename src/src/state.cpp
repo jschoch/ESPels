@@ -73,7 +73,7 @@ StaticJsonDocument<1000> nvConfigDoc;
 StaticJsonDocument<1000> inDoc;
 
 // used to send status to UI
-StaticJsonDocument<600> statusDoc;
+//StaticJsonDocument<600> statusDoc;
 
 // Used to log to UI
 StaticJsonDocument<5000> logDoc;

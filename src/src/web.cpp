@@ -171,49 +171,10 @@ void updateMoveConfigDoc(){
 
 void updateStatusDoc()
 {
-  // types the message as a status update for the UI
-  statusDoc["t"] = "status";
+  
+  // consolidating statusDoc and eventDoc
 
-  // Currently used for the UI DRO display,
-  // defined in util.h and helps UI figure out what to display
-  statusDoc["m"] = (int)run_mode;
-  // the position in steps
-  statusDoc["p"] = gs.position;
-
-  // encoder postion in cpr pulses
-  statusDoc["encoderPos"] = encoder.getCount();
-
-  // I think this is used for aboslute movements
-  // TODO: We should convert to steps in the UI and not have to do the conversion in the controller
-  statusDoc["targetSteps"] = mc.moveDistanceSteps;
-  // bool for constant run mode, TODO:  bad name though
-  //statusDoc["feeding"] = feeding;
-  // bools for sync movements, TODO:  bad name
-  statusDoc["jogging"] = jogging;
-  // bool for rapid sync movement TODO: bad name
-  statusDoc["rap"] = rapiding;
-  // flag for bouncing mode
-  statusDoc["bf"] = bouncing;
-  // main bool to turn movement on/off
-  statusDoc["pos_feed"] = pos_feeding;
-
-  // Wait for the spindle/ncoder "0" position
-  // this acts like a thread dial
-  statusDoc["sw"] = syncWaiting;
-  // generated in the encoder and displayed in the UI
-  // TODO: consider making the smoothing configurable or done in the browser
-  statusDoc["rpm"] = rpm;
-
-  // the virtual stop in the Z + direction, used to calculate "distance to go" in the UI
-  statusDoc["sp"] = mc.stopPos;
-  // the stop in the Z - direction
-  statusDoc["sn"] = mc.stopNeg;
-  statusDoc["r"] = WiFi.RSSI();
-
-  // this is used by "Distance to Go" in the UI to figure out the direction 
-  statusDoc["fd"] = mc.moveDirection;
-  statusDoc["es"] = encoder.start;
-  sendStatus();
+  //sendStatus();
 }
 
 void updateDebugStatusDoc()
@@ -1060,7 +1021,7 @@ void sendUpdates()
   if (update_timer.repeat())
   {
     updateDebugStatusDoc();
-    updateStatusDoc();
+    //updateStatusDoc();
 
     ws.cleanupClients();
   }
@@ -1112,6 +1073,7 @@ void sendUpdates()
 
     // this reverses everything
     eventDoc["fccw"] = mc.feeding_ccw;
+    eventDoc["es"] = encoder.start;
 
     // the delta in steps to go for moveAsync
     eventDoc["asd"] = stepsDelta;
