@@ -54,6 +54,7 @@ AccelState accelState = ACCEL_OFF;
 
 	
 hw_timer_t * stepTimer = NULL;
+hw_timer_t * accelTimer = NULL;
 volatile bool stepTimerIsRunning = false;
 int64_t last_pulse_count = 0;
 
@@ -76,7 +77,8 @@ void IRAM_ATTR stepTimerISR(){
 
 
 
-void IRAM_ATTR accelTimerCallback(void *par){
+//void IRAM_ATTR accelTimerCallback(void *par){
+void IRAM_ATTR accelTimerCallback(){
     if(stepTimerIsRunning){
         frequency = updateSpeed(&gs);
         if(frequency != last_frequency){
@@ -127,6 +129,16 @@ bool initStepperTimer(){
     timerAlarmWrite(stepTimer, 4,true);
     timerStart(stepTimer);
     timerAlarmEnable(stepTimer);
+
+    //stepTimerIsRunning = false; 
+    accelTimer = timerBegin(1,480,true);
+    timerAttachInterrupt(accelTimer, &accelTimerCallback, false);
+    
+    timerAlarmWrite(accelTimer, 1000,true);
+    timerStart(accelTimer);
+    timerAlarmEnable(accelTimer);
     Serial.println("\nStepper timer init complete");
+
+
 return true;
 }
