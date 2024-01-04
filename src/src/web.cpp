@@ -118,20 +118,20 @@ void loadNvConfigDoc()
   {
 
     if(nvConfigDoc.containsKey("lead_screw_pitch")){
-      lead_screw_pitch = nvConfigDoc["lead_screw_pitch"].as<float>();
+      gs.c.lead_screw_pitch = nvConfigDoc["lead_screw_pitch"].as<float>();
     }else{
       Serial.println("key missing: lead");
     }
 
 
     if(nvConfigDoc.containsKey("native_steps")){
-      native_steps = nvConfigDoc["native_steps"].as<int>();
+      gs.c.native_steps = nvConfigDoc["native_steps"].as<int>();
     }else{
       Serial.println("key missing: nat step");
     }
 
     if(nvConfigDoc.containsKey("microsteps")){
-      microsteps = nvConfigDoc["microsteps"].as<int>();
+      gs.c.microsteps = nvConfigDoc["microsteps"].as<int>();
     }else{
       Serial.println("key missing: microstesp");
     }
@@ -142,21 +142,12 @@ void loadNvConfigDoc()
       Serial.println("key missing: enc");
     }
 
-    motor_steps = native_steps * microsteps;
-    nvConfigDoc["motor_steps"] = motor_steps;
+    gs.c.motor_steps = native_steps * microsteps;
+    nvConfigDoc["motor_steps"] = gs.c.motor_steps;
 
-     /* TODO: all of these shouldn't be global and need to switch to gs.c
-    motor_steps = nvConfigDoc["motor_steps"];
-    native_steps = nvConfigDoc["native_steps"];
-    microsteps = nvConfigDoc["microsteps"];
-    spindle_encoder_resolution = nvConfigDoc["spindle_encoder_resolution"];
-    */
-    Serial.printf("Loaded Configuration com version %s lead screw pitch: %lf\n", vsn, lead_screw_pitch);
+    Serial.printf("Loaded Configuration com version %s lead screw pitch: %lf\n", vsn, gs.c.lead_screw_pitch);
     init_machine();
     // setFactor();
-    gs.c.lead_screw_pitch = lead_screw_pitch;
-    gs.c.motor_steps = motor_steps;
-    gs.c.microsteps = microsteps;
     Serial.print("Loaded this NvConfig doc");
     serializeJsonPretty(nvConfigDoc, Serial);
     if(!gs.setELSFactor(mc.movePitch,true)){

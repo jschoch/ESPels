@@ -133,6 +133,7 @@ namespace GenStepper {
          
         state.setELSFactor(init_pitch,true);
         state.init_gear(0);
+        // TODO:  need sane defaults for these vars
         //int stepper_speed = 80000;
         //int accel = 50000;
 #ifndef UNIT_TEST
