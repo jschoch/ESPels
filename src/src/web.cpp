@@ -930,11 +930,23 @@ void connectToWifi() {
   });
 
   ws.onEvent(onWsEvent);
+  server.on("/events",HTTP_OPTIONS,[](AsyncWebServerRequest * request) {
+    printf("got preflight");
+    int headers = request->headers();
+    int i;
+    for(i=0;i<headers;i++){
+      AsyncWebHeader* h = request->getHeader(i);
+      Serial.printf("HEADER[%s]: %s\n", h->name().c_str(), h->value().c_str());
+    }
+    request->send(200, "text/plain", "Post route");
+  });
   server.addHandler(&ws);
   server.addHandler(&events);
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "*");
+  DefaultHeaders::Instance().addHeader("Access-Control-Allow-Method", "*");
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Private-Network", "true");
+
   server.begin();
   Serial.println("HTTP websocket server started");
 
@@ -1025,7 +1037,10 @@ void sendUpdates()
 
     ws.cleanupClients();
   }
-  if(sse_timer.repeat() && (events.avgPacketsWaiting() < 2)){
+  if(sse_timer.repeat() && (events.avgPacketsWaiting() < 3)){
+    // TODO:  make waiting packet number above configurable
+    // TODO:  make SSE configurable and detect connection so you can fall back to WS if needed
+
     //if ( (webeventclient) && (webeventclient->connected()) ) {
       //if (webeventclient->packetsWaiting() < 2) {
     // types the message as a status update for the UI
@@ -1097,6 +1112,7 @@ void sendUpdates()
     //events.send(eventBuf,"e",millis());
 
     events.send(eventBuf);
+    // TODO:  why not just send only the stuff that changed?
   }
 }
 void do_web()
