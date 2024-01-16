@@ -1,5 +1,8 @@
 ## ESPels:  A simple electronic lead screw for the esp32.
 
+Join us on discord: https://discord.gg/Z2CqK4Kk
+
+
 __DANGER__
 while there is a "soft estop" right now take care to test things out without the halfnuts engaged, please test all the functions you plan to use this way first.  Use at your own risk and hover over the lathe e-stop.  The thing could go crazy and crash the carriage into the spindle at any moment.   It shouldn't but bugs happen....
 
