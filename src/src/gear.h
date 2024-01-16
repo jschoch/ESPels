@@ -61,6 +61,7 @@ namespace Gear {
       if(D == 0 || N == 0){
         //printf("D: %d N: %d calc_jumps exiting",N,D);
         // TODO: how to prevent this condition?
+        // TODO: this should throw an error, or return false
         return;
       }
       Jump nx = next_jump_forward(D,N,nerror,encoder_count);

@@ -10,7 +10,6 @@
 #include "moveConfig.h"
 #include <yasm.h>
 
-// TODO: can this be automagical somehow?
 extern const char* vsn;
 
 #include "ArduinoJson.h"

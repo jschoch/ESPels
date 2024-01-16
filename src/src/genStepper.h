@@ -8,8 +8,6 @@
 #else
 #include "rmtStepper.h"
 
-// use fast accel stepper
-
 #endif // unit_test
 
 
@@ -133,15 +131,9 @@ namespace GenStepper {
          
         state.setELSFactor(init_pitch,true);
         state.init_gear(0);
-        // TODO:  need sane defaults for these vars
-        //int stepper_speed = 80000;
-        //int accel = 50000;
 #ifndef UNIT_TEST
         pinMode(Z_DIR_PIN, OUTPUT);
         pinMode(Z_STEP_PIN, OUTPUT);
-
-        //stepsPerMM = c.motor_steps / c.lead_screw_pitch;
-
 
         state.zstepper.config.channel = RMT_CHANNEL_0;
         state.zstepper.config.stepPin = (gpio_num_t) Z_STEP_PIN;

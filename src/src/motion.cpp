@@ -43,8 +43,9 @@ void init_pos_feed(){
     else{
       // this resets the "start" but i'm not sure if it works correctly
       // TODO:  should warn that turning off sync will  loose the "start"
-      Serial.println("jog without spindle sync");
-      pos_feeding = true;
+      // TODO: not sure this is doable in the webUI so maybe get rid of it
+      Serial.println("THIS SHOULDN't HAPPEN");
+      //pos_feeding = true;
     }
   }else{
   el.error("already started pos_feeding, can't do it again");
@@ -64,9 +65,9 @@ void init_hob_feed(){
     else{
       // this resets the "start" but i'm not sure if it works correctly
       // TODO:  should warn that turning off sync will  loose the "start"
-      Serial.println("jog without spindle sync");
-      gs.init_gear(encoder.getCount());
-      pos_feeding = true;
+      Serial.println("THIS SHOULDNt HAPPEN ");
+      //gs.init_gear(encoder.getCount());
+      //pos_feeding = true;
     }
   }else{
   el.error("already started pos_feeding, can't do it again");

@@ -2,19 +2,11 @@
 
 #include "config.h"
 
-#define BOUNCE_LOCK_OUT
-//#include <Bounce2.h>
 #include <yasm.h>
 #include "BounceMode.h"
 #include "web.h"
 #include "state.h"
 
-//Neotimer button_print_timer = Neotimer(2000);
-//Neotimer dro_timer = Neotimer(600);
-
-
-//uint8_t menu = 3; 
-//int pitch_menu= 1;
 
 
 /*/
@@ -90,6 +82,5 @@ void setHobbFactor(){
 }
 */
 
-//this defines the parameters for the thread and turning for both metric and imperial threads
 
 

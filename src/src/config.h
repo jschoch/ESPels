@@ -2,8 +2,6 @@
 #include <Arduino.h>
 #include "util.h"
 
-// TODO: need a way to tie versions of the firmware to compatable versions of the UI
-// also need to have a compiled UI version linked in firmware releases
 
 #ifndef CONFIG_CONFIGURED 
 #error WARNING: no config.ini detected. Please copy config.ini.template to config.ini and customize it.
@@ -102,5 +100,3 @@ For most common quadrature encoders, choose Extern and apply 3.3v to your encode
 // read the cpu usage via the web server, only use for testing as it comes with bloat
 //#define DEBUG_CPU_STATS
 
-//TODO I think this isn't necessary since we can calculate microsteps per rev with the above and can divide the distance into steps instead of degrees
-#define STEPPER_DEGREES_PER_STEP 1.8

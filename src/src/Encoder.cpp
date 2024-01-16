@@ -183,7 +183,6 @@ double Encoder::getAngle(){
 double Encoder::initRelativeZero(){
   long angle_offset = -pulse_counter;
   pulse_counter = 0;
-  //pulse_timestamp = esp_timer_get_time();//_micros();
   return _2PI * (angle_offset) / ((double )cpr);
 }
 
@@ -231,12 +230,11 @@ void Encoder::enableInterrupts(void (*doA)(), void(*doB)()){
 }
 
 void IRAM_ATTR Encoder::setCount(int64_t count){
-  // TODO: why do you need these?
   pulse_counter = count;
   maybeProcessMotion();
 }
 int64_t  IRAM_ATTR Encoder::getCount(){
-  // TODO: why not just read the value?
+  // TODO: why not just read the value? what are the speed implications?
   return pulse_counter;
 }
 

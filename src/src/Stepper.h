@@ -4,14 +4,11 @@
 
 #include <Arduino.h>
 #include "genStepper.h"
-//#include "state.h"
 
 #ifndef UNIT_TEST
-//#include "config.h"
 
 #endif
 
-// TOOD: move to a machine state struct
 extern volatile bool pos_feeding;
 
 // TODO: seems like this could be done better
@@ -56,10 +53,6 @@ inline int32_t prepareMovement(int32_t currentPos, int32_t targetPos, uint32_t t
 
     // reset starting zero position
     move_start_position_0 = currentPos;
-
-    // this make no sense
-    //move_distance  = abs(targetPos - currentPos);
-    //move_distance = abs(moveDistance);
     move_distance = abs(targetPos);
 
     vs_sqr = (int32_t)vstart * vstart;
@@ -91,7 +84,7 @@ inline int32_t prepareMovement(int32_t currentPos, int32_t targetPos, uint32_t t
     }
     else
     {
-        // hack, call some error callback instead
+        // TODO: hack, call some error callback instead
         printf("ERROR\n");
     }
 

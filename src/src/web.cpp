@@ -169,29 +169,12 @@ void updateMoveConfigDoc(){
   sendDoc(moveConfigDoc);
 }
 
-void updateStatusDoc()
-{
-  
-  // consolidating statusDoc and eventDoc
-
-  //sendStatus();
-}
-
 void updateDebugStatusDoc()
 {
   // types as a debug status msg
   debugStatusDoc["t"] = "dbg_st";
-  // intended feeding "handiness" CCW or CW
-  // so if the spindle is rotating CW, and the intension is to feed in the Z- direction this should be false
-  // but this somewhat depends on the setup
 
-
-  // TODO: make this optional and move to a "debug" doc
-
-  // this doesn't appear to be used now, but...
-  debugStatusDoc["targetPos"] = mc.moveTargetSteps;
   // for cpu stats
-  // TODO: move this to a debug doc
   debugStatusDoc["c0"] = cpu0;
   debugStatusDoc["c1"] = cpu1;
   // this is incremented every status update
@@ -202,6 +185,7 @@ void updateDebugStatusDoc()
   // average time of encoder ISR
   debugStatusDoc["at"] = avg_times;
 
+  // TODO: add chip id so some silly fellow doesn't try to run this on a S3 or c6
   /*
   esp_chip_info_t* out_info = ESP.get_chip_info();
   make object .... parse this struct 
@@ -215,22 +199,13 @@ void updateStateDoc()
 
   // the run mode
   stateDoc["m"] = (int)run_mode;
-  // TODO: not used but this shold be used instead of jog_mm and the UI should do the conversion
   stateDoc["js"] = mc.moveDistanceSteps;
-  // this is the distance to jog in mm
   // this sets the desired "handedness" CW or CCW
   stateDoc["f"] = mc.moveDirection;
   // this is the target postion for sync absolute movements
   stateDoc["ja"] = jogAbs;
   // flag to wait for encocer "0" position
   stateDoc["s"] = syncStart;
-  // TODO: add angle for angle readout in UI
-  // send current acceleration setting
-#ifdef useFAS
-  stateDoc["a"] = gs.fzstepper->getAcceleration();
-#endif
-  
-
   sendState();
 }
 
@@ -260,17 +235,11 @@ void setRunMode(int mode)
 void sendDoc(const JsonDocument &doc)
 {
   serialize_len = serializeMsgPack(doc, outBuffer);
-  // TODO: debug flag?
-  //if(globalClient->canSend()){
-    //ws.queueisFull();
-    if(ws.availableForWriteAll()){
+  if(ws.availableForWriteAll()){
       ws.binaryAll(outBuffer, serialize_len);
-    }else{
+  }else{
       Serial.println("\n\tWS not available");
-    }
-  //}else{
-    //ESP_LOGE(TAGweb,"can't send doc");
-  //}
+  }
   
 }
 
@@ -330,53 +299,6 @@ bool processDoc(){
           return false;
         }
 
-void handleJogAbs()
-{
-
-  el.error("handleJogAbs needs full refactor to work with feeding_ccw and steps vs mm");
-  /*
-  JsonObject config = inDoc["config"];
-  jogAbs = config["ja"];
-  syncStart = config["s"];
-  // TOOD: pick better name for target in the UI
-  mc.moveSyncTarget = config["ja"];
-  // TODO: need to check if we are rapiding also somewhere!
-  if(!jogging){
-    printf("handleJogAbs target position: %d\n",mc.moveSyncTarget);
-
-    // config["f"] is the feeding_ccw flag from the UI
-    // TODO: why not set feeding_ccw like we do for handleJog()?
-    if(config["f"]){
-      if((mc.moveSyncTarget - jogAbs) < 0 ){
-        z_feeding_dir = true;
-        stopPos = jogAbs;
-        //stopNeg = toolRelPosMM;
-        stopNeg = gs.currentPosition();
-        zstepper.setDir(true);
-      }
-      else{
-        z_feeding_dir = false;
-        stopNeg = jogAbs;
-        stopPos = toolRelPosMM;
-      }
-    }else{
-      if((toolRelPosMM - jogAbs) > 0 ){
-        z_feeding_dir = true;
-        stopPos = jogAbs;
-        stopNeg = toolRelPosMM;
-        zstepper.setDir(true);
-      }
-      else{
-        z_feeding_dir = false;
-        stopNeg = jogAbs;
-        stopPos = toolRelPosMM;
-      }
-    }
-    init_pos_feed();
-    updateStatusDoc();
-  }
-  */
-}
 
 void handleMoveAsync(){
 
@@ -389,22 +311,15 @@ void handleMoveAsync(){
       Serial.printf("Stepper was running, can't issue new move command");
       return;
     }
-    //prepareMovement(int32_t currentPos, int32_t targetPos, uint32_t targetSpeed, 
-    //       uint32_t pullInSpeed, uint32_t pullOutSpeed, uint32_t accel) 
-
-    
     // set true (Z+) if moveDistanceSteps is > 0
     bool d = gs.zstepper.setDirNow((mc.moveDistanceSteps > 0 ? 1 : 0));
     if(d){
       Serial.println("changing dir");
       delay(5);
     }
-    //int32_t targetPos = gs.position - mc.moveDistanceSteps;
-    //int32_t targetPos = mc.moveDistanceSteps - gs.position;
     int32_t initial_speed = prepareMovement(gs.position, mc.moveDistanceSteps, mc.moveSpeed, 100,100,mc.accel);
     Serial.printf("Async step test start: distance in steps: %i, initial speed: %i\n",mc.moveDistanceSteps,initial_speed);
     Serial.printf("accel: %i speed: %i\n ",mc.accel,mc.moveSpeed);
-    //setStepFrequency(initial_speed);
     startStepperTimer(initial_speed);
   }
   else
@@ -436,9 +351,7 @@ void handleVencSpeed()
 void handleRapid()
 {
   //  This just sets the pitch to "rapids" and runs as a normal jog with a faster pitch
-
   // TODO: calculate speed from current RPM and perhaps warn if accel is a problem?
-  // really need the acceleration curve
   
   Serial.println("got rapid move command");
   if (run_mode == RunMode::SLAVE_JOG_READY && processDoc())
@@ -661,12 +574,7 @@ void handleNvConfig()
     init_controls();
     init_state(); 
     init_encoder(); 
-    //initStepperTimer();
 
-    // reset the den in case a param changed
-
-    // TODO consider testing a pitch and rolling back and erroring if it doesn't work
-    // this resets the denominator based on the updated nvconfig
     int old = mc.movePitch;
     if( !gs.setELSFactor(0.1,true) ) {
       printf("nvconfig may be bad, reverting move pitch");
@@ -684,9 +592,6 @@ void handleNvConfig()
   }
 }
 
-// void parseObj(String msg){
-//  This handles deserializing UI msgs and handling commands
-// void parseObj(void * param){
 void parseObj(AsyncWebSocketClient *client)
 {
   DeserializationError error = deserializeJson(inDoc, wsData);
@@ -716,21 +621,17 @@ void parseObj(AsyncWebSocketClient *client)
   }
   else if (strcmp(cmd, "fetch") == 0)
   {
-    // regenerate config and send it along
-    // TODO: compare version here
     Serial.println("fetch received: sending config");
-
     updateStateDoc();
   }
   else if (strcmp(cmd, "debug") == 0)
   {
     // Debugging tools
     handleDebug();
-    //  JOG COMMANDS
   }
   else if (strcmp(cmd, "moveCancel") == 0)
   {
-    // TODO wheat cleanup needs to be done?
+    // Cleanup state and reset mode, ESTOP
     Serial.println("Move Canceled");
     syncWaiting = false;
     pos_feeding = false;
@@ -745,12 +646,6 @@ void parseObj(AsyncWebSocketClient *client)
 
     // this must be reset for moveSync to work after running feed
     mc.feeding_ccw = true;
-
-    // TODO: need rapid cancel
-  }
-  else if (strcmp(cmd, "moveSyncAbs") == 0)
-  {
-    handleJogAbs();
   }
   else if (strcmp(cmd, "moveSync") == 0)
   {
@@ -809,16 +704,6 @@ void parseObj(AsyncWebSocketClient *client)
   }
   else if(strcmp(cmd,"ping") == 0){
     Serial.print("^");
-    /*  TODO:  this doesn't seem to actually be used at all
-                get rid of it!
-
-    // need to pong to keep alive?
-    if(client->canSend()){
-      ws.binary(client->id(),pongBuf,pong_len);
-    }else{
-      Serial.print("#");
-    }
-    */
   }
   else if(strcmp(cmd,"sendDebug") == 0){
     Serial.println("toggle send debug");
@@ -1041,14 +926,8 @@ void sendUpdates()
     // TODO:  make waiting packet number above configurable
     // TODO:  make SSE configurable and detect connection so you can fall back to WS if needed
 
-    //if ( (webeventclient) && (webeventclient->connected()) ) {
-      //if (webeventclient->packetsWaiting() < 2) {
-    // types the message as a status update for the UI
-    
     eventDoc["t"] = "status";
 
-    // Currently used for the UI DRO display,
-    // defined in util.h and helps UI figure out what to display
     eventDoc["m"] = (int)run_mode;
     // the position in steps
     eventDoc["p"] = gs.position;
@@ -1056,12 +935,7 @@ void sendUpdates()
     // encoder postion in cpr pulses
     eventDoc["encoderPos"] = encoder.getCount();
 
-    // I think this is used for aboslute movements
-    // TODO: We should convert to steps in the UI and not have to do the conversion in the controller
     eventDoc["targetSteps"] = mc.moveDistanceSteps;
-    // bool for constant run mode, TODO:  bad name though
-    //statusDoc["feeding"] = feeding;
-    // bools for sync movements, TODO:  bad name
     eventDoc["jogging"] = jogging;
     // bool for rapid sync movement TODO: bad name
     eventDoc["rap"] = rapiding;
@@ -1074,7 +948,7 @@ void sendUpdates()
     // this acts like a thread dial
     eventDoc["sw"] = syncWaiting;
     // generated in the encoder and displayed in the UI
-    // TODO: consider making the smoothing configurable or done in the browser
+    // TODO: calc rpm in browser
     eventDoc["rpm"] = rpm;
 
     // the virtual stop in the Z + direction, used to calculate "distance to go" in the UI
@@ -1096,20 +970,8 @@ void sendUpdates()
     eventDoc["sr"] = stepTimerIsRunning;
     eventDoc["as"] = (uint8_t)accelState;
 
-
-    // angle
-    // do this in the UI!!!!
-    //eventDoc["ngl"] = encoder.getAngle();
-
-
     // unclear how to send binary data via events
     eventLen = serializeJson(eventDoc, eventBuf);
-    //eventLen = serializeMsgPack(eventDoc,eventBuf);
-
-    // none of these seem to work
-    //events.send("e",eventBuf,millis());
-    //events.send("e",eventBuf,millis());
-    //events.send(eventBuf,"e",millis());
 
     events.send(eventBuf);
     // TODO:  why not just send only the stuff that changed?
