@@ -170,6 +170,8 @@ void updateMoveConfigDoc(){
 
 void updateStateDoc()
 {
+  printf("+");
+  /*  depricating this, state is updated in events.
   stateDoc["t"] = "state";
 
   // the run mode
@@ -182,6 +184,7 @@ void updateStateDoc()
   // flag to wait for encocer "0" position
   stateDoc["s"] = syncStart;
   sendState();
+  */
 }
 
 void setRunMode(int mode)
@@ -220,7 +223,7 @@ void sendDoc(const JsonDocument &doc)
 
 void sendState()
 {
-  sendDoc(stateDoc);
+  //sendDoc(stateDoc);
 }
 
 void sendLogP(Log::Msg *msg)
@@ -249,6 +252,8 @@ bool processDoc(){
               mc.accel = mcdoc.accel;
               mc.moveSpeed = mcdoc.moveSpeed;
               mc.dwell = mcdoc.dwell;
+              // TODO:  figure out why you need to send the doc back?
+              // why are you sending this back?
               updateMoveConfigDoc();
               return true;
             }else{

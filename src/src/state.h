@@ -39,7 +39,7 @@ extern RunMode run_mode;
 
 
 // config stateDoc
-extern StaticJsonDocument<1000> stateDoc;
+//extern StaticJsonDocument<1000> stateDoc;
 
 //  items to store in NV ram/EEPROM
 extern StaticJsonDocument<1000> nvConfigDoc;

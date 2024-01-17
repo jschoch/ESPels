@@ -140,7 +140,7 @@ void finish_jog(int status){
   }
   pos_feeding = false;
   mc.feeding_ccw = true;
-  Serial.printf("Move Completed: %i",status);
+  //Serial.printf("Move Completed: %i",status);
 }
 
 
