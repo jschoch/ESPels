@@ -61,6 +61,9 @@ GenStepper::Config gconf = {
 
 GenStepper::State gs = GenStepper::init("Z",&el,gconf);
 MoveConfig::State mc = MoveConfig::init();
+
+
+
 // json docs
 
 // config stateDoc

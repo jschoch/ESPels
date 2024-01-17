@@ -41,7 +41,7 @@ namespace MoveConfig{
              moveDirection = false;
              stopNeg = moveDistanceSteps + current_position;
              moveTargetSteps = stopNeg;
-             stopPos = current_position;
+             stopPos = current_position +1;
              //ESP_LOGE(TAGmc,"Stops:\n\t Distance: %ld stopNeg: %ld stopPos: %ld, moveDirection: %d\n",moveDistanceSteps, stopNeg, stopPos, moveDirection);
              printf("Stops:\n\t Distance: %i stopNeg: %i stopPos: %i, moveDirection: %d\n",moveDistanceSteps, stopNeg, stopPos, moveDirection);
              return false;
@@ -49,7 +49,7 @@ namespace MoveConfig{
              moveDirection = true;
              stopPos = moveDistanceSteps + current_position;
              moveTargetSteps = stopPos;
-             stopNeg = current_position;
+             stopNeg = current_position-1;
              //ESP_LOGE(TAGmc,"Stops:\n\t Distance: %ld stopNeg: %ld stopPos: %ld, moveDirection: %d\n", moveDistanceSteps, stopNeg, stopPos, moveDirection);
              printf("Stops:\n\t Distance: %i stopNeg: %i stopPos: %i, moveDirection: %d\n",moveDistanceSteps, stopNeg, stopPos, moveDirection);
 

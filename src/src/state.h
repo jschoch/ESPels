@@ -35,7 +35,7 @@ extern volatile bool rapiding;
 
 extern RunMode run_mode;
 
-#define SSE_EVENT_SIZE 1000
+#define SSE_EVENT_SIZE 2000
 
 
 // config stateDoc
@@ -54,7 +54,7 @@ extern StaticJsonDocument<600> statusDoc;
 extern StaticJsonDocument<5000> logDoc;
 
 // used for debugging, to slim down status doc 
-extern StaticJsonDocument<500> debugStatusDoc;
+//extern StaticJsonDocument<500> debugStatusDoc;
 
 // for pong
 extern StaticJsonDocument<100> pingDoc;

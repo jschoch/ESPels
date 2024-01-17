@@ -6,7 +6,6 @@
 #include <ArduinoOTA.h>
 #include <ArduinoJson.h>
 #include "jsonValidation.h"
-//#include "config.h"
 //#include <elslog.h> 
 #include "Encoder.h"
 #include "state.h"
@@ -168,29 +167,6 @@ void updateMoveConfigDoc(){
   sendDoc(moveConfigDoc);
 }
 
-void updateDebugStatusDoc()
-{
-  // types as a debug status msg
-  debugStatusDoc["t"] = "dbg_st";
-
-  // for cpu stats
-  debugStatusDoc["c0"] = cpu0;
-  debugStatusDoc["c1"] = cpu1;
-  // this is incremented every status update
-  debugStatusDoc["c"] = statusCounter++;
-  debugStatusDoc["h"] = ESP.getFreeHeap();
-  debugStatusDoc["ha"] = ESP.getHeapSize();
-  debugStatusDoc["cc"] = ws.count();
-  // average time of encoder ISR
-  debugStatusDoc["at"] = avg_times;
-
-  // TODO: add chip id so some silly fellow doesn't try to run this on a S3 or c6
-  /*
-  esp_chip_info_t* out_info = ESP.get_chip_info();
-  make object .... parse this struct 
-  debugStatusDoc["chip"] = chipInfo; 
-  */
-}
 
 void updateStateDoc()
 {
@@ -245,10 +221,6 @@ void sendDoc(const JsonDocument &doc)
 void sendState()
 {
   sendDoc(stateDoc);
-  if (sendDebug)
-  {
-    sendDoc(debugStatusDoc);
-  }
 }
 
 void sendLogP(Log::Msg *msg)
@@ -912,7 +884,7 @@ void sendUpdates()
   // called in main loop
   if (update_timer.repeat())
   {
-    updateDebugStatusDoc();
+    //updateDebugStatusDoc();
     //updateStatusDoc();
 
     ws.cleanupClients();
@@ -972,6 +944,28 @@ void sendUpdates()
 
     events.send(eventBuf);
     // TODO:  why not just send only the stuff that changed?
+    if(sendDebug){
+      // types as a debug status msg
+      //eventDoc["t"] = "dbg_st";
+
+      // for cpu stats
+      eventDoc["c0"] = cpu0;
+      eventDoc["c1"] = cpu1;
+      // this is incremented every status update
+      eventDoc["c"] = statusCounter++;
+      eventDoc["h"] = ESP.getFreeHeap();
+      eventDoc["ha"] = ESP.getHeapSize();
+      eventDoc["cc"] = ws.count();
+      // average time of encoder ISR
+      eventDoc["at"] = avg_times;
+
+      // TODO: add chip id so some silly fellow doesn't try to run this on a S3 or c6
+      /*
+      esp_chip_info_t* out_info = ESP.get_chip_info();
+      make object .... parse this struct 
+      debugStatusDoc["chip"] = chipInfo; 
+      */
+    }
   }
 }
 void do_web()

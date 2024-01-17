@@ -242,6 +242,8 @@ void do_pos_feeding(){
       return;
     }
 
+    // handle case where the target position is going the wrong direction
+
     if(mc.useStops && (mc.moveTargetSteps < mc.stopNeg)){
       el.addMsg("Tool past stopNeg: HALT");
       el.hasError = true;
@@ -250,6 +252,23 @@ void do_pos_feeding(){
     }
 
     if(mc.useStops && mc.moveTargetSteps > mc.stopPos){
+      el.addMsg("tool past stopPos: HALT");
+      el.hasError = true;
+
+      finish_jog(-1);
+      return;
+    }
+
+    // Handle case where we move the wrong direction 
+
+    if(mc.useStops && (gs.position < mc.stopNeg)){
+      el.addMsg("Tool past stopNeg: HALT");
+      el.hasError = true;
+      finish_jog(0);
+      return;
+    }
+
+    if(mc.useStops && gs.position > mc.stopPos){
       el.addMsg("tool past stopPos: HALT");
       el.hasError = true;
 
