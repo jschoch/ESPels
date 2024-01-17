@@ -5,12 +5,29 @@
 
 #include "src/mocks.h"
 #include <test_lib_helper.h>
+#include "src/genStepper.h"
+#include "src/moveConfig.h"
+#include "src/Stepper.h"
 #include "src/AsyncBounceMode.h"
 #include <ctime>
 
 using namespace fakeit;
 
+// because we are not compiling the .cpp
+int32_t s_0 = 0;
+int32_t move_distance = 0;
+uint32_t vstart = 0;
+uint32_t vend = 0;
+uint32_t vtarget = 0;
+int64_t vs_sqr = 0;
+int64_t ve_sqr = 0;
+int64_t vt_sqr = 0;
+uint32_t two_a = 0;
+int32_t accEnd = 0;
+int32_t  decStart = 0;
+int32_t volatile stepsDelta = 0;
 
+int move_start_position_0 = 0;
 
 void setUp(void) {
     // set stuff up here
@@ -21,6 +38,7 @@ void setUp(void) {
 void tearDown(void) {
     // clean stuff up here
 }
+
 
 volatile bool async_bouncing = false;
 

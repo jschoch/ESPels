@@ -817,12 +817,14 @@ void connectToWifi() {
   ws.onEvent(onWsEvent);
   server.on("/events",HTTP_OPTIONS,[](AsyncWebServerRequest * request) {
     printf("got preflight");
+    /*
     int headers = request->headers();
     int i;
     for(i=0;i<headers;i++){
       AsyncWebHeader* h = request->getHeader(i);
       Serial.printf("HEADER[%s]: %s\n", h->name().c_str(), h->value().c_str());
     }
+    */
     request->send(200, "text/plain", "Post route");
   });
   server.addHandler(&ws);

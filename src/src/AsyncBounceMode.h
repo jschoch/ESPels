@@ -57,7 +57,6 @@ namespace vTck {
         }
     };
 }
-
 #endif
 
 extern volatile bool async_bouncing;

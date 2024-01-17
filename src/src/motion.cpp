@@ -131,7 +131,7 @@ void updateGearForDir(){
 
 // clean up vars on finish
 
-void finish_jog(){
+void finish_jog(int status){
   if(rapiding){
     mc.movePitch = mc.oldPitch;
     rapiding = false;
@@ -140,6 +140,7 @@ void finish_jog(){
   }
   pos_feeding = false;
   mc.feeding_ccw = true;
+  Serial.printf("Move Completed: %i",status);
 }
 
 
@@ -232,19 +233,19 @@ void do_pos_feeding(){
 
     if (mc.useStops && mc.moveDirection == true && gs.position >= mc.moveTargetSteps){
       //ESP_LOGE(TAG,"reached target %d final position was: %d", mc.moveSyncTarget, gs.position);
-      finish_jog();
+      finish_jog(1);
       return;
     }
     if(mc.useStops && mc.moveDirection == false && gs.position <= mc.moveTargetSteps){
       //ESP_LOGE(TAG,"reached -target %d final position was: %d", mc.moveSyncTarget, gs.position);
-      finish_jog();
+      finish_jog(2);
       return;
     }
 
     if(mc.useStops && (mc.moveTargetSteps < mc.stopNeg)){
       el.addMsg("Tool past stopNeg: HALT");
       el.hasError = true;
-      finish_jog();
+      finish_jog(0);
       return;
     }
 
@@ -252,7 +253,7 @@ void do_pos_feeding(){
       el.addMsg("tool past stopPos: HALT");
       el.hasError = true;
 
-      finish_jog();
+      finish_jog(-1);
       return;
     }
 }

@@ -20,7 +20,7 @@ namespace MoveConfig{
         static double rapidPitch ;
         static double oldPitch ;
         static bool useStops ;
-        static int moveTargetSteps;
+        static int moveTargetSteps ;
         static int accel;
         static int dwell;
 
@@ -55,6 +55,7 @@ namespace MoveConfig{
 
              return true;
            }
+          return false;
         }
 
 
@@ -69,6 +70,7 @@ namespace MoveConfig{
         state.accel = state.default_accel;
         state.useStops = true;
         state.feeding_ccw = true;
+        state.moveTargetSteps = 0;
         return state;
     }
 }
