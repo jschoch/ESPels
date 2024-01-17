@@ -92,9 +92,12 @@ void startVenc(){
 }
 
 void maybeProcessMotion(){
-  #ifdef MOTION_MODE_INTERRUPT
+  if(MOTION_MODE == 1){
     processMotion();
+  }
 
+  #ifndef MOTION_MODE
+      #error "YOU MUST DEFINE either  MODE_MOTION_INTERRUPT or MOTION_MODE_TIMER or this can't run"
   #endif
 }
 

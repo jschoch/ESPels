@@ -299,7 +299,8 @@ void handleMoveAsync(){
 //  Update the virtual encoder
 void handleVencSpeed()
 {
-
+  mc.moveDirection = false;
+  mc.feeding_ccw = true;
   JsonObject config = inDoc["config"];
   vEncSpeed = config["encSpeed"];
   Serial.print(vEncSpeed);
