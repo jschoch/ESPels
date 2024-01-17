@@ -32,7 +32,7 @@ void stopStepperTimer();
 void IRAM_ATTR setStepFrequency(int32_t f);
 #else
 void setStepFrequency(int32_t f);
-void startStepperTimer(int x){};
+//void startStepperTimer(int x){};
 #endif
 bool initStepperTimer();
 void startAccelTimer();

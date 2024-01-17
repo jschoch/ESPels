@@ -5,9 +5,10 @@
 #endif
 
 #include <yasm.h>
-//#include "../../src/src/AsyncBounceMode.h"
-#include "../../src/src/moveConfig.h"
+#include "../../src/src/AsyncBounceMode.h"
 #include "../../src/src/genStepper.h"
+#include "../../src/src/moveConfig.h"
+//#include "../../src/src/genStepper.h"
 
 
 
@@ -17,6 +18,8 @@
 
 extern YASM main_yasm;
 
+
+inline void startStepperTimer(int x){};
 
 //void startStepperTimer(int i){};
 
