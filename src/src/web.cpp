@@ -59,7 +59,6 @@ Neotimer ota_timer = Neotimer(200);
 AsyncWebServer server(80);
 AsyncEventSource events("/events");
 AsyncWebSocket ws("/els");
-AsyncWebSocketClient *globalClient = NULL;
 
 // This is a bit like a ping counter, increments each time a new status is sent to the UI
 uint8_t statusCounter = 0;
@@ -246,6 +245,10 @@ void sendDoc(const JsonDocument &doc)
 void sendState()
 {
   sendDoc(stateDoc);
+  if (sendDebug)
+  {
+    sendDoc(debugStatusDoc);
+  }
 }
 
 void sendLogP(Log::Msg *msg)
@@ -254,15 +257,6 @@ void sendLogP(Log::Msg *msg)
   logDoc["level"] = (int)msg->level;
   logDoc["t"] = "log";
   sendDoc(logDoc);
-}
-
-void sendStatus()
-{
-  sendDoc(statusDoc);
-  if (sendDebug)
-  {
-    sendDoc(debugStatusDoc);
-  }
 }
 
 void sendNvConfigDoc()
@@ -706,8 +700,8 @@ void parseObj(AsyncWebSocketClient *client)
     Serial.print("^");
   }
   else if(strcmp(cmd,"sendDebug") == 0){
-    Serial.println("toggle send debug");
     sendDebug = !sendDebug;
+    Serial.printf("toggle send debug %i",(int)sendDebug);
   }
   else if(strcmp(cmd,"update_stats_interval") == 0){
     
@@ -749,7 +743,6 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
   if (type == WS_EVT_CONNECT)
   {
     Serial.printf("Websocket client connection received id: %d\n",client->id());
-    globalClient = client;
   }
   else if (type == WS_EVT_DISCONNECT)
   {
@@ -971,6 +964,8 @@ void sendUpdates()
     eventDoc["av"] = alarm_value;
     eventDoc["sr"] = stepTimerIsRunning;
     eventDoc["as"] = (uint8_t)accelState;
+    eventDoc["ws_c"] = ws.count();
+    eventDoc["es_c"] = events.count();
 
     // unclear how to send binary data via events
     eventLen = serializeJson(eventDoc, eventBuf);
