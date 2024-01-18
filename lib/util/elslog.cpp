@@ -11,12 +11,17 @@
 Log::Msg el;
 
 void Log::Msg::maybeSend(){
+    Serial.println("MaybeSend borked");
+    printf("test");
+    /* TODO: figure this out
     #ifndef PIO_UNIT_TESTING
+    Serial.println("maybeSend fucker");
     sendLogP(this);
     #endif
     #ifdef PIO_UNIT_TESTING
     //printf("mock send");
     #endif
+    */
 }
 
 void Log::Msg::error(){

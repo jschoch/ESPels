@@ -22,7 +22,10 @@ void init_state(){
 }
 
 void do_state(){
+    
     if(state_timer.repeat()){
+        //Serial.printf("0");
+        //TODO: do we need to run this when in startup or some idle state?
         main_yasm.run();
     }
     
@@ -67,7 +70,7 @@ MoveConfig::State mc = MoveConfig::init();
 // json docs
 
 // config stateDoc
-StaticJsonDocument<1000> stateDoc;
+//StaticJsonDocument<1000> stateDoc;
 
 //  items to store in NV ram/EEPROM
 StaticJsonDocument<1000> nvConfigDoc;
@@ -82,7 +85,7 @@ StaticJsonDocument<1000> inDoc;
 StaticJsonDocument<5000> logDoc;
 
 // used for debugging, to slim down status doc 
-StaticJsonDocument<500> debugStatusDoc;
+//StaticJsonDocument<500> debugStatusDoc;
 
 // for sending updates to move config
 StaticJsonDocument<1000> moveConfigDoc;

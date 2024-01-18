@@ -22,6 +22,7 @@ void sendLogP(Log::Msg *msg);
 void loadNvConfigDoc();
 void handleMove();
 void sendUpdates();
-void sendDoc(const JsonDocument& doc);
+void sendDoc(JsonDocument& doc);
+
 void setRunMode(int mode);
 void doMoveSync();

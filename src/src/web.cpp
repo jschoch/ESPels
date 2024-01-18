@@ -38,7 +38,7 @@ bool web = true;
 
 
 // buffer for msgpack
-char outBuffer[6000];
+char outBuffer[2000];
 
 // for events
 int eventLen = 0;
@@ -67,6 +67,7 @@ double jogAbs = 0;
 
 void saveNvConfigDoc()
 {
+  Serial.println("saveNvConfigDoc called");
   EepromStream eepromStream(0, 512);
   nvConfigDoc["motor_steps"] = nvConfigDoc["native_steps"].as<int>() * nvConfigDoc["microsteps"].as<int>();
   serializeJson(nvConfigDoc, eepromStream);
@@ -79,6 +80,7 @@ void saveNvConfigDoc()
 
 void initNvConfigDoc()
 {
+  Serial.println("initNvConfigDoc called");
   nvConfigDoc.clear();
   // this flag says we've updated from the default
   nvConfigDoc["i"] = 1;
@@ -155,6 +157,7 @@ void loadNvConfigDoc()
 }
 
 void updateMoveConfigDoc(){
+  Serial.println("&");
   moveConfigDoc["t"] = "moveConfigDoc";
   moveConfigDoc["movePitch"] = mc.movePitch;
   moveConfigDoc["rapidPitch"] = mc.rapidPitch;
@@ -164,13 +167,14 @@ void updateMoveConfigDoc(){
   moveConfigDoc["startSync"] = mc.startSync;
   moveConfigDoc["feeding_ccw"] = mc.feeding_ccw;
   moveConfigDoc["moveSpeed"] = mc.moveSpeed;
+  moveConfigDoc["x"] = millis();
   sendDoc(moveConfigDoc);
 }
 
 
 void updateStateDoc()
 {
-  printf("+");
+  Serial.printf("+");
   /*  depricating this, state is updated in events.
   stateDoc["t"] = "state";
 
@@ -210,9 +214,12 @@ void setRunMode(int mode)
   }
 }
 
-void sendDoc(const JsonDocument &doc)
+void sendDoc(JsonDocument &doc)
 {
+  memset(outBuffer, '\0', sizeof(outBuffer)); 
   serialize_len = serializeMsgPack(doc, outBuffer);
+  Serial.printf("SendDoc called, len: %i\n",serialize_len);
+  
   if(ws.availableForWriteAll()){
       ws.binaryAll(outBuffer, serialize_len);
   }else{
@@ -228,6 +235,7 @@ void sendState()
 
 void sendLogP(Log::Msg *msg)
 {
+  Serial.println("sendLogP called");
   logDoc["msg"] = msg->buf;
   logDoc["level"] = (int)msg->level;
   logDoc["t"] = "log";
@@ -236,39 +244,42 @@ void sendLogP(Log::Msg *msg)
 
 void sendNvConfigDoc()
 {
+  Serial.println("WTF");
+  Serial.println("sending nvconfig");
   nvConfigDoc["t"] = "nvConfig";
   sendDoc(nvConfigDoc);
 }
 
 bool processDoc(){
-          JsonObject config = inDoc["moveConfig"];
-          MCDOC mcdoc = validateMoveConfig(config);
-          if(mcdoc.valid){
-            if(gs.validPitch(mcdoc.movePitch)){
-              mc.moveDistanceSteps = mcdoc.moveSteps;
-              mc.movePitch = mcdoc.movePitch;
-              mc.rapidPitch = mcdoc.rapidPitch;
-              mc.feeding_ccw = mcdoc.feeding_ccw;
-              mc.accel = mcdoc.accel;
-              mc.moveSpeed = mcdoc.moveSpeed;
-              mc.dwell = mcdoc.dwell;
-              // TODO:  figure out why you need to send the doc back?
-              // why are you sending this back?
-              updateMoveConfigDoc();
-              return true;
-            }else{
-              el.error("move pitch greater than max pitch");
-            }
-            
-          }else{
-            printMCDOC(mcdoc);
-            char err_buff[600] = "";
-            serializeJsonPretty(inDoc,err_buff);
-            sprintf(el.buf,"invalid move config: %s",err_buff);
-            el.error();
-          }
-          return false;
-        }
+  Serial.println("parseDoc called");
+  JsonObject rawConfig = inDoc["moveConfig"];
+  MCDOC mcdoc = validateMoveConfig(rawConfig);
+  if(mcdoc.valid){
+    if(gs.validPitch(mcdoc.movePitch)){
+      mc.moveDistanceSteps = mcdoc.moveSteps;
+      mc.movePitch = mcdoc.movePitch;
+      mc.rapidPitch = mcdoc.rapidPitch;
+      mc.feeding_ccw = mcdoc.feeding_ccw;
+      mc.accel = mcdoc.accel;
+      mc.moveSpeed = mcdoc.moveSpeed;
+      mc.dwell = mcdoc.dwell;
+      // TODO:  figure out why you need to send the doc back?
+      // why are you sending this back?
+      updateMoveConfigDoc();
+      return true;
+    }else{
+      el.error("move pitch greater than max pitch");
+    }
+    
+  }else{
+    printMCDOC(mcdoc);
+    char err_buff[600] = "";
+    serializeJsonPretty(inDoc,err_buff);
+    sprintf(el.buf,"invalid move config: %s",err_buff);
+    el.error();
+  }
+  return false;
+  }
 
 
 void handleMoveAsync(){
@@ -336,7 +347,7 @@ void handleRapid()
     rapiding = true;
     doMoveSync();
   }else{
-    printf("problems with rapid\n");
+    Serial.printf("problems with rapid\n");
   }
 }
 
@@ -346,7 +357,7 @@ void handleMove()
   if (run_mode == RunMode::SLAVE_JOG_READY && processDoc())
   {
     // pitch rapid and distance should all be in the moveConfig now
-    updateStateDoc();
+    //updateStateDoc();
     doMoveSync(); 
     
   }
@@ -426,7 +437,7 @@ void handleBounce()
     main_yasm.next(BounceMoveState,true);
   }
   else{
-    printf("problem with bounce move config or state\n");
+    Serial.printf("problem with bounce move config or state\n");
   }
 }
 void handleBounceAsync()
@@ -440,7 +451,7 @@ void handleBounceAsync()
     main_yasm.next(AsyncBounceMoveToState,true);
   }
   else{
-    printf("problem with bounce move config or state\n");
+    Serial.printf("problem with bounce move config or state\n");
   }
 }
 
@@ -458,46 +469,11 @@ void handleFeed(){
     updateStateDoc();
     pos_feeding = true;
   }else{
-    printf("problem with feed config or state\n");
+    Serial.printf("problem with feed config or state\n");
   }
 
 }
 
-void handleDebug()
-{
-  if (inDoc["basic"])
-  {
-
-    auto t1 = inDoc["basic"];
-    auto t = t1.as<int>();
-    if (t == 1)
-    {
-      encoder.setCount(encoder.getCount() + 2400);
-    }
-    else if (t == 0)
-    {
-      encoder.setCount(encoder.getCount() - 2400);
-    }
-    else if (t == 2)
-    {
-      encoder.dir = true;
-      encoder.setCount((encoder.getCount() + 1));
-    }
-    else if (t == 3)
-    {
-      encoder.dir = false;
-      encoder.setCount((encoder.getCount() - 1));
-    }
-  }
-
-  if (inDoc["ticks"])
-  {
-    auto ticks = inDoc["ticks"];
-    encoder.setCount(encoder.getCount() + ticks.as<int>());
-  }
-
-  // Serial.printf("fccw: %d  fz: %d sd: %d encDir: %i \n",feeding_ccw,z_feeding_dir,zstepper.dir, encoder.dir);
-}
 
 void handleSend()
 {
@@ -514,7 +490,6 @@ void handleSend()
     Serial.println((int)run_mode);
     setRunMode(got_run_mode);
   }
-  updateStateDoc();
 }
 void handleMoveConfig(){
   if ((run_mode == RunMode::SLAVE_JOG_READY || run_mode == RunMode::FEED_READY) && processDoc()){
@@ -523,7 +498,7 @@ void handleMoveConfig(){
     gs.setAccel(mc.accel);
     updateStateDoc();
   }else{
-    printf("handleMoveConfig problem with state or doc\n");
+    Serial.printf("handleMoveConfig problem with state or doc\n");
   }
 }
 void handleNvConfig()
@@ -549,7 +524,7 @@ void handleNvConfig()
 
     int old = mc.movePitch;
     if( !gs.setELSFactor(0.1,true) ) {
-      printf("nvconfig may be bad, reverting move pitch");
+      Serial.printf("nvconfig may be bad, reverting move pitch");
       mc.movePitch = old;
     }
     if(old != 0) {
@@ -582,7 +557,6 @@ void parseObj(AsyncWebSocketClient *client)
     if (strcmp(uiVsn, vsn) == 0)
     {
       sendNvConfigDoc();
-      updateStateDoc();
     }
     else
     {
@@ -590,16 +564,6 @@ void parseObj(AsyncWebSocketClient *client)
       el.halt("bad version");
       client->close();
     }
-  }
-  else if (strcmp(cmd, "fetch") == 0)
-  {
-    Serial.println("fetch received: sending config");
-    updateStateDoc();
-  }
-  else if (strcmp(cmd, "debug") == 0)
-  {
-    // Debugging tools
-    handleDebug();
   }
   else if (strcmp(cmd, "moveCancel") == 0)
   {
@@ -626,11 +590,8 @@ void parseObj(AsyncWebSocketClient *client)
   else if (strcmp(cmd, "moveAsync") == 0){
     handleMoveAsync();
   }
-  else if (strcmp(cmd, "sendConfig") == 0)
-  {
-    handleSend();
-  }
   else if (strcmp(cmd, "sendMoveConfig") == 0){
+    Serial.println("sendMoveConfig handle");
     handleMoveConfig();
   }
   else if (strcmp(cmd, "hobrun") == 0)
@@ -643,10 +604,12 @@ void parseObj(AsyncWebSocketClient *client)
   }
   else if (strcmp(cmd, "setNvConfig") == 0)
   {
+    Serial.println("setNvConfig handle");
     handleNvConfig();
   }
   else if (strcmp(cmd, "getNvConfig") == 0)
   {
+    Serial.println("getNVconfig handle");
     sendNvConfigDoc();
   }
   else if (strcmp(cmd, "resetNvConfig") == 0)
@@ -674,9 +637,6 @@ void parseObj(AsyncWebSocketClient *client)
   {
     handleFeed();
   }
-  else if(strcmp(cmd,"ping") == 0){
-    Serial.print("^");
-  }
   else if(strcmp(cmd,"sendDebug") == 0){
     sendDebug = !sendDebug;
     Serial.printf("toggle send debug %i",(int)sendDebug);
@@ -691,6 +651,10 @@ void parseObj(AsyncWebSocketClient *client)
     }
     
 
+  }
+  else if (strcmp(cmd, "sendConfig") == 0)
+  {
+    handleSend();
   }
   else
   {
@@ -724,8 +688,7 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
   }
   else if (type == WS_EVT_DISCONNECT)
   {
-    Serial.println("Client disconnected");
-    Serial.println("-----------------------");
+    Serial.println("Client disconnected-----");
   }
   else if (type == WS_EVT_DATA)
   {
@@ -787,7 +750,7 @@ void connectToWifi() {
 
   ws.onEvent(onWsEvent);
   server.on("/events",HTTP_OPTIONS,[](AsyncWebServerRequest * request) {
-    printf("got preflight");
+    Serial.printf("got preflight");
     /*
     int headers = request->headers();
     int i;
@@ -890,9 +853,6 @@ void sendUpdates()
   // called in main loop
   if (update_timer.repeat())
   {
-    //updateDebugStatusDoc();
-    //updateStatusDoc();
-
     ws.cleanupClients();
   }
   if(sse_timer.repeat() && (events.avgPacketsWaiting() < 3)){
@@ -946,6 +906,7 @@ void sendUpdates()
     eventDoc["es_c"] = events.count();
 
     // unclear how to send binary data via events
+    // it seems that eventsource is supposed to be text only
     eventLen = serializeJson(eventDoc, eventBuf);
 
     events.send(eventBuf);

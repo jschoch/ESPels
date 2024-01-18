@@ -24,7 +24,7 @@ namespace Log{
         public:
         T t = T::WS;
         bool hasError = false;
-        char buf[650] = "";
+        char buf[1000] = "";
         Level level = Level::ERROR;
         void maybeSend();
         void error(void);

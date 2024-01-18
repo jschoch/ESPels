@@ -48,7 +48,7 @@ extern StaticJsonDocument<1000> nvConfigDoc;
 extern StaticJsonDocument<1000> inDoc;
 
 // used to send status to UI
-extern StaticJsonDocument<600> statusDoc;
+//extern StaticJsonDocument<600> statusDoc;
 
 // Used to log to UI
 extern StaticJsonDocument<5000> logDoc;
